@@ -7,6 +7,7 @@ import { tequilaProvider } from "./tequila";
 import { travelpayoutsDataProvider } from "./travelpayouts-data";
 import { duffelProvider } from "./duffel";
 import { serpApiProvider } from "./serpapi";
+import { apifyProvider } from "./apify";
 import { mockProvider } from "./mock";
 
 export type { FlightOption, FlightProvider };
@@ -144,6 +145,22 @@ export function getProvider(): FlightProvider {
     case "serpapi":
       provider = createSerpApiProvider();
       break;
+    case "apify": {
+      // Apify actor provider (real Kiwi results). Without APIFY_TOKEN we fall back to
+      // the deterministic mock so the site stays functional; set APIFY_TOKEN to go live.
+      if (!getConfig().apifyToken) {
+        if (!warnedNoKey) {
+          warnedNoKey = true;
+          console.warn(
+            "[flights] FLIGHTS_PROVIDER=apify but APIFY_TOKEN is not set — falling back to the mock provider"
+          );
+        }
+        provider = createMockProvider();
+      } else {
+        provider = createApifyProvider();
+      }
+      break;
+    }
     case "mock":
     default:
       provider = createMockProvider();
@@ -177,6 +194,9 @@ function createDuffelProvider(): FlightProvider {
 }
 function createSerpApiProvider(): FlightProvider {
   return serpApiProvider;
+}
+function createApifyProvider(): FlightProvider {
+  return apifyProvider;
 }
 function createMockProvider(): FlightProvider {
   return mockProvider;

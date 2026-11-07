@@ -9,6 +9,7 @@ export type FlightsProviderName =
   | "travelpayouts-data"
   | "duffel"
   | "serpapi"
+  | "apify"
   | "mock";
 
 export type MidspotConfig = {
@@ -25,6 +26,7 @@ export type MidspotConfig = {
   duffelAccessToken?: string;
   duffelMode: "test" | "prod";
   serpapiApiKey?: string;
+  apifyToken?: string;
   flightsCacheTtlSeconds: number;
   airportCacheTtlDays: number;
   maxCandidateDestinations: number;
@@ -56,7 +58,7 @@ const num = (value: string | undefined, fallback: number): number => {
 function buildConfig(): MidspotConfig {
   const providerRaw = (process.env.FLIGHTS_PROVIDER ?? "tequila").trim().toLowerCase();
   const flightsProvider: FlightsProviderName = (
-    ["tequila", "travelpayouts-data", "duffel", "serpapi", "mock"].includes(providerRaw)
+    ["tequila", "travelpayouts-data", "duffel", "serpapi", "apify", "mock"].includes(providerRaw)
       ? providerRaw
       : "tequila"
   ) as FlightsProviderName;
@@ -76,6 +78,7 @@ function buildConfig(): MidspotConfig {
     duffelAccessToken: process.env.DUFFEL_ACCESS_TOKEN,
     duffelMode: process.env.DUFFEL_MODE === "prod" ? "prod" : "test",
     serpapiApiKey: process.env.SERPAPI_API_KEY,
+    apifyToken: process.env.APIFY_TOKEN,
     flightsCacheTtlSeconds: num(process.env.FLIGHTS_CACHE_TTL_SECONDS, 1800),
     airportCacheTtlDays: num(process.env.AIRPORT_CACHE_TTL_DAYS, 30),
     maxCandidateDestinations: num(process.env.FLIGHTS_MAX_CANDIDATE_DESTINATIONS, 30),
