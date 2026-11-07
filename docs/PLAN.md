@@ -91,3 +91,16 @@ repetate în 30 min: 0 apeluri.
 3. **429/rate limits** — coadă + backoff + cache 30 min + concurență 4.
 4. **Timeout 100s Cloudflare** — rezolvat prin joburi async + polling.
 5. **Cost apeluri la trafic mare** — cache + cap-uri + rate limit pe POST /api/search (5/min/IP) + retention 7 zile.
+
+---
+
+## Faza 3 — consens cu owner-ul (2026-11-07)
+
+Decizii luate (Q&A):
+1. **Toate workstream-urile**, site-ul e simplu și le facem pe toate: ads+SEO, UX/i18n, cost guard, monitorizare.
+2. **SerpApi guard**: cap hard lunar la **200 căutări** (`PROVIDER_MONTHLY_CAP=200`); după cap, căutările răspund doar din cache (flag `usageLimited` pe răspuns). Owner se ocupă separat de aprobarea Kiwi → când vine cheia, `FLIGHTS_PROVIDER=tequila` (fără rescriere). Prewarm cache se activează când aterizează Kiwi (limite mai mari); până atunci doar cap + cache 30 min.
+3. **Fără login** la MVP și pe viitor apropiat — doar linkuri shareabile `/r/[slug]`.
+4. **Obligatoriu înainte de lansare publică**: pagini legale (Privacy + Termeni, GDPR + cookie consent care gatează Drive/ads) + SEO de bază (sitemap, OG).
+5. **Limbi**: EN + top limbi UE — `en, ro, de, fr, es, it` (prin modulul de mesaje existent, comutator de limbă, fără schimbare de rutare).
+
+Ordinea de implementare: (1) cost guard [protejează banii], (2) legal + consent + SEO [GDPR înainte de ads], (3) ads live când ai contul, (4) i18n + detectează locația (IP→IATA), (5) monitorizare health pe box.
