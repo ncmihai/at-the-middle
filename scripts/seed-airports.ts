@@ -1,22 +1,28 @@
-// Seed the `airports` table from the OurAirports CSV and regenerate the static
-// EU candidate list `db/candidates.ts` (EEA + UK + CH + NO/IS + Western Balkans,
-// large+medium airports with scheduled service).
+// Seed the `airports` table and regenerate the static EU candidate list
+// `db/candidates.ts` (EEA + UK + CH + NO/IS + Western Balkans).
+//
+// Primary source: Travelpayouts/Aviasales JSON data files (support category
+// "API and data" → "Flight data by Aviasales"), no token needed, HTTPS only
+// (http 301-redirects to https):
+//   https://api.travelpayouts.com/data/en/airports.json   (iata_type, flightable, city_code, ...)
+//   https://api.travelpayouts.com/data/en/cities.json      (city_code → city name)
+//   https://api.travelpayouts.com/data/en/countries.json   (country_code → country name)
+// Fallback: OurAirports CSV (flight-data-spec §7.1).
 //
 // Usage:
 //   DATABASE_URL=... npm run db:seed-airports   # upsert into Postgres AND rewrite db/candidates.ts
 //   npm run db:seed-airports                    # only rewrite db/candidates.ts (no DB needed)
-//
-// Sources (flight-data-spec §7.1): https://davidmegginson.github.io/ourairports-data/airports.csv
-// and countries.csv. The source file is regenerated daily by OurAirports; the infra
-// cron re-runs this script weekly (7 d — intentionally different from the 30 d row TTL).
 import { writeFileSync } from "node:fs";
 import path from "node:path";
 
+const TP_AIRPORTS_JSON = "https://api.travelpayouts.com/data/en/airports.json";
+const TP_CITIES_JSON = "https://api.travelpayouts.com/data/en/cities.json";
+const TP_COUNTRIES_JSON = "https://api.travelpayouts.com/data/en/countries.json";
 const AIRPORTS_CSV = "https://davidmegginson.github.io/ourairports-data/airports.csv";
 const COUNTRIES_CSV = "https://davidmegginson.github.io/ourairports-data/countries.csv";
 
 // EEA (EU27 + IS, LI, NO) + UK + CH + Western Balkans — the candidate-destination set
-// (app-spec §10 Q4: EEA + UK + CH + NO/IS + Western Balkans).
+// (app-spec §10 Q4).
 const CANDIDATE_COUNTRIES = new Set([
   "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU",
   "IS", "IE", "IT", "LV", "LI", "LT", "LU", "MT", "NL", "NO", "PL", "PT", "RO",
@@ -82,6 +88,12 @@ async function fetchCsv(url: string): Promise<CsvRow[]> {
   return parseCsv(await res.text());
 }
 
+async function fetchJson<T>(url: string): Promise<T> {
+  const res = await fetch(url, { headers: { "user-agent": "midspot-seed/1.0" } });
+  if (!res.ok) throw new Error(`fetch ${url} failed: ${res.status}`);
+  return (await res.json()) as T;
+}
+
 export type SeedAirport = {
   iata: string;
   name: string;
@@ -94,14 +106,63 @@ export type SeedAirport = {
   kind: string;
 };
 
-async function main() {
-  console.log("[seed-airports] downloading", AIRPORTS_CSV);
+type TpAirport = {
+  code: string;
+  iata_type: string;
+  flightable?: boolean;
+  city_code?: string;
+  country_code: string;
+  name: string;
+  name_translations?: { en?: string };
+  coordinates?: { lat: number; lon: number };
+};
+type TpCity = { code: string; name: string; name_translations?: { en?: string } };
+type TpCountry = { code: string; name: string; name_translations?: { en?: string } };
+
+/** Primary source: Travelpayouts/Aviasales JSON data files. */
+async function fetchAviasales(): Promise<SeedAirport[]> {
+  const [airports, cities, countries] = await Promise.all([
+    fetchJson<TpAirport[]>(TP_AIRPORTS_JSON),
+    fetchJson<TpCity[]>(TP_CITIES_JSON),
+    fetchJson<TpCountry[]>(TP_COUNTRIES_JSON),
+  ]);
+  const cityNames = new Map(cities.map((c) => [c.code, c.name_translations?.en ?? c.name]));
+  const countryNames = new Map(countries.map((c) => [c.code, c.name_translations?.en ?? c.name]));
+
+  const selected: SeedAirport[] = [];
+  const seen = new Set<string>();
+  for (const a of airports) {
+    if (a.iata_type !== "airport" || a.flightable === false) continue;
+    const iata = (a.code ?? "").trim().toUpperCase();
+    const countryCode = (a.country_code ?? "").trim().toUpperCase();
+    if (iata.length !== 3 || seen.has(iata)) continue;
+    if (!CANDIDATE_COUNTRIES.has(countryCode)) continue;
+    const lat = a.coordinates?.lat;
+    const lon = a.coordinates?.lon;
+    if (lat === undefined || lon === undefined || !Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    seen.add(iata);
+    selected.push({
+      iata,
+      name: a.name_translations?.en ?? a.name,
+      city: cityNames.get((a.city_code ?? "").toUpperCase()) ?? "",
+      country: countryNames.get(countryCode) ?? countryCode,
+      countryCode,
+      latitude: lat,
+      longitude: lon,
+      isEu: true,
+      kind: "airport",
+    });
+  }
+  return selected;
+}
+
+/** Fallback source: OurAirports CSV. */
+async function fetchOurAirports(): Promise<SeedAirport[]> {
   const [airportRows, countryRows] = await Promise.all([
     fetchCsv(AIRPORTS_CSV),
     fetchCsv(COUNTRIES_CSV),
   ]);
   const countryNames = new Map(countryRows.map((c) => [c.code, c.name]));
-
   const selected: SeedAirport[] = [];
   const seen = new Set<string>();
   for (const r of airportRows) {
@@ -128,6 +189,20 @@ async function main() {
       kind: r.type.trim(),
     });
   }
+  return selected;
+}
+
+async function main() {
+  let selected: SeedAirport[];
+  try {
+    console.log("[seed-airports] downloading", TP_AIRPORTS_JSON);
+    selected = await fetchAviasales();
+    console.log(`[seed-airports] aviasales source: ${selected.length} EU flightable airports`);
+  } catch (err) {
+    console.warn("[seed-airports] aviasales source failed, falling back to OurAirports CSV:", err);
+    console.log("[seed-airports] downloading", AIRPORTS_CSV);
+    selected = await fetchOurAirports();
+  }
   selected.sort((a, b) => a.iata.localeCompare(b.iata));
   console.log(`[seed-airports] ${selected.length} candidate airports selected`);
 
@@ -139,9 +214,10 @@ async function main() {
   );
   writeFileSync(
     candidatesPath,
-    `// GENERATED by scripts/seed-airports.ts from OurAirports (EEA + UK + CH + NO/IS +
-// Western Balkans, large+medium airports, scheduled_service=yes). Do not edit by hand;
-// re-run \`npm run db:seed-airports\` (weekly infra cron refreshes the source CSV).
+    `// GENERATED by scripts/seed-airports.ts — primary source: Travelpayouts/Aviasales JSON
+// (api.travelpayouts.com/data/en/airports.json, iata_type=airport, flightable=true),
+// fallback: OurAirports CSV. EEA + UK + CH + NO/IS + Western Balkans.
+// Do not edit by hand; re-run \`npm run db:seed-airports\`.
 // Used by lib/jobs/run-search.ts as the candidate-destination shortlist; at runtime it is
 // ordered by haversine distance to the origins' centroid and capped at
 // FLIGHTS_MAX_CANDIDATE_DESTINATIONS.
@@ -177,6 +253,7 @@ export const CANDIDATES_BY_IATA: Record<string, CandidateDestination> =
   const now = new Date();
   let upserted = 0;
   for (const a of selected) {
+    const searchText = `${a.name} ${a.city} ${a.country} ${a.iata}`.toLowerCase();
     await db
       .insert(airports)
       .values({
@@ -189,7 +266,7 @@ export const CANDIDATES_BY_IATA: Record<string, CandidateDestination> =
         longitude: a.longitude,
         isEu: a.isEu,
         kind: a.kind,
-        searchText: `${a.name} ${a.city} ${a.iata}`.toLowerCase(),
+        searchText,
         fetchedAt: now,
       })
       .onConflictDoUpdate({
@@ -203,7 +280,7 @@ export const CANDIDATES_BY_IATA: Record<string, CandidateDestination> =
           longitude: a.longitude,
           isEu: a.isEu,
           kind: a.kind,
-          searchText: `${a.name} ${a.city} ${a.iata}`.toLowerCase(),
+          searchText,
           fetchedAt: now,
         },
       });

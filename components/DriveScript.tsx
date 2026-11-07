@@ -12,6 +12,7 @@ import Script from "next/script";
 export default function DriveScript() {
   if (process.env.NEXT_PUBLIC_DRIVE_ENABLED !== "true") return null;
   return (
+    // eslint-disable-next-line @next/next/no-before-interactive-script-outside-document -- App Router: beforeInteractive is the supported way to inject into <head>; verified in served HTML
     <Script
       id="travelpayouts-drive"
       strategy="beforeInteractive"
