@@ -54,3 +54,12 @@ curl -s http://127.0.0.1:3005/api/health
 curl -sI https://midspot.ncmihai.dev
 journalctl --user -u midspot-web.service --no-pager | tail -20
 ```
+
+## Travelpayouts Drive (verificat Active — setări recomandate non-intrusive)
+
+Loader instalat în `<head>` (components/DriveScript.tsx, `NEXT_PUBLIC_DRIVE_ENABLED=true` în prod).
+În dashboard app.travelpayouts.com/drive pentru midspot.ncmihai.dev:
+- Monetization boost: **Low/Off** (nu Maximum)
+- Switch Links to Travelpayouts: **ON**; "Switch links from affiliate networks": **OFF**
+- Link Relevant Keywords / Insert Recommendations / Display Smart Previews / Show Targeted Offers: **OFF**
+- Exclude pages: `https://midspot.ncmihai.dev/r/*` (paginile de rezultate cu butoane Book rămân neatinse)
