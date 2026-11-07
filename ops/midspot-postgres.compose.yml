@@ -1,0 +1,28 @@
+# midspot Postgres — self-hosted on the BC250 box, loopback only.
+# 5432 is already taken by cumsevoteaza-postgres, so midspot binds 127.0.0.1:5433.
+# The DB password is NOT stored here — pass it via the environment
+# (POSTGRES_PASSWORD=... docker compose -f midspot-postgres.compose.yml up -d)
+# or an env file outside the repo. DATABASE_URL in Infisical must match:
+#   postgres://midspot:<same-password>@127.0.0.1:5433/midspot
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: midspot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: midspot
+      POSTGRES_USER: midspot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the environment before "compose up"}
+    ports:
+      # loopback only — never exposed on the LAN:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - midspot-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U midspot -d midspot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  midspot-postgres-data:

@@ -1,8 +1,8 @@
 # midspot — runbook de ziua 1: adăugare pe box-ul BC250
 
-**Public:** https://midspot.ncmihai.dev · **Port loopback:** 3003 · **Artefact:** `~/projects/midspot-web/` · **Unit:** `midspot-web.service` (systemd `--user`) · **Secrete:** Infisical `midspot-prod` / env `prod`
+**Public:** https://midspot.ncmihai.dev · **Port loopback:** 3005 · **Artefact:** `~/projects/midspot-web/` · **Unit:** `midspot-web.service` (systemd `--user`) · **Secrete:** Infisical `midspot-prod` / env `prod`
 
-Surse canonice pentru reteta: `cumsevoteaza/docs/deployment.md` (arhitectura + lecțiile), `ncm/.github/workflows/deploy-box.yml` + `mereya_star/.github/workflows/deploy-box.yml` (șablonul de deploy), `bc250-monitor/server/bc250-stats.service` (hardening), planul sofronesti Task 13 (pattern `ops/` + port 3003).
+Surse canonice pentru reteta: `cumsevoteaza/docs/deployment.md` (arhitectura + lecțiile), `ncm/.github/workflows/deploy-box.yml` + `mereya_star/.github/workflows/deploy-box.yml` (șablonul de deploy), `bc250-monitor/server/bc250-stats.service` (hardening), planul sofronesti Task 13 (pattern `ops/`).
 
 Lanțul (identic cu celelalte site-uri de pe box):
 
@@ -13,11 +13,33 @@ Internet → Cloudflare (zona ncmihai.dev, DNS + WAF) → tunnel 87e40a55 (cloud
               ├─ cumvoteaza-web.service → 127.0.0.1:3000
               ├─ ncm-web.service        → 127.0.0.1:3001
               ├─ mereya-web.service     → 127.0.0.1:3002
-              ├─ midspot-web.service    → 127.0.0.1:3003   ← NOU
+              ├─ midspot-web.service    → 127.0.0.1:3005   ← NOU
               └─ midspot-postgres (docker) → 127.0.0.1:5433 ← NOU
 ```
 
-> **⚠️ Conflict de port 3003 — rezoluția e la owner înainte de primul deploy:** planul sofronesti (`sofronesti/docs/superpowers/plans/2026-11-07-elena-alexa-site.md`, Task 13 + `global-constraints.md`) revendică și el **3003** pentru `elena-web.service`. Poziția midspot: **păstrăm 3003** (portul canonical din brief-ul midspot și din ambele spec-uri midspot), iar **sofronesti trece pe 3004**; dacă owner-ul decide altfel, unul dintre cele două servicii se mută pe 3004 înainte ca ambele să fie live pe box. Ocupate pe box: 3000 cumvoteaza, 3001 ncm, 3002 mereya, **3003 midspot**; 5432 e luat de `cumsevoteaza-postgres` (bind `5432:5432` pe toate interfețele), deci Postgres-ul midspot merge pe **127.0.0.1:5433**.
+> **Alocarea porturilor (regula finală):** 3000 cumvoteaza, 3001 ncm, 3002 mereya, **3003 sofronesti/elena-web** (deja rezervat în planul ei, Task 13), **3004 rezervat**, **3005 midspot**. **Fiecare site nou ia următorul port liber** — vezi registrul de mai jos (`Port registry`). 5432 e luat de `cumsevoteaza-postgres` (bind `5432:5432` pe toate interfețele), deci Postgres-ul midspot merge pe **127.0.0.1:5433**.
+
+---
+
+## Port registry (anti-coliziune)
+
+- **Sursa unică de adevăr: `~/projects/PORTS.md` pe box** — tabel `port | service | host | artefact`, păstrat la zi de fiecare echipă înainte de deploy.
+- **Regula:** site nou = **max+1**, înregistrat în `PORTS.md` **înainte de primul deploy** (cine ia portul, îl trece în registru înainte de primul rsync; dacă două echipe iau același port, cine a înregistrat primul rămâne, celălalt ia max+1).
+- **PORT e env-driven în unitatea systemd** (`Environment=PORT=3005`), nu hardcodat în aplicație — app-ul citește `process.env.PORT` (`server.js` standalone). Așa mutarea unui site pe alt port = doar editare de unit + ingress + intrare în registru, fără rebuild.
+
+**Tabelul curent (sincron cu `~/projects/PORTS.md` de pe box):**
+
+| Port | Service / container | Host | Artefact |
+|---|---|---|---|
+| 3000 | `cumvoteaza-web.service` | cumvoteaza.ncmihai.dev | `~/projects/cumvoteaza-web` |
+| 3001 | `ncm-web.service` | www.ncmihai.dev, ncmihai.dev | `~/projects/ncm-web` |
+| 3002 | `mereya-web.service` | mereya.eu, www.mereya.eu | `~/projects/mereya-web` |
+| 3003 | `elena-web.service` (sofronesti — rezervat în plan, Task 13) | sofronesti.ncmihai.dev | `~/projects/elena-web` |
+| 3004 | *rezervat* | — | — |
+| **3005** | **`midspot-web.service`** | **midspot.ncmihai.dev** | **`~/projects/midspot-web`** |
+| 5432 | `cumsevoteaza-postgres` (docker, bind all) | — loopback | volum `cumsevoteaza-postgres-data` |
+| 5433 | `midspot-postgres` (docker, 127.0.0.1 only) | — loopback | volum `midspot-postgres-data` |
+| 8250 | `bc250-stats.service` | — loopback | `/opt/bc250-stats` |
 
 ---
 
@@ -54,9 +76,9 @@ ingress:
     service: http://127.0.0.1:3002
   - hostname: www.mereya.eu
     service: http://127.0.0.1:3002
-  # --- midspot (NOU) ---
+  # --- midspot (NOU) — vezi și „Viitor: wildcard ingress” mai jos ---
   - hostname: midspot.ncmihai.dev
-    service: http://127.0.0.1:3003
+    service: http://127.0.0.1:3005
   # catch-all — TREBUIE să rămână ultimul:
   - service: http_status:404
 ```
@@ -68,6 +90,36 @@ curl -sI https://midspot.ncmihai.dev   # după primul deploy → 200; înainte �
 ```
 
 - **Lecția 1:** cloudflared atinge `localhost` peste **::1** — de aceea regulile de mai sus folosesc `127.0.0.1` explicit, iar unitatea de mai jos face bind pe `HOSTNAME=127.0.0.1` (Next standalone cu `HOSTNAME=127.0.0.1` ascultă doar IPv4 loopback, deci potrivirea e garantată). La fel și în `authorized_keys`: restricția deploy key-ului e `from="127.0.0.1,::1"` — ambele forme trebuie permise.
+
+### 2b. Viitor: wildcard ingress + reverse proxy local (Caddy)
+
+Când box-ul ajunge la **~6–8 site-uri**, se trece de la câte o regulă ingress per host la **o singură regulă wildcard + un reverse proxy local pe box**:
+
+```yaml
+# /etc/cloudflared/config.yml — o singură regulă în loc de N (sudo, o singură dată la migrare)
+ingress:
+  - hostname: "*.ncmihai.dev"
+    service: http://127.0.0.1:8080      # Caddy pe box
+  - service: http_status:404            # catch-all rămâne ultimul
+```
+
+- DNS: un singur record wildcard `*.ncmihai.dev` → tunnel `87e40a55` (proxied) înlocuiește recordurile per-host din zona `ncmihai.dev` (atenție la lecția 8: `route dns` e zone-scoped; wildcard-ul se poate pune și manual în dashboard).
+- **Caddy pe box** (unit `systemd --user` `caddy.service`, ascultă pe `127.0.0.1:8080` plain HTTP — TLS e terminat la Cloudflare) rutează după header-ul `Host`:
+
+  ```caddyfile
+  # Caddyfile pe box (ex. ~/projects/caddy/Caddyfile)
+  :8080 {
+    @midspot host midspot.ncmihai.dev
+    reverse_proxy @midspot 127.0.0.1:3005
+    @cumvoteaza host cumvoteaza.ncmihai.dev
+    reverse_proxy @cumvoteaza 127.0.0.1:3000
+    # ... câte un bloc @host per site, înregistrat în PORTS.md
+    respond 404
+  }
+  ```
+
+- **Atunci adăugarea unui site nou = doar:** DNS (acoperit de wildcard) + rută Caddy (fără sudo pe `/etc/cloudflared/config.yml`) + unitate systemd + intrare în `PORTS.md`. Migrarea inițială a regulilor per-host existente e un singur edit sudo + `sudo systemctl restart cloudflared`.
+- Până atunci (MVP, 4–5 site-uri) păstrăm regulile per-host din §2 — mai simple de citit și de debugat.
 
 ## 3. Unitate systemd `--user` + wrapper Infisical
 
@@ -84,7 +136,7 @@ Type=simple
 WorkingDirectory=%h/projects/midspot-web
 # DOAR valori nenule aici — systemd EnvironmentFile respinge valorile goale (lecția 3),
 # deci secretele NU vin din EnvironmentFile, ci din wrapper-ul Infisical de mai jos.
-Environment=PORT=3003
+Environment=PORT=3005        # env-driven — vezi „Port registry”; nu hardcodat în app
 Environment=HOSTNAME=127.0.0.1
 Environment=NODE_ENV=production
 # credentialele machine identity „bc250" (universal-auth), toate nenule:
@@ -346,7 +398,7 @@ jobs:
       - name: Check the live site (loopback /api/health + public URL)
         run: |
           for i in 1 2 3 4 5 6; do
-            if ssh box 'curl -fsS -o /dev/null http://127.0.0.1:3003/api/health'; then
+            if ssh box 'curl -fsS -o /dev/null http://127.0.0.1:3005/api/health'; then
               echo "up on the box's loopback"
               if curl -fsS -o /dev/null https://midspot.ncmihai.dev; then echo live; exit 0; fi
             fi
@@ -386,7 +438,7 @@ Toate trăiesc în Infisical `midspot-prod` / `prod`, **cu excepția** `PORT`/`H
 |---|---|---|---|
 | `DATABASE_URL` | server (Drizzle + postgres-js) + drizzle-kit | Infisical prod | `postgres://midspot:<parola>@127.0.0.1:5433/midspot`; doar pt. DB, niciodată ca base URL de fetch intern (lecția 7) |
 | `NEXT_PUBLIC_SITE_URL` | build + runtime | Infisical prod + env de build în CI | **baked la build** (lecția 5) → `https://midspot.ncmihai.dev`; folosit la share links `/r/<slug>` (calea canonică din app-spec) |
-| `PORT` | `server.js` standalone | unitatea systemd | `3003` — nu în Infisical |
+| `PORT` | `server.js` standalone | unitatea systemd | `3005` — nu în Infisical; env-driven (vezi Port registry) |
 | `HOSTNAME` | `server.js` standalone | unitatea systemd | `127.0.0.1` — vezi lecția 1 (::1) |
 | `NODE_ENV` | Next | unitatea systemd | `production` — nu în Infisical |
 
@@ -460,7 +512,7 @@ Toate trăiesc în Infisical `midspot-prod` / `prod`, **cu excepția** `PORT`/`H
 4. **`next/font/google` fetchează la build și a făcut CI intermitent să pice** — la rebuild, fonturile (Geist din `app/layout.tsx` al prototipului) devin fișiere locale (OFL), ca la portofoliu.
 5. **`NEXT_PUBLIC_*` se bake-uiesc la build** — `NEXT_PUBLIC_SITE_URL` (și cele de ads) se setează în env-ul de build din CI (prin pull-ul din Infisical), nu doar la runtime pe box.
 6. **Cloudflare free ignoră `Vary`** — regula de edge cache e **per-host** și opțională la MVP pentru midspot; când o activăm, trebuie să excludem requesturile routerului (`rsc: 1`, `next-router-prefetch: 1`) și să nu cache-ăm query-urile; verificăm cu `cf-cache-status: MISS` → `HIT`. Până atunci paginile răspund `DYNAMIC`, ceea ce e corect.
-7. **Fără URL-uri absolute de loopback în app** — niciun `https://127.0.0.1:3003/...` construit din `request.url`; rewrite-urile rămân relative, iar proxy-ul răspunde pe path nepotrivite cu 404 direct.
+7. **Fără URL-uri absolute de loopback în app** — niciun `https://127.0.0.1:3005/...` construit din `request.url`; rewrite-urile rămân relative, iar proxy-ul răspunde pe path nepotrivite cu 404 direct.
 8. **`tunnel route dns` e zone-scoped** — `midspot.ncmihai.dev` e în zona `ncmihai.dev` (aceeași cu login-ul existent), deci pasul 1 funcționează; altă zonă → record manual în dashboard.
 9. **Timeout Cloudflare de 100 s** — căutarea de zboruri pentru N călători (N itinerarii, fiecare cu retry) poate depăși 100 s, deci în app căutarea e **job async + polling**: `POST /api/search` → returnează imediat un `jobId`, `GET /api/search/<jobId>` poll-uie starea, rezultatele se păstrează în Postgres; share-link-ul `/r/<id>` citește doar din DB. Astfel niciun request nu ține conexiunea peste 100 s.
 10. **Igienă operațională:** directorul de deploy nu conține `.env` (rsync `--delete` le-ar șterge oricum); cheia de deploy funcționează doar prin tunel (`from="127.0.0.1,::1"`); `RuntimeMaxSec=7d` reîmprospătează token-ul Infisical (30 zile); rotația machine identity = creezi nouă, swap, revoci vechea din dashboard.
@@ -474,5 +526,5 @@ Toate trăiesc în Infisical `midspot-prod` / `prod`, **cu excepția** `PORT`/`H
 - [ ] **GitHub (repo `at_the_middle`):** cele 5 secretele Actions din tabelul de la pasul 6 (copiate din alt repo, nu regenerate); Actions enabled pe branch `main`.
 - [ ] **Box, ca user ncm:** `~/bin/start-midspot-web.sh` + `~/.config/systemd/user/midspot-web.service` + `midspot-postgres.service` + `~/projects/midspot-postgres/docker-compose.yml` copiate; `systemctl --user daemon-reload && systemctl --user enable --now midspot-postgres.service midspot-web.service`.
 - [ ] **Owner rulează migrările înainte de primul deploy** (regula casei: niciodată agentul împotriva prod): pe box, din `~/projects/midspot-web/`, `infisical run --projectId <id-midspot-prod> --env=prod -- npm run db:migrate`.
-- [ ] **Rezoluție port 3003 la owner, înainte de primul deploy:** planul sofronesti (Task 13) revendică și el 3003 pentru `elena-web.service`. midspot păstrează **3003**, **sofronesti trece pe 3004**; dacă owner-ul decide altfel, unul dintre cele două se mută pe 3004 înainte de primul deploy.
-- [ ] **Verificare post-deploy:** `curl -sI https://midspot.ncmihai.dev` → 200; `curl -s http://127.0.0.1:3003/api/health` pe box → `{"ok":true,"db":true,...}`; `systemctl --user status midspot-web.service midspot-postgres.service`; `journalctl --user -u midspot-web.service --no-pager | tail -20`; `docker ps | grep midspot-postgres` (127.0.0.1:5433->5432); primul push pe `main` → workflow verde end-to-end (CI + deploy + live check public + loopback).
+- [ ] **Port înregistrat în registry:** `3005 | midspot-web.service | midspot.ncmihai.dev | ~/projects/midspot-web` adăugat în `~/projects/PORTS.md` pe box **înainte de primul deploy** (3003 e deja rezervat de sofronesti/elena-web, 3004 rezervat; regula: site nou = max+1).
+- [ ] **Verificare post-deploy:** `curl -sI https://midspot.ncmihai.dev` → 200; `curl -s http://127.0.0.1:3005/api/health` pe box → `{"ok":true,"db":true,...}`; `systemctl --user status midspot-web.service midspot-postgres.service`; `journalctl --user -u midspot-web.service --no-pager | tail -20`; `docker ps | grep midspot-postgres` (127.0.0.1:5433->5432); primul push pe `main` → workflow verde end-to-end (CI + deploy + live check public + loopback).

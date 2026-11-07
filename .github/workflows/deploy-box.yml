@@ -1,0 +1,109 @@
+name: Deploy to the BC250
+
+# midspot deploy: a push to main builds the standalone artefact — with the production
+# environment pulled from Infisical, because NEXT_PUBLIC_SITE_URL is baked at build time —
+# rsyncs it through the Cloudflare tunnel to the box, restarts midspot-web.service and
+# checks the live site (public URL, with loopback http://127.0.0.1:3005/api/health as
+# fallback). Adapted from ncm/.github/workflows/deploy-box.yml + docs/deploy-midspot.md §6.
+#
+# Required GitHub Actions secrets (repo settings → Actions → Secrets, names only):
+#   INFISICAL_CLIENT_ID       — client ID of the Infisical machine identity "github" (Viewer on midspot-prod)
+#   INFISICAL_CLIENT_SECRET   — client secret of that machine identity
+#   INFISICAL_PROJECT_ID      — Project ID of the Infisical project "midspot-prod"
+#   BOX_SSH_KEY               — deploy private key (the one restricted to from="127.0.0.1,::1" in authorized_keys)
+#   CF_ACCESS_CLIENT_ID       — Cloudflare Access service token for ssh.ncmihai.dev
+#   CF_ACCESS_CLIENT_SECRET   — secret of the same service token
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-bc250-midspot
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install cloudflared and the Infisical CLI
+        run: |
+          curl -sL -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          sudo install -m 755 cloudflared /usr/local/bin/cloudflared
+          VER=$(curl -s https://api.github.com/repos/Infisical/cli/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+          curl -sL -o cli.tgz "https://github.com/Infisical/cli/releases/download/$VER/cli_${VER#v}_linux_amd64.tar.gz"
+          tar xzf cli.tgz && sudo install -m 755 infisical /usr/local/bin/infisical
+
+      - name: Pull the production environment from Infisical
+        run: |
+          TOKEN=$(infisical login --method universal-auth \
+            --client-id "${{ secrets.INFISICAL_CLIENT_ID }}" \
+            --client-secret "${{ secrets.INFISICAL_CLIENT_SECRET }}" \
+            --domain https://eu.infisical.com --plain 2>/dev/null | tail -1)
+          infisical export --format dotenv --projectId "${{ secrets.INFISICAL_PROJECT_ID }}" \
+            --env prod --token "$TOKEN" --domain https://eu.infisical.com --silent > prod.env
+          test -s prod.env
+
+      - name: Build the standalone artefact (prod env, NEXT_PUBLIC_* baked)
+        run: |
+          set -a
+          . prod.env          # dotenv export is single-quoted; the shell parses it correctly here
+          set +a
+          rm -f prod.env      # never leave secrets on disk / in the artefact
+          npm run build
+        env:
+          STANDALONE_OUTPUT: "1"
+
+      - name: Configure SSH through the Cloudflare Access tunnel
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo "${{ secrets.BOX_SSH_KEY }}" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+          cat > ~/.ssh/config <<EOF
+          Host box
+            HostName ssh.ncmihai.dev
+            User ncm
+            StrictHostKeyChecking accept-new
+            ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CF_ACCESS_CLIENT_ID }} --service-token-secret ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          EOF
+
+      - name: Rsync the artefact to the box (standalone only — never any .env files)
+        run: |
+          rsync -az --delete .next/standalone/ box:projects/midspot-web/
+          rsync -az .next/static/ box:projects/midspot-web/.next/static/
+          rsync -az public/ box:projects/midspot-web/public/
+
+      - name: Restart the web service
+        run: ssh box 'XDG_RUNTIME_DIR=/run/user/1000 systemctl --user restart midspot-web.service'
+
+      - name: Check the live site (public URL, loopback /api/health fallback)
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS -o /dev/null https://midspot.ncmihai.dev; then
+              echo "live on https://midspot.ncmihai.dev"
+              exit 0
+            fi
+            if ssh box 'curl -fsS -o /dev/null http://127.0.0.1:3005/api/health'; then
+              echo "up on the box loopback (http://127.0.0.1:3005/api/health) — public check still pending"
+            fi
+            sleep 10
+          done
+          if ssh box 'curl -fsS -o /dev/null http://127.0.0.1:3005/api/health'; then
+            echo "service healthy on loopback; public URL did not answer — check tunnel/DNS" >&2
+            exit 0
+          fi
+          echo "midspot did not answer after the deploy" >&2
+          exit 1

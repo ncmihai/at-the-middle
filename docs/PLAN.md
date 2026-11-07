@@ -1,6 +1,6 @@
 # midspot — plan integrat (aprobat de subagenți în cross-review)
 
-Nume intern: **midspot**. Domeniu: **https://midspot.ncmihai.dev** (box BC250, port 3003).
+Nume intern: **midspot**. Domeniu: **https://midspot.ncmihai.dev** (box BC250, port **3005** — vezi §4 port registry).
 Repo: `at_the_middle` (păstrăm folderul, numele intern de cod e midspot; numele public îl decidem la lansare).
 
 Spec-uri de detaliu (toate cross-review-uite, 13+22 neconcordanțe găsite și rezolvate între ele):
@@ -19,7 +19,7 @@ Spec-uri de detaliu (toate cross-review-uite, 13+22 neconcordanțe găsite și r
 | 2 | **Provider de zboruri: abstracție obligatorie** `FLIGHTS_PROVIDER ∈ {tequila, travelpayouts-data, duffel, serpapi}` | Kiwi Tequila are **gate (≥50.000 MAU)** și self-serve e invite-only din mai 2024 → la MVP pornim cu Travelpayouts Data API (fără gate) pentru ranking-ul candidaților + Duffel test / SerpApi free pentru demo; owner aplică la Kiwi (`affiliates@kiwi.com`) de la signup. Amadeus Self-Service e **decommissionat (2026-07-17)** — nu mai e opțiune. |
 | 3 | **Monetizare** | Linkuri afiliate Travelpayouts (Kiwi `promo_id=3791`, template `c111.travelpayouts.com/click?shmarker=...&custom_url=kiwi.com/deep?...`) — **preț identic pentru user**, comision 3% plătit de Kiwi. Plus reclame ne-intrusive: EthicalAds primary, CarbonAds fallback, env-gated, niciodată peste fold / între rezultate / lângă butoanele Book. Fără vânzare de bilete (fără Duffel prod) la MVP. |
 | 4 | **Constrângerea de 24h = gap de sosire** | `gap = max(utc_arrival) − min(utc_arrival)` al sosirilor **outbound**, calculat în UTC din timestamp-urile reale ale itinerariilor. Hard cap **24h**, relaxare automată la **30h** dacă nu găsește nimic (fără apeluri noi — datele sunt deja în cache). |
-| 5 | **Hosting: BC250 + Cloudflare tunnel**, nu Vercel | `midspot.ncmihai.dev` → tunnel `87e40a55` → `127.0.0.1:3003`, unit `midspot-web.service`, build standalone, deploy prin GH Actions (rsync via `ssh.ncmihai.dev`). **Conflict de port:** și planul sofronesti vrea 3003 → rezoluție owner: midspot păstrează 3003, sofronesti trece pe 3004. |
+| 5 | **Hosting: BC250 + Cloudflare tunnel**, nu Vercel | `midspot.ncmihai.dev` → tunnel `87e40a55` → `127.0.0.1:3005`, unit `midspot-web.service`, build standalone, deploy prin GH Actions (rsync via `ssh.ncmihai.dev`). Porturi alocate secvențial: 3000 cumvoteaza, 3001 ncm, 3002 mereya, 3003 sofronesti (elena-web), 3004 rezervat, **3005 midspot** — registru pe box `~/projects/PORTS.md` (vezi §4). |
 | 6 | **DB: Postgres self-hosted pe box**, nu Neon | `midspot-postgres` docker, doar `127.0.0.1:5433` (5432 e ocupat de cumsevoteaza), `DATABASE_URL=postgres://midspot:...@127.0.0.1:5433/midspot` în Infisical. Drizzle ORM. Backup nightly `pg_dump` — owner-run. |
 | 7 | **Secrete: Infisical** proiect `midspot-prod`, env `prod`, machine identity `bc250` existentă; wrapper `infisical run --env=prod -- node server.js` la fiecare start. | |
 | 8 | **Stack app** | Next.js 16 App Router standalone + React 19 + TS + Tailwind 4 + shadcn/ui + Drizzle. Fără `next/font/google` (fonturi locale — lecție build CI). UI în engleză la MVP, mesaje într-un singur modul (RO mai târziu). |
@@ -77,7 +77,14 @@ repetate în 30 min: 0 apeluri.
 - [ ] Monitorizare: health endpoint în bc250-monitor dacă vrei, loguri systemd
 - [ ] Decizie nume public (midspot vs altceva) + eventual alias atthemiddle.ncmihai.dev
 
-## 4. Riscuri principale (din flight-data-spec §9)
+## 4. Port registry (anti-coliziune pe box)
+
+- Sursa unică de adevăr: **`~/projects/PORTS.md` pe BC250** — tabel `port | service | host | artefact dir`. Îl actualizezi ÎNAINTE de fiecare deploy nou.
+- Regulă: site nou = următorul port liber (max+1). `PORT` e env-driven în unitatea systemd, niciodată hardcodat în codul aplicației.
+- Registru curent: 3000 cumvoteaza-web, 3001 ncm-web, 3002 mereya-web, 3003 elena-web (sofronesti), 3004 rezervat, **3005 midspot-web**.
+- Când avem ~6-8 site-uri: trecem pe **wildcard ingress** `*.ncmihai.dev → 127.0.0.1:8080` + reverse proxy local (Caddy) pe box care rutează după Host header → adăugarea unui site devine doar DNS + rută Caddy + unit, fără sudo pe config-ul cloudflared.
+
+## 5. Riscuri principale (din flight-data-spec §9)
 
 1. **Gate Kiwi API (50k MAU)** — mitigat prin abstracție provider + pornire fără el (Data API + linkuri + demo Duffel/SerpApi). Owner aplică la Kiwi de la început.
 2. **Prețurile se mișcă între căutare și click** — afișăm „preț la momentul căutării”, fără garanție; linkul afiliat e sursa de adevăr.

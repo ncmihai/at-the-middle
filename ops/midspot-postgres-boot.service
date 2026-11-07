@@ -1,0 +1,16 @@
+[Unit]
+Description=midspot Postgres (docker compose up, 127.0.0.1:5433) — start at boot
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# The compose file is deployed to ~/projects/midspot-postgres/midspot-postgres.compose.yml
+WorkingDirectory=%h/projects/midspot-postgres
+ExecStart=/usr/bin/docker compose -f midspot-postgres.compose.yml up -d
+ExecStop=/usr/bin/docker compose -f midspot-postgres.compose.yml down
+TimeoutStartSec=180
+
+[Install]
+WantedBy=default.target

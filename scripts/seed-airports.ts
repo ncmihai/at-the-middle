@@ -1,0 +1,219 @@
+// Seed the `airports` table from the OurAirports CSV and regenerate the static
+// EU candidate list `db/candidates.ts` (EEA + UK + CH + NO/IS + Western Balkans,
+// large+medium airports with scheduled service).
+//
+// Usage:
+//   DATABASE_URL=... npm run db:seed-airports   # upsert into Postgres AND rewrite db/candidates.ts
+//   npm run db:seed-airports                    # only rewrite db/candidates.ts (no DB needed)
+//
+// Sources (flight-data-spec §7.1): https://davidmegginson.github.io/ourairports-data/airports.csv
+// and countries.csv. The source file is regenerated daily by OurAirports; the infra
+// cron re-runs this script weekly (7 d — intentionally different from the 30 d row TTL).
+import { writeFileSync } from "node:fs";
+import path from "node:path";
+
+const AIRPORTS_CSV = "https://davidmegginson.github.io/ourairports-data/airports.csv";
+const COUNTRIES_CSV = "https://davidmegginson.github.io/ourairports-data/countries.csv";
+
+// EEA (EU27 + IS, LI, NO) + UK + CH + Western Balkans — the candidate-destination set
+// (app-spec §10 Q4: EEA + UK + CH + NO/IS + Western Balkans).
+const CANDIDATE_COUNTRIES = new Set([
+  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU",
+  "IS", "IE", "IT", "LV", "LI", "LT", "LU", "MT", "NL", "NO", "PL", "PT", "RO",
+  "SK", "SI", "ES", "SE", "CH", "GB",
+  "AL", "BA", "ME", "MK", "RS", "XK",
+]);
+
+const CANDIDATE_TYPES = new Set(["large_airport", "medium_airport"]);
+
+type CsvRow = Record<string, string>;
+
+/** Minimal CSV parser that handles quoted fields with embedded commas/quotes. */
+function parseCsv(text: string): CsvRow[] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += c;
+      }
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ",") {
+      row.push(field);
+      field = "";
+    } else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(field);
+      field = "";
+      if (row.length > 1 || row[0] !== "") rows.push(row);
+      row = [];
+    } else {
+      field += c;
+    }
+  }
+  if (field !== "" || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+  const header = rows[0];
+  return rows.slice(1).map((r) => {
+    const rec: CsvRow = {};
+    header.forEach((h, i) => {
+      rec[h] = r[i] ?? "";
+    });
+    return rec;
+  });
+}
+
+async function fetchCsv(url: string): Promise<CsvRow[]> {
+  const res = await fetch(url, { headers: { "user-agent": "midspot-seed/1.0" } });
+  if (!res.ok) throw new Error(`fetch ${url} failed: ${res.status}`);
+  return parseCsv(await res.text());
+}
+
+export type SeedAirport = {
+  iata: string;
+  name: string;
+  city: string;
+  country: string;
+  countryCode: string;
+  latitude: number;
+  longitude: number;
+  isEu: boolean;
+  kind: string;
+};
+
+async function main() {
+  console.log("[seed-airports] downloading", AIRPORTS_CSV);
+  const [airportRows, countryRows] = await Promise.all([
+    fetchCsv(AIRPORTS_CSV),
+    fetchCsv(COUNTRIES_CSV),
+  ]);
+  const countryNames = new Map(countryRows.map((c) => [c.code, c.name]));
+
+  const selected: SeedAirport[] = [];
+  const seen = new Set<string>();
+  for (const r of airportRows) {
+    const iata = (r.iata_code ?? "").trim().toUpperCase();
+    const countryCode = (r.iso_country ?? "").trim().toUpperCase();
+    if (!iata || iata.length !== 3) continue;
+    if (!CANDIDATE_COUNTRIES.has(countryCode)) continue;
+    if (!CANDIDATE_TYPES.has((r.type ?? "").trim())) continue;
+    if ((r.scheduled_service ?? "").trim() !== "yes") continue;
+    if (seen.has(iata)) continue;
+    seen.add(iata);
+    const lat = Number(r.latitude_deg);
+    const lon = Number(r.longitude_deg);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    selected.push({
+      iata,
+      name: r.name?.trim() || iata,
+      city: r.municipality?.trim() || "",
+      country: countryNames.get(countryCode) ?? countryCode,
+      countryCode,
+      latitude: lat,
+      longitude: lon,
+      isEu: true,
+      kind: r.type.trim(),
+    });
+  }
+  selected.sort((a, b) => a.iata.localeCompare(b.iata));
+  console.log(`[seed-airports] ${selected.length} candidate airports selected`);
+
+  // 1) Regenerate the static candidate list used by the search algorithm.
+  const candidatesPath = path.join(process.cwd(), "db", "candidates.ts");
+  const lines = selected.map(
+    (a) =>
+      `  { iata: ${JSON.stringify(a.iata)}, city: ${JSON.stringify(a.city)}, country: ${JSON.stringify(a.country)}, countryCode: ${JSON.stringify(a.countryCode)}, latitude: ${a.latitude}, longitude: ${a.longitude} },`
+  );
+  writeFileSync(
+    candidatesPath,
+    `// GENERATED by scripts/seed-airports.ts from OurAirports (EEA + UK + CH + NO/IS +
+// Western Balkans, large+medium airports, scheduled_service=yes). Do not edit by hand;
+// re-run \`npm run db:seed-airports\` (weekly infra cron refreshes the source CSV).
+// Used by lib/jobs/run-search.ts as the candidate-destination shortlist; at runtime it is
+// ordered by haversine distance to the origins' centroid and capped at
+// FLIGHTS_MAX_CANDIDATE_DESTINATIONS.
+
+export type CandidateDestination = {
+  iata: string;
+  city: string;
+  country: string;
+  countryCode: string;
+  latitude: number;
+  longitude: number;
+};
+
+export const CANDIDATE_DESTINATIONS: CandidateDestination[] = [
+${lines.join("\n")}
+];
+
+/** Fast IATA → destination lookup for result enrichment. */
+export const CANDIDATES_BY_IATA: Record<string, CandidateDestination> =
+  Object.fromEntries(CANDIDATE_DESTINATIONS.map((c) => [c.iata, c]));
+`
+  );
+  console.log(`[seed-airports] wrote ${candidatesPath}`);
+
+  // 2) Upsert into the airports table (only when DATABASE_URL is available).
+  if (!process.env.DATABASE_URL) {
+    console.log("[seed-airports] DATABASE_URL not set — skipped DB upsert");
+    return;
+  }
+  const { getDb, closeDb } = await import("../db/client");
+  const { airports } = await import("../db/schema");
+  const db = getDb();
+  const now = new Date();
+  let upserted = 0;
+  for (const a of selected) {
+    await db
+      .insert(airports)
+      .values({
+        iata: a.iata,
+        name: a.name,
+        city: a.city,
+        country: a.country,
+        countryCode: a.countryCode,
+        latitude: a.latitude,
+        longitude: a.longitude,
+        isEu: a.isEu,
+        kind: a.kind,
+        searchText: `${a.name} ${a.city} ${a.iata}`.toLowerCase(),
+        fetchedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: airports.iata,
+        set: {
+          name: a.name,
+          city: a.city,
+          country: a.country,
+          countryCode: a.countryCode,
+          latitude: a.latitude,
+          longitude: a.longitude,
+          isEu: a.isEu,
+          kind: a.kind,
+          searchText: `${a.name} ${a.city} ${a.iata}`.toLowerCase(),
+          fetchedAt: now,
+        },
+      });
+    upserted++;
+  }
+  await closeDb();
+  console.log(`[seed-airports] upserted ${upserted} rows into airports`);
+}
+
+main().catch((err) => {
+  console.error("[seed-airports] failed:", err);
+  process.exit(1);
+});
