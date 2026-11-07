@@ -142,9 +142,20 @@ export function getProvider(): FlightProvider {
     case "duffel":
       provider = createDuffelProvider();
       break;
-    case "serpapi":
-      provider = createSerpApiProvider();
+    case "serpapi": {
+      if (!getConfig().serpapiApiKey) {
+        if (!warnedNoKey) {
+          warnedNoKey = true;
+          console.warn(
+            "[flights] FLIGHTS_PROVIDER=serpapi but SERPAPI_API_KEY is not set — falling back to the mock provider"
+          );
+        }
+        provider = createMockProvider();
+      } else {
+        provider = createSerpApiProvider();
+      }
       break;
+    }
     case "apify": {
       // Apify actor provider (real Kiwi results). Without APIFY_TOKEN we fall back to
       // the deterministic mock so the site stays functional; set APIFY_TOKEN to go live.

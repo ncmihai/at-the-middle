@@ -1,8 +1,10 @@
-// SerpApi Google Flights adapter — LAST-RESORT fallback only (ToS risk, 250 searches/mo
-// free tier — flight-data-spec §6). Minimal working stub for the free tier: one call per
-// day (no range collapse), one-way, currency=EUR.
-// TODO(provider-mapping): best_flights/other_flights → FlightOption mapped here
-// (departure_airport.time / arrival_airport.time ISO, price, flight_number).
+// SerpApi Google Flights adapter — the UNGATED real-time source for MVP (free tier:
+// 250 searches/month, instant key, no approval/email — flight-data-spec §6).
+// Real itineraries with departure/arrival ISO times → the arrival-gap algorithm works.
+// One call per day (no range collapse), one-way (type=2), currency=EUR.
+// Phase-1 ranking is delegated to the Travelpayouts Data API (real prices, no gate).
+// Caveats: ToS gray (SerpApi handles the scraping), paid per search beyond the free
+// tier ($0.01–0.025) — our 30-min cache + rate limits keep cost near zero at low traffic.
 import { getConfig } from "@/lib/env";
 import type { AirportSuggestion, FlightOption } from "@/lib/types";
 import {
@@ -15,6 +17,7 @@ import {
   ProviderRateLimitedError,
   type RankingFlightProvider,
 } from "./provider";
+import { travelpayoutsDataProvider } from "./travelpayouts-data";
 
 function apiKey(): string {
   const k = getConfig().serpapiApiKey;
@@ -28,23 +31,37 @@ function addDays(dateIso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-function mapFlight(fRaw: unknown, origin: string, dest: string, date: string): FlightOption | null {
-  const f = asObj(fRaw);
-  const dep = asStr(asObj(f.departure_airport).time);
-  const arr = asStr(asObj(f.arrival_airport).time);
-  const price = asNum(f.price);
-  if (!dep || !arr || !Number.isFinite(price)) return null;
+/**
+ * SerpApi google_flights item shape: { price, total_duration, flights: [segment, ...] }
+ * where each segment has departure_airport.time / arrival_airport.time (ISO), flight_number.
+ * Gap uses first-segment departure → last-segment arrival (UTC epochs).
+ */
+function mapFlight(itemRaw: unknown, origin: string, dest: string, date: string): FlightOption | null {
+  const item = asObj(itemRaw);
+  const segs = asArr(item.flights);
+  if (segs.length === 0) return null;
+  const first = asObj(segs[0]);
+  const last = asObj(segs[segs.length - 1]);
+  const dep = asStr(asObj(first.departure_airport).time);
+  const arr = asStr(asObj(last.arrival_airport).time);
+  const price = asNum(item.price);
+  if (!dep || !arr || !Number.isFinite(price) || price <= 0) return null;
   const departUtc = Math.floor(Date.parse(dep) / 1000);
   const arriveUtc = Math.floor(Date.parse(arr) / 1000);
+  if (!departUtc || !arriveUtc) return null;
+  const totalMin = asNum(item.total_duration);
   return {
     date,
-    flightNumber: asStr(f.flight_number),
+    flightNumber: asStr(first.flight_number),
     departLocal: dep,
     arriveLocal: arr,
     departUtc,
     arriveUtc,
-    durationMinutes: Math.round((arriveUtc - departUtc) / 60),
+    durationMinutes:
+      Number.isFinite(totalMin) && totalMin > 0 ? Math.round(totalMin) : Math.round((arriveUtc - departUtc) / 60),
     priceEur: price,
+    // Google Flights JSON has no per-flight booking URL — the Book button goes to the
+    // Kiwi deep link wrapped in our Travelpayouts marker (our commission path).
     bookingUrl: affiliateLink({ origin, dest, date, adults: 1 }),
   };
 }
@@ -72,6 +89,7 @@ export const serpApiProvider: RankingFlightProvider = {
       url.searchParams.set("departure_id", origin);
       url.searchParams.set("arrival_id", dest);
       url.searchParams.set("outbound_date", d);
+      url.searchParams.set("type", "2"); // one-way
       url.searchParams.set("currency", "EUR");
       url.searchParams.set("hl", "en");
       url.searchParams.set("api_key", apiKey());
@@ -91,6 +109,13 @@ export const serpApiProvider: RankingFlightProvider = {
       }
     }
     return out;
+  },
+
+  // Phase-1 ranking with REAL prices via the Travelpayouts Data API (no gate).
+  async searchCheapestPerCity(origin, destCodes, dateFrom, dateTo, adults) {
+    const fn = travelpayoutsDataProvider.searchCheapestPerCity;
+    if (!fn) return [];
+    return fn.call(travelpayoutsDataProvider, origin, destCodes, dateFrom, dateTo, adults);
   },
 
   affiliateLink,
