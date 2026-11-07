@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 
+import DriveScript from "@/components/DriveScript";
+
 import "./globals.css";
 
 // System font stack only — never next/font/google (build-time fetch made CI flaky,
@@ -34,6 +36,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased" style={{ fontFamily: systemFontStack }}>
+        {/* beforeInteractive scripts are hoisted into <head> by Next — required for
+            the Travelpayouts Drive server-side verification */}
+        <DriveScript />
         {children}
         {adsEnabled && ethicalAdsId ? (
           <Script

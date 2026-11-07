@@ -16,10 +16,10 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://cdn.ethicalads.io https://cdn.carbonads.com https://*.ethicalads.io",
+              "script-src 'self' 'unsafe-inline' https://cdn.ethicalads.io https://cdn.carbonads.com https://*.ethicalads.io https://emrldco.com https://*.emrldco.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
-              "connect-src 'self'",
+              "connect-src 'self' https://emrldco.com https://*.emrldco.com https://*.travelpayouts.com",
               "font-src 'self' data:",
               "frame-ancestors 'self'",
               "base-uri 'self'",
