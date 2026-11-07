@@ -1,45 +1,19 @@
 [Unit]
-Description=midspot web (Next.js standalone) — https://midspot.ncmihai.dev
-After=network-online.target
-Wants=network-online.target
+Description=midspot web (standalone; secrets from Infisical midspot-prod; tunnel -> localhost:3005)
+After=network.target
 
 [Service]
-Type=simple
 WorkingDirectory=%h/projects/midspot-web
-# Only NON-EMPTY values here — systemd EnvironmentFile rejects empty values, so the
-# app secrets do NOT come from this file; they are injected by the Infisical wrapper
-# (ExecStart below). PORT/HOSTNAME/NODE_ENV live here, never in Infisical.
 Environment=PORT=3005
 Environment=HOSTNAME=127.0.0.1
 Environment=NODE_ENV=production
-# Machine identity "bc250" (universal-auth) credentials — all values must be non-empty:
-#   INFISICAL_CLIENT_ID=...
-#   INFISICAL_CLIENT_SECRET=...
-EnvironmentFile=%h/.config/midspot/infisical.env
 ExecStart=%h/bin/start-midspot-web.sh
-Restart=on-failure
-RestartSec=3
-# Same resource pattern as the other web units on the box (flight searches are in-process jobs):
+Restart=always
+RestartSec=10
+RuntimeMaxSec=7d
 MemoryMax=2G
 CPUQuota=200%
 OOMScoreAdjust=500
-# Weekly restart keeps the Infisical machine-identity token fresh (it lives 30 days;
-# the wrapper does a fresh login on every start):
-RuntimeMaxSec=7d
-# Hardening (pattern bc250-monitor/server/bc250-stats.service, adapted for a --user unit
-# that must read %h and write only to the deploy dir):
-NoNewPrivileges=yes
-PrivateTmp=yes
-ProtectSystem=strict
-ReadWritePaths=%h/projects/midspot-web
-ProtectHome=read-only
-ProtectKernelTunables=yes
-ProtectKernelModules=yes
-ProtectControlGroups=yes
-RestrictSUIDSGID=yes
-LockPersonality=yes
-RestrictNamespaces=yes
-CapabilityBoundingSet=
 
 [Install]
 WantedBy=default.target

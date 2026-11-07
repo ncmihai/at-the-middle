@@ -13,11 +13,12 @@ Internet → Cloudflare (zona ncmihai.dev, DNS + WAF) → tunnel 87e40a55 (cloud
               ├─ cumvoteaza-web.service → 127.0.0.1:3000
               ├─ ncm-web.service        → 127.0.0.1:3001
               ├─ mereya-web.service     → 127.0.0.1:3002
-              ├─ midspot-web.service    → 127.0.0.1:3005   ← NOU
-              └─ midspot-postgres (docker) → 127.0.0.1:5433 ← NOU
+              └─ midspot-web.service    → 127.0.0.1:3005   ← NOU
+           DB: Neon (ca la celelalte proiecte) — nimic local pe box
+           Tunnel: dedicat user-level `d2d3de1a` (pattern sofronesti, fără sudo) — vezi §1/§2
 ```
 
-> **Alocarea porturilor (regula finală):** 3000 cumvoteaza, 3001 ncm, 3002 mereya, **3003 sofronesti/elena-web** (deja rezervat în planul ei, Task 13), **3004 rezervat**, **3005 midspot**. **Fiecare site nou ia următorul port liber** — vezi registrul de mai jos (`Port registry`). 5432 e luat de `cumsevoteaza-postgres` (bind `5432:5432` pe toate interfețele), deci Postgres-ul midspot merge pe **127.0.0.1:5433**.
+> **Alocarea porturilor (regula finală):** 3000 cumvoteaza, 3001 ncm, 3002 mereya, **3003 sofronesti/elena-web** (deja rezervat în planul ei, Task 13), **3004 rezervat**, **3005 midspot**. **Fiecare site nou ia următorul port liber** — vezi registrul de mai jos (`Port registry`).
 
 ---
 
@@ -38,7 +39,6 @@ Internet → Cloudflare (zona ncmihai.dev, DNS + WAF) → tunnel 87e40a55 (cloud
 | 3004 | *rezervat* | — | — |
 | **3005** | **`midspot-web.service`** | **midspot.ncmihai.dev** | **`~/projects/midspot-web`** |
 | 5432 | `cumsevoteaza-postgres` (docker, bind all) | — loopback | volum `cumsevoteaza-postgres-data` |
-| 5433 | `midspot-postgres` (docker, 127.0.0.1 only) | — loopback | volum `midspot-postgres-data` |
 | 8250 | `bc250-stats.service` | — loopback | `/opt/bc250-stats` |
 
 ---
@@ -48,17 +48,40 @@ Internet → Cloudflare (zona ncmihai.dev, DNS + WAF) → tunnel 87e40a55 (cloud
 Pe laptop (unde există login-ul Cloudflare pe zona `ncmihai.dev`), **fără sudo**:
 
 ```bash
+# VARIANTA IMPLEMENTATĂ (2026-11-07, fără sudo pe box) — tunnel user-level dedicat, ca sofronesti:
+TID=$(cloudflared tunnel create midspot | grep -oE '[0-9a-f-]{36}' | head -1)   # pe box: d2d3de1a-b427-4cd5-af63-8a22cd79e3c2
+echo "$TID" > ~/.cloudflared/midspot-tunnel-id
+cloudflared tunnel route dns "$TID" midspot.ncmihai.dev
+# config: ~/.cloudflared/midspot-config.yml (vezi ops/midspot-config.yml), unit: ops/cloudflared-midspot.service
+
+# VARIANTĂ alternativă: același tunnel existent 87e40a55 (cumvoteaza), dacă preferi un singur tunnel:
 cloudflared tunnel route dns --overwrite-dns 87e40a55 midspot.ncmihai.dev
 ```
 
-- Creează/overwrite în zona `ncmihai.dev` un record **proxied CNAME → tunnel `87e40a55`** pentru `midspot.ncmihai.dev`.
+- Creează/overwrite în zona `ncmihai.dev` un record **proxied CNAME → tunnel**-ul ales pentru `midspot.ncmihai.dev`.
 - `--overwrite-dns` suprascrie liniștit un record vechi pe același hostname.
 - **Lecția 8 din deployment.md:** `cert.pem` al cloudflared e zone-scoped — `route dns` scrie doar în zona pe care a ales login-ul. `midspot.ncmihai.dev` e în aceeași zonă `ncmihai.dev` ca celelalte, deci comanda e corectă. Pentru altă zonă (ex. un domeniu propriu) recordul se pune manual în dashboard.
 - Verificare: în dashboard-ul Cloudflare → zona `ncmihai.dev` → DNS, `midspot` apare ca Tunnel record, proxied (norul portocaliu).
 
-## 2. Regula ingress în `/etc/cloudflared/config.yml`
+## 2. Regula ingress — VARIANTA IMPLEMENTATĂ: tunnel user-level (fără sudo)
 
-> ⚠️ **Necesită sudo pe box + `sudo systemctl restart cloudflared`.** Fișierul e root-owned; regula nouă se pune **înainte de catch-all** (`http_status:404` trebuie să rămână ultimul).
+Pe box s-a folosit un **tunnel cloudflared user-level dedicat** (pattern `cloudflared-sofronesti.service`), deci **nu e nevoie de sudo**: config `~/.cloudflared/midspot-config.yml` (șablon în `ops/midspot-config.yml`) + unit `~/.config/systemd/user/cloudflared-midspot.service` (șablon în `ops/cloudflared-midspot.service`):
+
+```yaml
+tunnel: <TUNNEL_ID>
+credentials-file: /home/ncm/.cloudflared/<TUNNEL_ID>.json
+ingress:
+  - hostname: midspot.ncmihai.dev
+    service: http://localhost:3005
+  - service: http_status:404
+```
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now cloudflared-midspot.service
+```
+
+> **Alternativă (mai jos):** regulă în `/etc/cloudflared/config.yml` pe tunnel-ul principal `87e40a55` — ⚠️ **necesită sudo pe box + `sudo systemctl restart cloudflared`**. Fișierul e root-owned; regula nouă se pune **înainte de catch-all** (`http_status:404` trebuie să rămână ultimul).
 
 ```yaml
 # /etc/cloudflared/config.yml  — editare cu sudo
@@ -203,7 +226,7 @@ Dashboard: https://eu.infisical.com (owner). Pași:
 
    | Cheie | Valoare la ziua 1 |
    |---|---|
-   | `DATABASE_URL` | `postgres://midspot:<parola>@127.0.0.1:5433/midspot` (vezi pasul 5) |
+   | `DATABASE_URL` | connection string **Neon** (proiectul tău Neon, ex. branch dedicat `midspot`) — vezi pasul 5 |
    | `NEXT_PUBLIC_SITE_URL` | `https://midspot.ncmihai.dev` (se bake-uiește la build — lecția 5) |
    | `FLIGHTS_PROVIDER` | `tequila` la start (adapter default; vezi flight-data-spec §0/§8) |
    | `TRAVELPAYOUTS_API_KEY` | token de la travelpayouts.com/developers/api (placeholder până la aprobarea contului) |
@@ -220,78 +243,17 @@ Dashboard: https://eu.infisical.com (owner). Pași:
 
 3. **Machine identities:** acordă acces la proiectul nou identității **`bc250`** (Admin; credentialele ei sunt deja pe box în `~/.config/cumvoteaza/machine-auth` + `infisical.env`) și identității **`github`** (Viewer; credentialele ei sunt în secretele GitHub Actions, vezi pasul 6). Rotație = creezi identitate nouă, o schimbi, o revoci pe cea veche din dashboard.
 
-## 5. Postgres pe box (self-hosted, NU Neon)
+## 5. Baza de date: Neon (decizie owner, 2026-11-07 — NU Postgres local pe box)
 
-### 5a. `~/projects/midspot-postgres/docker-compose.yml`
-
-```yaml
-services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: midspot-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: midspot
-      POSTGRES_USER: midspot
-      POSTGRES_PASSWORD: <parola-generata-cu-openssl-rand--base64-32>
-    ports:
-      # doar loopback, port 5433 ca să nu se bată cu cumsevoteaza-postgres (5432):
-      - "127.0.0.1:5433:5432"
-    volumes:
-      - midspot-postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U midspot -d midspot"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-volumes:
-  midspot-postgres-data:
-```
-
-### 5b. Pornire la boot — unit `systemd --user` oneshot
-
-`~/.config/systemd/user/midspot-postgres.service`:
-
-```ini
-[Unit]
-Description=midspot Postgres (docker compose, 127.0.0.1:5433)
-After=network-online.target docker.service
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-WorkingDirectory=%h/projects/midspot-postgres
-ExecStart=/usr/bin/docker compose up -d
-ExecStop=/usr/bin/docker compose down
-TimeoutStartSec=180
-
-[Install]
-WantedBy=default.target
-```
-
-```bash
-systemctl --user daemon-reload
-systemctl --user enable --now midspot-postgres.service
-systemctl --user status midspot-postgres.service
-# verificare:
-docker ps --format '{{.Names}} {{.Ports}}' | grep midspot-postgres   # 127.0.0.1:5433->5432
-pg_isready -h 127.0.0.1 -p 5433 -U midspot -d midspot
-```
-
-- `restart: unless-stopped` pe container + unit `enable` (linger deja on) = pornește la fiecare boot al box-ului.
-- Dacă docker e rootless pe box, unitatea `--user` rulează `docker compose` în contextul userului; ajustează calea `docker` dacă e alta.
-
-### 5c. `DATABASE_URL` rezultat (formatul în Infisical)
+Ca la celelalte proiecte (ncm, cumsevoteaza, mereya), DB-ul midspot e pe **Neon**: creează în consola Neon un proiect (sau branch) dedicat `midspot` și pune connection string-ul în Infisical:
 
 ```
-postgres://midspot:<parola>@127.0.0.1:5433/midspot
+DATABASE_URL=postgres://<user>:<password>@<host>.eu-central-1.aws.neon.tech/midspot?sslmode=require
 ```
 
-- **De ce 5433 și nu 5432:** `cumsevoteaza/docker-compose.yml` publică deja `"5432:5432"` (toate interfețele), deci 5432 e ocupat pe box — midspot ia **5433 doar pe loopback**. (app-spec §8 dă un exemplu cu 5432 — de corectat acolo; vezi review.)
-- `postgres:16-alpine` include modulele contrib, iar `POSTGRES_USER=midspot` e superuser în cluster, deci `CREATE EXTENSION pg_trgm` din migrarea 0000 (app-spec §2) funcționează fără pași extra.
-- **Migrări:** regula casei — migrările de producție le rulează **owner-ul**, niciodată un agent. Înainte de primul deploy: pe box, `infisical run --projectId <id> --env=prod -- npm run db:migrate` din `~/projects/midspot-web/` (sau `drizzle-kit migrate` cu `DATABASE_URL` din Infisical).
+- **Nimic local pe box:** fără container Postgres pentru midspot (unitatea `midspot-postgres.service` a fost scoasă de pe box; păstrăm doar `cumsevoteaza-postgres` pe 5432, neatins). Backup-urile sunt treaba Neon (PITR/branching), deci nici timer de pg_dump local.
+- `pg_trgm` (folosit de migrarea 0000 pentru autocomplete aeroporturi) e disponibil pe Neon.
+- **Migrări:** regula casei — migrările de producție le rulează **owner-ul**, niciodată un agent. Înainte de primul deploy: `DATABASE_URL=<neon> npm run db:migrate` (sau `drizzle-kit migrate`). La boot, aplicația rulează automat migrațiile dacă găsește folderul `drizzle/` în artefact (instrumentation), altfel loghează warning.
 - **Fără URL-uri absolute de loopback în aplicație** (lecția 7): `DATABASE_URL` e doar connection string pentru pg/Drizzle, niciodată folosit ca base URL pentru fetch-uri interne. Next's `NextURL` normalizează `127.0.0.1` → `localhost` și un rewrite absolut construit din `request.url` a produs 500-uri silențioase; păstrăm toate redirecturile/rewrite-urile **relative**.
 
 ## 6. GitHub Actions — `.github/workflows/deploy-box.yml`

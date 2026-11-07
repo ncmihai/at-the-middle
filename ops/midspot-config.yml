@@ -1,0 +1,9 @@
+# cloudflared user-tunnel config for midspot — installed on the box as
+# ~/.cloudflared/midspot-config.yml. Replace <TUNNEL_ID> with the id from
+# `cloudflared tunnel create midspot` (also saved by the runbook in ~/.cloudflared/midspot-tunnel-id).
+tunnel: <TUNNEL_ID>
+credentials-file: /home/ncm/.cloudflared/<TUNNEL_ID>.json
+ingress:
+  - hostname: midspot.ncmihai.dev
+    service: http://localhost:3005
+  - service: http_status:404

@@ -1,0 +1,14 @@
+# User-level cloudflared tunnel for midspot (no sudo needed — pattern of
+# cloudflared-sofronesti.service on the box). The tunnel id is stored on the box in
+# ~/.cloudflared/midspot-tunnel-id; replace <TUNNEL_ID> below with it.
+[Unit]
+Description=cloudflared tunnel midspot
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/cloudflared --config %h/.cloudflared/midspot-config.yml tunnel run <TUNNEL_ID>
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target
