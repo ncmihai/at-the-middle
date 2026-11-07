@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ArrowRightIcon,
   CalendarDaysIcon,
@@ -8,7 +10,7 @@ import {
 import { differenceInCalendarDays, parseISO } from "date-fns";
 
 import type { PersonLeg, ResultEntry } from "@/lib/types";
-import { messages } from "@/lib/messages";
+import { useMessages } from "@/lib/i18n";
 import {
   formatDateDay,
   formatDateShort,
@@ -58,6 +60,7 @@ function LegRow({ leg, bookLabel }: { leg: PersonLeg; bookLabel: string }) {
 }
 
 export default function ResultCard({ entry }: { entry: ResultEntry }) {
+  const messages = useMessages();
   const green = entry.gapMinutes <= GREEN_GAP_MINUTES;
   const returnByOrigin = new Map(entry.return.map((l) => [l.origin, l]));
   const perPerson = entry.outbound.map((o) => ({

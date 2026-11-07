@@ -17,6 +17,7 @@ import {
   type CityOption,
   type RankingFlightProvider,
 } from "./provider";
+import { bumpUsage } from "./usage";
 
 const DUFFEL_BASE = "https://api.duffel.com"; // test and prod share the base; the token selects the mode
 
@@ -88,6 +89,7 @@ export const duffelProvider: RankingFlightProvider = {
     // range-collapsed like Tequila; cache still collapses repeats within the TTL).
     const out: FlightOption[] = [];
     for (let d = dateFrom; d <= dateTo; d = addDays(d, 1)) {
+      void bumpUsage("duffel"); // cost guard: one external call per day (fire-and-forget)
       const res = await fetch(`${DUFFEL_BASE}/air/offer_requests`, {
         method: "POST",
         headers: {

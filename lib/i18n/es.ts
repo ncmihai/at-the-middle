@@ -1,0 +1,137 @@
+// Español — mismas claves que en.ts. Las páginas legales (privacy/terms) quedan
+// en inglés (reserva) hasta que se traduzcan.
+import type { LangMessages } from "./en";
+
+export const es: LangMessages = {
+  brand: {
+    name: "midspot",
+    heroTitle: "Encuentraos en el medio",
+    heroSubtitle:
+      "Un solo destino, cada uno vuela desde su ciudad y todos llegan con menos de un día de diferencia — dentro de vuestro presupuesto.",
+    heroPoints: [
+      "2–8 viajeros, cada uno desde su ciudad",
+      "Cualquier ventana de salida de hasta 14 días",
+      "Ordenados por diferencia de llegada, luego por precio",
+    ],
+  },
+  form: {
+    title: "Planifica el viaje",
+    originsLabel: "¿Desde dónde vuela cada uno?",
+    originsHint: "2–8 aeropuertos de origen, un viajero cada uno",
+    originPlaceholder: "Busca ciudad o aeropuerto…",
+    originSelectedPlaceholder: "Elige un aeropuerto",
+    addOrigin: "Añadir viajero",
+    removeOrigin: "Quitar",
+    maxOriginsReached: "Máximo 8 viajeros",
+    minOriginsHint: "Mínimo 2 viajeros",
+    locationButton: "Usar mi ubicación",
+    locationLocating: "Detectando ubicación…",
+    locationFailed: "No pudimos detectar tu ubicación: elige el aeropuerto manualmente",
+    locationNoEmptyRow: "Todas las plazas de viajeros están ocupadas",
+    autocomplete: {
+      searching: "Buscando aeropuertos…",
+      minChars: "Escribe al menos 2 caracteres…",
+      empty: "No se encontraron aeropuertos.",
+    },
+    datesLabel: "Ventana de salida",
+    datesPlaceholder: "Selecciona la ventana de salida",
+    datesHint: "Hasta 14 días de salida — la vuelta es salida + noches",
+    nightsLabel: "Noches",
+    nightsHint: "1–30",
+    fewerNights: "Menos noches",
+    moreNights: "Más noches",
+    budgetLabel: "Presupuesto por persona",
+    budgetHint: "Cubre ida + vuelta, en EUR",
+    maxFlightLabel: "Tiempo máx. de vuelo (opcional)",
+    maxFlightAny: "Cualquier duración",
+    maxFlightHours: (h: number) => `Hasta ${h} h`,
+    submit: "Buscar sitios en el medio",
+    submitting: "Iniciando búsqueda…",
+    errors: {
+      originsRequired: "Elige al menos 2 aeropuertos de origen",
+      originsUnique: "Cada viajero necesita un aeropuerto de origen distinto",
+      datesRequired: "Selecciona una ventana de salida",
+      nightsRequired: "Elige cuántas noches (1–30)",
+      budgetRequired: "El presupuesto debe estar entre 20 € y 5.000 € por persona",
+      validationFailed: "Revisa el formulario: algunos campos no son válidos",
+      rateLimited: (retryAfterSeconds?: number) =>
+        `Demasiadas búsquedas: espera${retryAfterSeconds ? ` ${retryAfterSeconds} s` : " un poco"} e inténtalo de nuevo`,
+      generic: "Algo ha fallado. Inténtalo de nuevo.",
+      network: "No se pudo contactar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+    },
+  },
+  waiting: {
+    title: "Buscando vuestro medio…",
+    subtitle:
+      "Analizamos vuelos desde cada aeropuerto de origen hacia destinos candidatos. Suele tardar menos de un minuto.",
+    currentStep: (step: string) => step,
+    progress: (done: number, total: number) =>
+      total > 0 ? `Paso ${done} de ${total}` : "Preparando…",
+    partialTitle: "Encontrado hasta ahora",
+    cancel: "Cancelar búsqueda",
+    cancelling: "Cancelando…",
+    cancelDialogTitle: "¿Cancelar esta búsqueda?",
+    cancelDialogBody:
+      "La búsqueda se detendrá, pero los destinos ya encontrados seguirán visibles abajo.",
+    cancelDialogConfirm: "Sí, cancelar",
+    cancelDialogDismiss: "Seguir buscando",
+  },
+  results: {
+    title: "Vuestros sitios en el medio",
+    subtitle: "Ordenados por lo cerca que llegan todos, luego por precio total.",
+    empty: "Ningún destino encaja todavía con el presupuesto y el límite de diferencia de llegada.",
+    gapBadge: (text: string) => `Todos llegan con menos de ${text} de diferencia`,
+    gapRelaxed: (hours: number) =>
+      `Sin resultados dentro del límite estándar de 24 h: la diferencia de llegada se amplió a ${hours} h`,
+    outbound: (date: string) => `Ida · ${date}`,
+    returnLeg: (date: string) => `Vuelta · ${date}`,
+    perPersonTotal: "por persona",
+    groupTotal: "Total del grupo",
+    bookOutbound: "Reservar ida",
+    bookReturn: "Reservar vuelta",
+    priceNote:
+      "Los precios son del momento de la búsqueda: el sitio de reserva muestra el precio en vivo.",
+    share: "Copiar enlace para compartir",
+    copied: "¡Enlace copiado!",
+    copyFailed: "No se pudo copiar: selecciona la URL manualmente",
+    cancelledBanner: "Búsqueda cancelada: se muestran los destinos encontrados hasta ahora.",
+    failedTitle: "La búsqueda ha fallado",
+    failedRetry: "Inicia una nueva búsqueda desde la página principal",
+    rank: (n: number) => `#${n}`,
+    nights: (n: number) => `${n} noche${n === 1 ? "" : "s"}`,
+  },
+  ads: {
+    label: "Patrocinado",
+  },
+  share: {
+    pageTitle: "búsqueda midspot",
+    loading: "Cargando búsqueda…",
+    notFoundTitle: "Este enlace de búsqueda no está disponible",
+    notFoundBody: "Puede haber expirado (las búsquedas se guardan 7 días) o ser incorrecto.",
+    backHome: "Volver a midspot",
+    errorPrefix: "Error de búsqueda: ",
+  },
+  notFound: {
+    title: "Página no encontrada",
+    body: "La página que buscas no existe o se ha movido.",
+    backHome: "Volver a midspot",
+  },
+  common: {
+    loading: "Cargando…",
+  },
+  consent: {
+    title: "Cookies",
+    body: "Usamos cookies esenciales para el idioma y tu elección aquí. Las cookies de publicidad (EthicalAds / CarbonAds) solo se cargan si eliges «Aceptar todas».",
+    acceptAll: "Aceptar todas",
+    essentialOnly: "Solo esenciales",
+  },
+  footer: {
+    privacy: "Privacidad",
+    terms: "Términos",
+    cookieSettings: "Configuración de cookies",
+    copyright: (year: number) => `© ${year} midspot`,
+  },
+  lang: {
+    label: "Idioma",
+  },
+};

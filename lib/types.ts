@@ -97,5 +97,7 @@ export type SearchResponse = {
   error?: string;
   /** set when the 24h gap found nothing and the search was re-evaluated at 30h */
   relaxedGapHours?: number;
+  /** true when the search ran cache-only because the provider hit PROVIDER_MONTHLY_CAP this month */
+  usageLimited?: boolean;
   createdAt: string;
 };

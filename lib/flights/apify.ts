@@ -24,6 +24,7 @@ import {
   type RankingFlightProvider,
 } from "./provider";
 import { travelpayoutsDataProvider } from "./travelpayouts-data";
+import { bumpUsage } from "./usage";
 
 const ACTOR = "ecomscrape~kiwi-flight-search-scraper";
 const APIFY_API = "https://api.apify.com/v2";
@@ -46,6 +47,7 @@ function listDates(from: string, to: string): string[] {
 }
 
 async function runActor(urls: string[], token: string): Promise<unknown[]> {
+  void bumpUsage("apify"); // cost guard: count every external actor run (fire-and-forget)
   const url = `${APIFY_API}/actors/${ACTOR}/run-sync-get-dataset-items?token=${encodeURIComponent(token)}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), RUN_TIMEOUT_MS);

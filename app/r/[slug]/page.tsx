@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 import type { SearchResponse, SearchStatus } from "@/lib/types";
-import { messages } from "@/lib/messages";
+import { useMessages } from "@/lib/i18n";
 import AdsSlot from "@/components/AdsSlot";
 import ResultsList from "@/components/ResultsList";
 import ShareButton from "@/components/ShareButton";
@@ -30,6 +30,7 @@ export default function SearchResultPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
+  const messages = useMessages();
   const [data, setData] = React.useState<SearchResponse | null>(null);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [notFound, setNotFound] = React.useState(false);

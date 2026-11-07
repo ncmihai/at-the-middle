@@ -91,6 +91,7 @@ export async function GET(
     },
     results: resultEntries,
     relaxedGapHours: search.maxGapHours > cfg.gapLimitHours ? search.maxGapHours : undefined,
+    usageLimited: search.usageLimited ? true : undefined,
     createdAt: search.createdAt.toISOString(),
     error: job?.error ?? undefined,
   };

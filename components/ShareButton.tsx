@@ -4,7 +4,7 @@ import * as React from "react";
 import { CheckIcon, LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import { messages } from "@/lib/messages";
+import { useMessages } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 
 export default function ShareButton({
@@ -14,6 +14,7 @@ export default function ShareButton({
   slug: string;
   className?: string;
 }) {
+  const messages = useMessages();
   const [copied, setCopied] = React.useState(false);
 
   const shareUrl = React.useMemo(() => {

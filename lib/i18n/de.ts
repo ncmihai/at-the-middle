@@ -1,0 +1,138 @@
+// Deutsch — gleiche Schlüsselstruktur wie en.ts. Legale Seiten (privacy/terms)
+// bleiben auf Englisch (Fallback), bis sie übersetzt sind.
+import type { LangMessages } from "./en";
+
+export const de: LangMessages = {
+  brand: {
+    name: "midspot",
+    heroTitle: "Trefft euch in der Mitte",
+    heroSubtitle:
+      "Ein Ziel, alle fliegen von zu Hause aus, und alle kommen innerhalb eines Tages an — im Budget.",
+    heroPoints: [
+      "2–8 Reisende, jeder aus seiner eigenen Stadt",
+      "Jedes Abflugfenster von bis zu 14 Tagen",
+      "Sortiert nach Ankunftsdifferenz, dann nach Preis",
+    ],
+  },
+  form: {
+    title: "Reise planen",
+    originsLabel: "Wo fliegt jeder ab?",
+    originsHint: "2–8 Heimatflughäfen, je ein Reisender",
+    originPlaceholder: "Stadt oder Flughafen suchen…",
+    originSelectedPlaceholder: "Flughafen wählen",
+    addOrigin: "Reisenden hinzufügen",
+    removeOrigin: "Entfernen",
+    maxOriginsReached: "Maximal 8 Reisende",
+    minOriginsHint: "Mindestens 2 Reisende",
+    locationButton: "Meinen Standort verwenden",
+    locationLocating: "Standort wird ermittelt…",
+    locationFailed: "Standort konnte nicht ermittelt werden — bitte Flughafen manuell wählen",
+    locationNoEmptyRow: "Alle Reisenden-Plätze sind bereits belegt",
+    autocomplete: {
+      searching: "Flughäfen werden gesucht…",
+      minChars: "Mindestens 2 Zeichen eingeben…",
+      empty: "Keine Flughäfen gefunden.",
+    },
+    datesLabel: "Abflugfenster",
+    datesPlaceholder: "Abflugfenster wählen",
+    datesHint: "Bis zu 14 Abflugtage — die Rückkehr ist Abflug + Nächte",
+    nightsLabel: "Nächte",
+    nightsHint: "1–30",
+    fewerNights: "Weniger Nächte",
+    moreNights: "Mehr Nächte",
+    budgetLabel: "Budget pro Person",
+    budgetHint: "Deckt Hin- + Rückflug, in EUR",
+    maxFlightLabel: "Max. Flugzeit (optional)",
+    maxFlightAny: "Jede Dauer",
+    maxFlightHours: (h: number) => `Bis ${h} h`,
+    submit: "Mittlere Orte finden",
+    submitting: "Suche wird gestartet…",
+    errors: {
+      originsRequired: "Wähle mindestens 2 Heimatflughäfen",
+      originsUnique: "Jeder Reisende braucht einen anderen Heimatflughafen",
+      datesRequired: "Wähle ein Abflugfenster",
+      nightsRequired: "Wähle, wie viele Nächte (1–30)",
+      budgetRequired: "Budget muss zwischen 20 € und 5.000 € pro Person liegen",
+      validationFailed: "Bitte prüfe das Formular — einige Felder sind ungültig",
+      rateLimited: (retryAfterSeconds?: number) =>
+        `Zu viele Suchen — bitte warte${retryAfterSeconds ? ` ${retryAfterSeconds} s` : " einen Moment"} und versuche es erneut`,
+      generic: "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+      network: "Server nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
+    },
+  },
+  waiting: {
+    title: "Wir finden eure Mitte…",
+    subtitle:
+      "Wir durchsuchen Flüge von jedem Heimatflughafen zu Kandidatenzielen. Das dauert normalerweise unter eine Minute.",
+    currentStep: (step: string) => step,
+    progress: (done: number, total: number) =>
+      total > 0 ? `Schritt ${done} von ${total}` : "Wird vorbereitet…",
+    partialTitle: "Bisher gefunden",
+    cancel: "Suche abbrechen",
+    cancelling: "Wird abgebrochen…",
+    cancelDialogTitle: "Diese Suche abbrechen?",
+    cancelDialogBody:
+      "Die Suche wird gestoppt, aber bereits gefundene Ziele bleiben unten sichtbar.",
+    cancelDialogConfirm: "Ja, abbrechen",
+    cancelDialogDismiss: "Weiter suchen",
+  },
+  results: {
+    title: "Eure Mittleren Orte",
+    subtitle: "Sortiert danach, wie nah alle ankommen, dann nach dem Gesamtpreis.",
+    empty: "Noch kein Ziel passt zu Budget und Ankunftsdifferenz.",
+    gapBadge: (text: string) => `Alle kommen innerhalb von ${text} an`,
+    gapRelaxed: (hours: number) =>
+      `Kein Treffer innerhalb der Standard-24 h — die Ankunftsdifferenz wurde auf ${hours} h erweitert`,
+    outbound: (date: string) => `Hinflug · ${date}`,
+    returnLeg: (date: string) => `Rückflug · ${date}`,
+    perPersonTotal: "pro Person",
+    groupTotal: "Gesamt für die Gruppe",
+    bookOutbound: "Hinflug buchen",
+    bookReturn: "Rückflug buchen",
+    priceNote:
+      "Preise vom Zeitpunkt der Suche — die Buchungsseite zeigt den Live-Preis.",
+    share: "Share-Link kopieren",
+    copied: "Share-Link kopiert!",
+    copyFailed: "Kopieren nicht möglich — bitte URL manuell markieren",
+    cancelledBanner: "Suche abgebrochen — bisher gefundene Ziele werden angezeigt.",
+    failedTitle: "Die Suche ist fehlgeschlagen",
+    failedRetry: "Neue Suche über die Startseite starten",
+    rank: (n: number) => `#${n}`,
+    nights: (n: number) => `${n} ${n === 1 ? "Nacht" : "Nächte"}`,
+  },
+  ads: {
+    label: "Werbung",
+  },
+  share: {
+    pageTitle: "midspot-Suche",
+    loading: "Suche wird geladen…",
+    notFoundTitle: "Dieser Suchlink ist nicht verfügbar",
+    notFoundBody:
+      "Er ist möglicherweise abgelaufen (Suchen werden 7 Tage gespeichert) oder falsch.",
+    backHome: "Zurück zu midspot",
+    errorPrefix: "Suchfehler: ",
+  },
+  notFound: {
+    title: "Seite nicht gefunden",
+    body: "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    backHome: "Zurück zu midspot",
+  },
+  common: {
+    loading: "Wird geladen…",
+  },
+  consent: {
+    title: "Cookies",
+    body: "Wir verwenden essentielle Cookies für Sprache und deine Auswahl hier. Werbe-Cookies (EthicalAds / CarbonAds) werden nur geladen, wenn du „Alle akzeptieren“ wählst.",
+    acceptAll: "Alle akzeptieren",
+    essentialOnly: "Nur essentielle",
+  },
+  footer: {
+    privacy: "Datenschutz",
+    terms: "AGB",
+    cookieSettings: "Cookie-Einstellungen",
+    copyright: (year: number) => `© ${year} midspot`,
+  },
+  lang: {
+    label: "Sprache",
+  },
+};

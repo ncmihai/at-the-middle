@@ -4,7 +4,7 @@ import * as React from "react";
 import { CheckIcon, ChevronsUpDownIcon, MapPinIcon, XIcon } from "lucide-react";
 
 import type { AirportSuggestion } from "@/lib/types";
-import { messages } from "@/lib/messages";
+import { useMessages } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +35,7 @@ export default function OriginAutocomplete({
   disabled,
   id,
 }: OriginAutocompleteProps) {
+  const messages = useMessages();
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const [results, setResults] = React.useState<AirportSuggestion[]>([]);
@@ -140,12 +141,12 @@ export default function OriginAutocomplete({
             onValueChange={setQuery}
           />
           <CommandList>
-            {loading && <CommandLoading>Searching airports…</CommandLoading>}
+            {loading && <CommandLoading>{messages.form.autocomplete.searching}</CommandLoading>}
             {!loading && query.trim().length < 2 && (
-              <CommandEmpty>Type at least 2 characters…</CommandEmpty>
+              <CommandEmpty>{messages.form.autocomplete.minChars}</CommandEmpty>
             )}
             {!loading && query.trim().length >= 2 && results.length === 0 && (
-              <CommandEmpty>No airports found.</CommandEmpty>
+              <CommandEmpty>{messages.form.autocomplete.empty}</CommandEmpty>
             )}
             {results.length > 0 && (
               <CommandGroup>

@@ -21,6 +21,7 @@ import {
   type CityOption,
   type RankingFlightProvider,
 } from "./provider";
+import { bumpUsage } from "./usage";
 
 function baseUrl(): string {
   return getConfig().kiwiTequilaBaseUrl.replace(/\/+$/, "");
@@ -43,6 +44,7 @@ async function tequilaFetch(
   path: string,
   params: Record<string, string>
 ): Promise<Record<string, unknown>> {
+  void bumpUsage("tequila"); // cost guard: count every external call (fire-and-forget)
   const url = new URL(`${baseUrl()}${path}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const res = await fetch(url.toString(), {

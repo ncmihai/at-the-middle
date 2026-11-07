@@ -1,0 +1,138 @@
+// Français — mêmes clés que en.ts. Les pages légales (privacy/terms) restent en
+// anglais (secours) tant qu'elles ne sont pas traduites.
+import type { LangMessages } from "./en";
+
+export const fr: LangMessages = {
+  brand: {
+    name: "midspot",
+    heroTitle: "Rencontrez-vous au milieu",
+    heroSubtitle:
+      "Une seule destination, chacun vole de chez soi, et tout le monde arrive à moins d'un jour d'écart — dans votre budget.",
+    heroPoints: [
+      "2 à 8 voyageurs, chacun de sa ville",
+      "Toute fenêtre de départ jusqu'à 14 jours",
+      "Classés par écart d'arrivée, puis par prix",
+    ],
+  },
+  form: {
+    title: "Planifier le voyage",
+    originsLabel: "D'où chacun vole-t-il ?",
+    originsHint: "2 à 8 aéroports de départ, un voyageur chacun",
+    originPlaceholder: "Rechercher une ville ou un aéroport…",
+    originSelectedPlaceholder: "Choisir un aéroport",
+    addOrigin: "Ajouter un voyageur",
+    removeOrigin: "Retirer",
+    maxOriginsReached: "Maximum 8 voyageurs",
+    minOriginsHint: "Au moins 2 voyageurs",
+    locationButton: "Utiliser ma position",
+    locationLocating: "Détection de la position…",
+    locationFailed: "Position introuvable — choisissez l'aéroport manuellement",
+    locationNoEmptyRow: "Toutes les places de voyageurs sont déjà prises",
+    autocomplete: {
+      searching: "Recherche d'aéroports…",
+      minChars: "Tapez au moins 2 caractères…",
+      empty: "Aucun aéroport trouvé.",
+    },
+    datesLabel: "Fenêtre de départ",
+    datesPlaceholder: "Sélectionner la fenêtre de départ",
+    datesHint: "Jusqu'à 14 jours de départ — le retour = départ + nuits",
+    nightsLabel: "Nuits",
+    nightsHint: "1–30",
+    fewerNights: "Moins de nuits",
+    moreNights: "Plus de nuits",
+    budgetLabel: "Budget par personne",
+    budgetHint: "Couvre aller + retour, en EUR",
+    maxFlightLabel: "Temps de vol max (optionnel)",
+    maxFlightAny: "Toute durée",
+    maxFlightHours: (h: number) => `Jusqu'à ${h} h`,
+    submit: "Trouver les lieux du milieu",
+    submitting: "Lancement de la recherche…",
+    errors: {
+      originsRequired: "Choisissez au moins 2 aéroports de départ",
+      originsUnique: "Chaque voyageur doit avoir un aéroport différent",
+      datesRequired: "Sélectionnez une fenêtre de départ",
+      nightsRequired: "Choisissez le nombre de nuits (1–30)",
+      budgetRequired: "Le budget doit être entre 20 € et 5 000 € par personne",
+      validationFailed: "Vérifiez le formulaire — certains champs sont invalides",
+      rateLimited: (retryAfterSeconds?: number) =>
+        `Trop de recherches — patientez${retryAfterSeconds ? ` ${retryAfterSeconds} s` : " un peu"} et réessayez`,
+      generic: "Une erreur est survenue. Réessayez.",
+      network: "Serveur injoignable. Vérifiez votre connexion et réessayez.",
+    },
+  },
+  waiting: {
+    title: "Recherche du milieu…",
+    subtitle:
+      "Nous analysons les vols depuis chaque aéroport de départ vers des destinations candidates. Cela prend moins d'une minute.",
+    currentStep: (step: string) => step,
+    progress: (done: number, total: number) =>
+      total > 0 ? `Étape ${done} sur ${total}` : "Préparation…",
+    partialTitle: "Trouvé pour l'instant",
+    cancel: "Annuler la recherche",
+    cancelling: "Annulation…",
+    cancelDialogTitle: "Annuler cette recherche ?",
+    cancelDialogBody:
+      "La recherche s'arrêtera, mais les destinations déjà trouvées restent visibles ci-dessous.",
+    cancelDialogConfirm: "Oui, annuler",
+    cancelDialogDismiss: "Continuer la recherche",
+  },
+  results: {
+    title: "Vos lieux du milieu",
+    subtitle: "Classés selon la proximité d'arrivée de tous, puis par prix total.",
+    empty: "Aucune destination ne correspond encore au budget et à la limite d'écart d'arrivée.",
+    gapBadge: (text: string) => `Tout le monde arrive à moins de ${text} d'écart`,
+    gapRelaxed: (hours: number) =>
+      `Aucun résultat sous la limite standard de 24 h — l'écart d'arrivée a été élargi à ${hours} h`,
+    outbound: (date: string) => `Aller · ${date}`,
+    returnLeg: (date: string) => `Retour · ${date}`,
+    perPersonTotal: "par personne",
+    groupTotal: "Total pour le groupe",
+    bookOutbound: "Réserver l'aller",
+    bookReturn: "Réserver le retour",
+    priceNote:
+      "Prix au moment de la recherche — le site de réservation affiche le prix en direct.",
+    share: "Copier le lien de partage",
+    copied: "Lien de partage copié !",
+    copyFailed: "Copie impossible — sélectionnez l'URL manuellement",
+    cancelledBanner: "Recherche annulée — destinations trouvées jusqu'ici affichées.",
+    failedTitle: "La recherche a échoué",
+    failedRetry: "Lancer une nouvelle recherche depuis l'accueil",
+    rank: (n: number) => `#${n}`,
+    nights: (n: number) => `${n} nuit${n === 1 ? "" : "s"}`,
+  },
+  ads: {
+    label: "Sponsorisé",
+  },
+  share: {
+    pageTitle: "recherche midspot",
+    loading: "Chargement de la recherche…",
+    notFoundTitle: "Ce lien de recherche n'est pas disponible",
+    notFoundBody:
+      "Il a peut-être expiré (recherches conservées 7 jours) ou est incorrect.",
+    backHome: "Retour à midspot",
+    errorPrefix: "Erreur de recherche : ",
+  },
+  notFound: {
+    title: "Page introuvable",
+    body: "La page recherchée n'existe pas ou a été déplacée.",
+    backHome: "Retour à midspot",
+  },
+  common: {
+    loading: "Chargement…",
+  },
+  consent: {
+    title: "Cookies",
+    body: "Nous utilisons des cookies essentiels pour la langue et votre choix ici. Les cookies publicitaires (EthicalAds / CarbonAds) ne sont chargés que si vous choisissez « Tout accepter ».",
+    acceptAll: "Tout accepter",
+    essentialOnly: "Essentiels uniquement",
+  },
+  footer: {
+    privacy: "Confidentialité",
+    terms: "Conditions",
+    cookieSettings: "Paramètres des cookies",
+    copyright: (year: number) => `© ${year} midspot`,
+  },
+  lang: {
+    label: "Langue",
+  },
+};

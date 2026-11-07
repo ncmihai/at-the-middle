@@ -40,6 +40,8 @@ export type MidspotConfig = {
   rateLimitSearchPerMin: number;
   rateLimitAirportsPerMin: number;
   searchRetentionDays: number;
+  /** hard monthly cap on external provider calls (per provider, UTC month); beyond it searches run cache-only (PLAN.md Faza 3 #2) */
+  providerMonthlyCap: number;
   /** soft per-job time budget: stop scanning destinations past this and keep partial results */
   jobTimeBudgetMs: number;
   adsEnabled: boolean;
@@ -92,6 +94,7 @@ function buildConfig(): MidspotConfig {
     rateLimitSearchPerMin: num(process.env.RATE_LIMIT_SEARCH_PER_MIN, 5),
     rateLimitAirportsPerMin: num(process.env.RATE_LIMIT_AIRPORTS_PER_MIN, 30),
     searchRetentionDays: num(process.env.SEARCH_RETENTION_DAYS, 7),
+    providerMonthlyCap: num(process.env.PROVIDER_MONTHLY_CAP, 200),
     jobTimeBudgetMs: num(process.env.JOB_TIME_BUDGET_MS, 10 * 60 * 1000),
     adsEnabled: process.env.NEXT_PUBLIC_ADS_ENABLED === "true",
     ethicalAdsId: process.env.NEXT_PUBLIC_ETHICALADS_ID,

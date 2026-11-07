@@ -17,6 +17,7 @@ import {
   type CityOption,
   type RankingFlightProvider,
 } from "./provider";
+import { bumpUsage } from "./usage";
 
 const DATA_API_BASE = "https://api.travelpayouts.com";
 
@@ -24,6 +25,7 @@ async function dataApiFetch(
   path: string,
   params: Record<string, string>
 ): Promise<Record<string, unknown>> {
+  void bumpUsage("travelpayouts-data"); // cost guard: count every external call (fire-and-forget)
   const token = getConfig().travelpayoutsApiKey;
   if (!token) throw new ProviderError("TRAVELPAYOUTS_API_KEY is not set", 401, false);
   const url = new URL(`${DATA_API_BASE}${path}`);

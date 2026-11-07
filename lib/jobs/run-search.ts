@@ -20,6 +20,7 @@ import { getConfig } from "@/lib/env";
 import type { FlightOption } from "@/lib/types";
 import { cachedPerCity, cachedRange } from "@/lib/flights/cache";
 import { getRankingProvider } from "@/lib/flights/provider";
+import { getUsage } from "@/lib/flights/usage";
 
 export interface RunSearchContext {
   isCancelled: () => Promise<boolean>;
@@ -147,7 +148,32 @@ export async function runSearchJob(jobId: string, ctx: RunSearchContext): Promis
     .update(searches)
     .set({ status: "running", updatedAt: new Date() })
     .where(eq(searches.id, search.id));
-  await writeProgress(0, 1, "phase 1/2 · ranking candidates", true);
+
+  // ---- 0. Monthly provider cost guard (PLAN.md Faza 3 #2): if the active provider
+  //         already made PROVIDER_MONTHLY_CAP external calls this UTC month, the whole
+  //         job runs cache-only — phase 1 and phase 2 read ONLY flight_cache, zero new
+  //         external calls (results may be empty/partial). Never throws because of the cap.
+  const provider = getRankingProvider();
+  const providerCap = cfg.providerMonthlyCap;
+  const providerCalls = await getUsage(provider.name);
+  const usageLimited = providerCalls >= providerCap;
+  if (usageLimited) {
+    await db
+      .update(searches)
+      .set({ usageLimited: true, updatedAt: new Date() })
+      .where(eq(searches.id, search.id));
+    console.warn(
+      `[run-search] job ${jobId}: ${provider.name} monthly cap reached (${providerCalls}/${providerCap} calls) — running cache-only`
+    );
+  }
+  await writeProgress(
+    0,
+    1,
+    usageLimited
+      ? `monthly provider limit reached (${providerCalls}/${providerCap} calls this month) — serving cached results only`
+      : "phase 1/2 · ranking candidates",
+    true
+  );
 
   // ---- 1. Candidate destinations: EU shortlist minus origins, ordered by haversine
   //         distance to the origins' centroid ascending, capped at FLIGHTS_MAX_CANDIDATE_DESTINATIONS.
@@ -174,7 +200,7 @@ export async function runSearchJob(jobId: string, ctx: RunSearchContext): Promis
   }
 
   // ---- 2. Phase 1 — cold ranking: ONE call per origin (fly_to=<C>&one_for_city=1).
-  const provider = getRankingProvider();
+  //         When usageLimited, cachedPerCity reads only flight_cache (no external call).
   const priceByDest = new Map<string, Map<string, number>>(); // dest → origin → cheapest one-way
   await Promise.all(
     origins.map(async (o) => {
@@ -184,7 +210,8 @@ export async function runSearchJob(jobId: string, ctx: RunSearchContext): Promis
         candidates.map((c) => c.iata),
         ws,
         we,
-        1
+        1,
+        { cacheOnly: usageLimited }
       ).catch((err) => {
         console.warn(`[run-search] phase-1 ranking failed for ${o.iata}:`, err);
         return [];
@@ -245,8 +272,10 @@ export async function runSearchJob(jobId: string, ctx: RunSearchContext): Promis
       await Promise.all(
         origins.map(async (o) => {
           const [out, ret] = await Promise.all([
-            cachedRange(provider, o.iata, destCode, ws, we, 1),
-            cachedRange(provider, destCode, o.iata, addDays(ws, nights), addDays(we, nights), 1),
+            cachedRange(provider, o.iata, destCode, ws, we, 1, { cacheOnly: usageLimited }),
+            cachedRange(provider, destCode, o.iata, addDays(ws, nights), addDays(we, nights), 1, {
+              cacheOnly: usageLimited,
+            }),
           ]);
           outboundByOrigin.set(o.iata, groupByDate(out));
           returnByOrigin.set(o.iata, groupByDate(ret));
@@ -320,7 +349,14 @@ export async function runSearchJob(jobId: string, ctx: RunSearchContext): Promis
 
   // ---- 5. Final ranking: gap asc, then total price asc; top 20.
   await persistResults(search.id, allEntries, effectiveGapHours);
-  await writeProgress(totalSteps, totalSteps, "done", true);
+  await writeProgress(
+    totalSteps,
+    totalSteps,
+    usageLimited
+      ? `done — monthly provider limit reached (${providerCalls}/${providerCap}), cache-only results`
+      : "done",
+    true
+  );
 }
 
 /** Rank valid entries (gap ≤ limit) by gap asc then total asc, keep top 20, replace rows. */

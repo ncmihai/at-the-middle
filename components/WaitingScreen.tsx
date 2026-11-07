@@ -4,7 +4,7 @@ import * as React from "react";
 import { Loader2Icon } from "lucide-react";
 
 import type { ResultEntry, SearchProgress } from "@/lib/types";
-import { messages } from "@/lib/messages";
+import { useMessages } from "@/lib/i18n";
 import ResultsList from "@/components/ResultsList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,6 +34,7 @@ export default function WaitingScreen({
   onCancel,
   cancelling = false,
 }: WaitingScreenProps) {
+  const messages = useMessages();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const pct =
     progress.totalSteps > 0

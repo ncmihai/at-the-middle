@@ -8,6 +8,13 @@
       "when": 1794076875806,
       "tag": "0000_furry_miracleman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794086705216,
+      "tag": "0001_magenta_toad_men",
+      "breakpoints": true
     }
   ]
 }

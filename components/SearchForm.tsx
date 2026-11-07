@@ -12,6 +12,7 @@ import {
   CalendarDaysIcon,
   ClockIcon,
   Loader2Icon,
+  MapPinIcon,
   MinusIcon,
   PlaneIcon,
   PlusIcon,
@@ -22,7 +23,7 @@ import { toast } from "sonner";
 
 import { searchRequestSchema } from "@/lib/validation";
 import type { AirportSuggestion } from "@/lib/types";
-import { messages } from "@/lib/messages";
+import { useLanguage, useMessages } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -67,6 +68,8 @@ function firstErrorMessage(err: unknown): string | undefined {
 
 export default function SearchForm() {
   const router = useRouter();
+  const messages = useMessages();
+  const [lang] = useLanguage();
   const [rows, setRows] = React.useState<OriginRow[]>([
     { id: 0, value: null },
     { id: 1, value: null },
@@ -75,6 +78,7 @@ export default function SearchForm() {
   const [range, setRange] = React.useState<DateRange | undefined>(undefined);
   const [dateOpen, setDateOpen] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [locating, setLocating] = React.useState(false);
   const today = React.useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -122,13 +126,50 @@ export default function SearchForm() {
     syncOrigins(rows.map((r) => (r.id === id ? { ...r, value } : r)));
   };
 
+  /** "Use my location" — GET /api/location resolves the nearest airport from the
+      visitor's IP and prefills the first empty origin row. The IP is never stored. */
+  const detectLocation = async () => {
+    setLocating(true);
+    try {
+      const res = await fetch(`/api/location?locale=${encodeURIComponent(lang)}`, {
+        cache: "no-store",
+      });
+      const data = (await res.json().catch(() => null)) as {
+        iata: string | null;
+        city?: string | null;
+        country?: string | null;
+        countryCode?: string | null;
+      } | null;
+      if (res.ok && data?.iata) {
+        const emptyRow = rows.find((r) => !r.value);
+        if (!emptyRow) {
+          toast.info(messages.form.locationNoEmptyRow);
+          return;
+        }
+        changeOrigin(emptyRow.id, {
+          iata: data.iata,
+          name: data.city ?? data.iata,
+          city: data.city ?? data.iata,
+          country: data.country ?? "",
+          countryCode: data.countryCode ?? "",
+        });
+      } else {
+        toast.error(messages.form.locationFailed);
+      }
+    } catch {
+      toast.error(messages.form.locationFailed);
+    } finally {
+      setLocating(false);
+    }
+  };
+
   const originsError = React.useMemo(() => {
     if (!errors.origins) return undefined;
     const iatas = rows.map((r) => r.value?.iata ?? "");
     if (iatas.some((i) => !i)) return messages.form.errors.originsRequired;
     if (new Set(iatas).size !== iatas.length) return messages.form.errors.originsUnique;
     return firstErrorMessage(errors.origins);
-  }, [errors.origins, rows]);
+  }, [errors.origins, rows, messages]);
 
   const onRangeSelect = (next: DateRange | undefined) => {
     if (!next?.from) {
@@ -246,7 +287,7 @@ export default function SearchForm() {
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -256,6 +297,21 @@ export default function SearchForm() {
               >
                 <PlusIcon className="h-4 w-4" />
                 {messages.form.addOrigin}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void detectLocation()}
+                disabled={locating}
+                title={messages.form.locationButton}
+              >
+                {locating ? (
+                  <Loader2Icon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MapPinIcon className="h-4 w-4" />
+                )}
+                {locating ? messages.form.locationLocating : messages.form.locationButton}
               </Button>
               {rows.length >= MAX_ORIGINS && (
                 <span className="text-xs text-muted-foreground">
@@ -320,12 +376,12 @@ export default function SearchForm() {
                 size="icon"
                 onClick={() => setNights((nights ?? MIN_NIGHTS) - 1)}
                 disabled={nights <= MIN_NIGHTS}
-                aria-label="Fewer nights"
+                aria-label={messages.form.fewerNights}
               >
                 <MinusIcon className="h-4 w-4" />
               </Button>
               <span className="w-20 text-center text-sm font-medium">
-                {nights} {nights === 1 ? "night" : "nights"}
+                {messages.results.nights(nights ?? MIN_NIGHTS)}
               </span>
               <Button
                 type="button"
@@ -333,7 +389,7 @@ export default function SearchForm() {
                 size="icon"
                 onClick={() => setNights((nights ?? MIN_NIGHTS) + 1)}
                 disabled={nights >= MAX_NIGHTS}
-                aria-label="More nights"
+                aria-label={messages.form.moreNights}
               >
                 <PlusIcon className="h-4 w-4" />
               </Button>

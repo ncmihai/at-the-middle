@@ -55,6 +55,12 @@ curl -sI https://midspot.ncmihai.dev
 journalctl --user -u midspot-web.service --no-pager | tail -20
 ```
 
+## Health monitoring (midspot-health.timer, every 5 min)
+
+On the box: `cp ops/midspot-health.{sh,service,timer} ~/.config/systemd/user/ && chmod +x ~/.config/systemd/user/midspot-health.sh`,
+then `systemctl --user daemon-reload && systemctl --user enable --now midspot-health.timer`.
+FAIL lines (loopback `:3005` + public `/api/health`): `journalctl --user -u midspot-health.service --no-pager`.
+
 ## Travelpayouts Drive (verificat Active — setări recomandate non-intrusive)
 
 Loader instalat în `<head>` (components/DriveScript.tsx, `NEXT_PUBLIC_DRIVE_ENABLED=true` în prod).

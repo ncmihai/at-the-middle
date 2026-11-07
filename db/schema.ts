@@ -10,6 +10,7 @@ import {
   jsonb,
   numeric,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -89,6 +90,8 @@ export const searches = pgTable(
     topK: integer("top_k").notNull().default(10),
     /** sha256(ip + salt) — raw IPs are never stored */
     ipHash: text("ip_hash"),
+    /** true when the job ran cache-only because the provider hit PROVIDER_MONTHLY_CAP this month */
+    usageLimited: boolean("usage_limited").notNull().default(false),
     createdAt: ts("created_at"),
     updatedAt: ts("updated_at"),
     expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }).notNull(),
@@ -180,8 +183,27 @@ export const results = pgTable(
   ]
 );
 
+/**
+ * provider_usage — external provider call counter per UTC month (cost guard,
+ * PLAN.md Faza 3 #2). ym = YYYY-MM (UTC). One row per (ym, provider); bumped by
+ * lib/flights/usage.ts on every external HTTP call an adapter makes.
+ */
+export const providerUsage = pgTable(
+  "provider_usage",
+  {
+    /** YYYY-MM, UTC */
+    ym: text("ym").notNull(),
+    /** adapter name: tequila | travelpayouts-data | duffel | serpapi | apify */
+    provider: text("provider").notNull(),
+    /** external HTTP calls made in this month */
+    calls: integer("calls").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.ym, t.provider] })]
+);
+
 export type SearchRow = typeof searches.$inferSelect;
 export type SearchJobRow = typeof searchJobs.$inferSelect;
 export type ResultRow = typeof results.$inferSelect;
 export type AirportRow = typeof airports.$inferSelect;
 export type FlightCacheRow = typeof flightCache.$inferSelect;
+export type ProviderUsageRow = typeof providerUsage.$inferSelect;

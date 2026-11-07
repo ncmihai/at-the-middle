@@ -1,8 +1,12 @@
+"use client";
+
 import type { ResultEntry } from "@/lib/types";
-import { messages } from "@/lib/messages";
+import { useMessages } from "@/lib/i18n";
 import ResultCard from "@/components/ResultCard";
 
 export default function ResultsList({ results }: { results: ResultEntry[] }) {
+  const messages = useMessages();
+
   if (results.length === 0) {
     return <p className="text-sm text-muted-foreground">{messages.results.empty}</p>;
   }

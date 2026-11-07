@@ -1,11 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import { PlaneIcon } from "lucide-react";
 
-import { messages } from "@/lib/messages";
+import { useMessages } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function NotFound() {
+  const messages = useMessages();
+
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <Card className="w-full max-w-md">

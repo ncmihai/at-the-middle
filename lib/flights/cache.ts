@@ -91,6 +91,8 @@ async function writeCache(args: {
 /**
  * Cached searchOneWayRange: one provider call per (origin, dest, range, adults) within the
  * TTL, across jobs. Returns options tagged with their departure date.
+ * opts.cacheOnly (monthly cost guard): on a cache miss return [] WITHOUT calling the
+ * provider — used when the provider already hit PROVIDER_MONTHLY_CAP this month.
  */
 export async function cachedRange(
   provider: RankingFlightProvider,
@@ -98,11 +100,13 @@ export async function cachedRange(
   dest: string,
   dateFrom: string,
   dateTo: string,
-  adults: number
+  adults: number,
+  opts: { cacheOnly?: boolean } = {}
 ): Promise<FlightOption[]> {
   const key = rangeCacheKey(provider.name, origin, dest, dateFrom, dateTo, adults);
   const hit = await readCache(key);
   if (hit && hit.kind === "range") return hit.options;
+  if (opts.cacheOnly) return [];
   const options = await withConcurrency(() =>
     callWithBackoff(() => provider.searchOneWayRange(origin, dest, dateFrom, dateTo, adults), {
       label: `range ${origin}→${dest} ${dateFrom}..${dateTo}`,
@@ -125,6 +129,7 @@ export async function cachedRange(
 /**
  * Cached phase-1 ranking call: one provider call per (origin, candidate set, range).
  * Returns the cheapest option per destination city.
+ * opts.cacheOnly (monthly cost guard): on a cache miss return [] WITHOUT calling the provider.
  */
 export async function cachedPerCity(
   provider: RankingFlightProvider,
@@ -132,13 +137,15 @@ export async function cachedPerCity(
   destCodes: string[],
   dateFrom: string,
   dateTo: string,
-  adults: number
+  adults: number,
+  opts: { cacheOnly?: boolean } = {}
 ): Promise<CityOption[]> {
   if (typeof provider.searchCheapestPerCity !== "function" || destCodes.length === 0) return [];
   const dest = multiDestKey(destCodes);
   const key = rangeCacheKey(provider.name, origin, dest, dateFrom, dateTo, adults);
   const hit = await readCache(key);
   if (hit && hit.kind === "per-city") return hit.entries;
+  if (opts.cacheOnly) return [];
   const entries = await withConcurrency(() =>
     callWithBackoff(
       () => provider.searchCheapestPerCity!(origin, destCodes, dateFrom, dateTo, adults),

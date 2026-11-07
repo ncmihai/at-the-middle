@@ -1,0 +1,7 @@
+[Unit]
+Description=midspot health probe (loopback :3005 + public /api/health)
+After=network-online.target midspot-web.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/systemd/user/midspot-health.sh

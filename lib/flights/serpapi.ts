@@ -18,6 +18,7 @@ import {
   type RankingFlightProvider,
 } from "./provider";
 import { travelpayoutsDataProvider } from "./travelpayouts-data";
+import { bumpUsage } from "./usage";
 
 function apiKey(): string {
   const k = getConfig().serpapiApiKey;
@@ -84,6 +85,7 @@ export const serpApiProvider: RankingFlightProvider = {
     void adults;
     const out: FlightOption[] = [];
     for (let d = dateFrom; d <= dateTo; d = addDays(d, 1)) {
+      void bumpUsage("serpapi"); // cost guard: one external call per day (fire-and-forget)
       const url = new URL("https://serpapi.com/search.json");
       url.searchParams.set("engine", "google_flights");
       url.searchParams.set("departure_id", origin);
