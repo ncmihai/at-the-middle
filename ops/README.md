@@ -81,3 +81,14 @@ curl -s http://127.0.0.1:8850/health    # {"ok":true,"tz":10378}
 # Infisical midspot/prod: FLIGHTS_PROVIDER=fastflights, FASTFLIGHTS_BASE_URL=http://127.0.0.1:8850
 systemctl --user restart midspot-web.service
 ```
+
+## Edge cache pe Cloudflare pentru conținut static (owner action în dashboard)
+
+Paginile /destinations și /blog sunt deja ISR la origine (revalidate 1h). Ca să fie servite și din
+edge-ul Cloudflare (mai rapid, mai puțin load pe box), adaugă în dashboard (zona ncmihai.dev →
+Caching → Cache Rules) o regulă, ca la D-095 de la cumsevoteaza:
+
+- Expression: `(http.host eq "midspot.ncmihai.dev" and (starts_with(http.request.uri.path, "/destinations") or starts_with(http.request.uri.path, "/blog")) and not any(http.request.headers["rsc"][*] in {"1"}) and not any(http.request.headers["next-router-prefetch"][*] in {"1"}) and http.request.uri.query eq "")`
+- Settings: Eligible for cache · Edge TTL: Ignore cache-control and use this TTL: 30 minutes ·
+  Status Code TTL: 4xx–5xx → No store · Browser TTL: Respect origin.
+- Verificare: `curl -sI https://midspot.ncmihai.dev/destinations` de 2 ori → al doilea răspuns `cf-cache-status: HIT`.
