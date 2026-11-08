@@ -365,4 +365,10 @@ export const es: LangMessages = {
     rateLine: ({ rate, cur, date }: { rate: string; cur: string; date: string }) =>
       `1 EUR = ${rate} ${cur} · tipo del BCE del ${date}`,
   },
+  theme: {
+    label: "Tema",
+    light: "Claro",
+    dark: "Oscuro",
+    system: "Sistema",
+  },
 };

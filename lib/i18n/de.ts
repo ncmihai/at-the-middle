@@ -366,4 +366,10 @@ export const de: LangMessages = {
     rateLine: ({ rate, cur, date }: { rate: string; cur: string; date: string }) =>
       `1 EUR = ${rate} ${cur} · EZB-Kurs vom ${date}`,
   },
+  theme: {
+    label: "Design",
+    light: "Hell",
+    dark: "Dunkel",
+    system: "System",
+  },
 };

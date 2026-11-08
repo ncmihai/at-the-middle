@@ -366,6 +366,12 @@ export const ro: LangMessages = {
     rateLine: ({ rate, cur, date }: { rate: string; cur: string; date: string }) =>
       `1 EUR = ${rate} ${cur} · curs ECB din ${date}`,
   },
+  theme: {
+    label: "Temă",
+    light: "Luminos",
+    dark: "Întunecat",
+    system: "Sistem",
+  },
   legal: {
     privacy: {
       title: "Politica de confidențialitate",

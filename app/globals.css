@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: the .dark class on <html> (set BEFORE first paint by the
+   inline script in app/layout.tsx, from the "midspot-theme" cookie) drives every
+   dark: variant AND redefines the same design tokens below (see the .dark block). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* midspot design tokens — light travel style (docs/app-spec.md §6.4):
    primary sky, accent amber, bg slate-50, white rounded-2xl border shadow-sm cards.
    System font stack only — never next/font/google (build-time fetch lesson). */
@@ -33,6 +38,44 @@
   --color-success-foreground: #ffffff;
   --color-warning: var(--color-amber-500);
   --color-warning-foreground: var(--color-amber-950);
+
+  --color-selection: var(--color-sky-200);
+}
+
+/* Dark theme — slate palette (bg slate-950/900, cards slate-900/800, NOT pure
+   black). Redefines the SAME @theme variables, so every bg-background /
+   text-foreground / bg-card / border-border / … utility flips automatically.
+   Placed after @theme on purpose: equal specificity to :root, later source
+   order wins. The .dark class is set pre-paint from the midspot-theme cookie. */
+.dark {
+  --color-background: #020617; /* slate-950 */
+  --color-foreground: var(--color-slate-100);
+
+  --color-card: #0f172a; /* slate-900 */
+  --color-card-foreground: var(--color-slate-100);
+
+  --color-primary: var(--color-sky-500);
+  --color-primary-foreground: #082f49; /* sky-950 — readable on sky-500 */
+  --color-primary-hover: var(--color-sky-400);
+
+  --color-accent: var(--color-amber-400);
+  --color-accent-foreground: var(--color-amber-950);
+
+  --color-muted: var(--color-slate-800);
+  --color-muted-foreground: var(--color-slate-400);
+
+  --color-border: var(--color-slate-800);
+  --color-ring: var(--color-sky-400);
+
+  --color-destructive: var(--color-red-500);
+  --color-destructive-foreground: #450a0a; /* red-950 */
+
+  --color-success: var(--color-emerald-500);
+  --color-success-foreground: #022c22; /* emerald-950 */
+  --color-warning: var(--color-amber-400);
+  --color-warning-foreground: var(--color-amber-950);
+
+  --color-selection: var(--color-sky-800);
 }
 
 html {
@@ -48,7 +91,7 @@ body {
 }
 
 ::selection {
-  background: var(--color-sky-200);
+  background: var(--color-selection);
 }
 
 /* Faza 9: shared scrim drawn over city photos (hero answer, result cards,

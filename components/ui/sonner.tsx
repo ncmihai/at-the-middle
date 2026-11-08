@@ -2,10 +2,14 @@
 
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
+import { useTheme } from "@/lib/theme";
+
 const Toaster = ({ ...props }: ToasterProps) => {
+  // follow the site theme (SSR/first render resolves to "light" — no mismatch)
+  const { resolved } = useTheme();
   return (
     <Sonner
-      theme="light"
+      theme={resolved}
       position="bottom-center"
       richColors
       closeButton

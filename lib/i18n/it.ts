@@ -366,4 +366,10 @@ export const it: LangMessages = {
     rateLine: ({ rate, cur, date }: { rate: string; cur: string; date: string }) =>
       `1 EUR = ${rate} ${cur} · tasso BCE del ${date}`,
   },
+  theme: {
+    label: "Tema",
+    light: "Chiaro",
+    dark: "Scuro",
+    system: "Sistema",
+  },
 };

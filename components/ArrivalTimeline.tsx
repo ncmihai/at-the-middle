@@ -81,8 +81,9 @@ export default function ArrivalTimeline({
             key={a.origin}
             title={`${a.origin} · ${formatLocalTime(a.arriveLocal)}`}
             className={cn(
-              "absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-sm",
-              dark ? "bg-sky-300" : "bg-primary"
+              "absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-sm",
+              // on a photo the dot ring is white; on a plain card it follows the card bg
+              dark ? "border-white bg-sky-300" : "border-card bg-primary"
             )}
             style={{ left: `${pct(a.t)}%` }}
           />

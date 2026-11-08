@@ -210,7 +210,7 @@ export default function ResultsMap({
       <CardContent className="flex flex-col gap-3">
         <div
           ref={containerRef}
-          className="relative aspect-[4/3] w-full max-h-[70vh] overflow-hidden rounded-xl border border-border bg-sky-50 md:aspect-[16/10]"
+          className="relative aspect-[4/3] w-full max-h-[70vh] overflow-hidden rounded-xl border border-border bg-sky-50 dark:bg-sky-950/50 md:aspect-[16/10]"
         >
           <svg
             viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
@@ -229,7 +229,7 @@ export default function ResultsMap({
               <path
                 key={f.id}
                 d={f.d}
-                className="fill-[#f1f5f9] stroke-[#cbd5e1]"
+                className="fill-[#f1f5f9] stroke-[#cbd5e1] dark:fill-slate-800 dark:stroke-slate-700"
                 strokeWidth={0.7}
                 strokeLinejoin="round"
               />
@@ -242,7 +242,7 @@ export default function ResultsMap({
                   cx={d.x}
                   cy={d.y}
                   r={2.4}
-                  className="fill-slate-400"
+                  className="fill-slate-400 dark:fill-slate-500"
                   opacity={0.38}
                 />
               ))}
@@ -260,7 +260,7 @@ export default function ResultsMap({
                       y1={a.y}
                       x2={b.x}
                       y2={b.y}
-                      className="stroke-sky-500"
+                      className="stroke-sky-500 dark:stroke-sky-400"
                       strokeWidth={1.4}
                       strokeDasharray="4 3"
                       opacity={0.75}
@@ -289,8 +289,8 @@ export default function ResultsMap({
                     cy={p.y}
                     r={isSelected ? 5.5 : 3.5}
                     className={cn(
-                      "stroke-white",
-                      isSelected ? "fill-sky-600" : "fill-sky-500/90"
+                      "stroke-white dark:stroke-slate-900",
+                      isSelected ? "fill-sky-600 dark:fill-sky-400" : "fill-sky-500/90 dark:fill-sky-400/90"
                     )}
                     strokeWidth={1.6}
                   />
@@ -299,7 +299,7 @@ export default function ResultsMap({
                       x={p.x + 9}
                       y={p.y + 3}
                       fontSize={9.5}
-                      className="fill-slate-700 font-semibold"
+                      className="fill-slate-700 font-semibold dark:fill-slate-200"
                     >
                       {d.label}
                     </text>
@@ -316,14 +316,14 @@ export default function ResultsMap({
                     cx={p.x}
                     cy={p.y}
                     r={4.2}
-                    className="fill-amber-500 stroke-white"
+                    className="fill-amber-500 stroke-white dark:stroke-slate-900"
                     strokeWidth={1.6}
                   />
                   <text
                     x={p.x + 6}
                     y={p.y - 5}
                     fontSize={8}
-                    className="fill-slate-600 font-medium"
+                    className="fill-slate-600 font-medium dark:fill-slate-300"
                   >
                     {o.iata}
                   </text>
@@ -372,11 +372,11 @@ export default function ResultsMap({
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-white" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900" />
             {messages.results.map.origins}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-white" />
+            <span className="h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-white dark:ring-slate-900" />
             {messages.results.map.destinations}
           </span>
           <span className="inline-flex items-center gap-1.5">

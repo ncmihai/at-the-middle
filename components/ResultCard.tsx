@@ -324,7 +324,9 @@ export default function ResultCard({ entry, selected = false, onSelect }: Result
   const outlineBtn = onPhoto
     ? "border-white/40 bg-white/10 text-white hover:bg-white/25 hover:text-white"
     : "";
-  const solidBadge = onPhoto ? "border-transparent bg-white text-slate-900" : "";
+  const solidBadge = onPhoto
+    ? "border-transparent bg-white text-slate-900 dark:bg-slate-900/90 dark:text-slate-100"
+    : "";
   const gapBadge = onPhoto
     ? green
       ? "border-transparent bg-emerald-600 text-white"

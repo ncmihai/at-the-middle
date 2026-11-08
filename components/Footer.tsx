@@ -6,12 +6,13 @@ import { PlaneIcon } from "lucide-react";
 import { CONSENT_OPEN_EVENT, useMessages } from "@/lib/i18n";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import LangSwitcher from "@/components/LangSwitcher";
+import ThemeToggle from "@/components/ThemeToggle";
 
 /**
  * Site footer rendered in the root layout: brand, the /destinations SEO index,
  * the /blog (Faza 7), legal links (/privacy, /terms — PLAN.md Faza 3 "pagini
  * legale obligatorii înainte de lansare"), a "Cookie settings" button that
- * re-opens the consent banner, and the language switcher.
+ * re-opens the consent banner, and the theme / currency / language switchers.
  */
 export default function Footer() {
   const messages = useMessages();
@@ -49,6 +50,7 @@ export default function Footer() {
             {messages.footer.cookieSettings}
           </button>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <CurrencySwitcher />
             <LangSwitcher />
           </div>

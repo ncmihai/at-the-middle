@@ -389,6 +389,12 @@ export const en = {
     rateLine: ({ rate, cur, date }: { rate: string; cur: string; date: string }) =>
       `1 EUR = ${rate} ${cur} · ECB rate from ${date}`,
   },
+  theme: {
+    label: "Theme",
+    light: "Light",
+    dark: "Dark",
+    system: "System",
+  },
   legal: {
     privacy: {
       title: "Privacy policy",

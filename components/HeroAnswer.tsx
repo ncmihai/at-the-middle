@@ -122,7 +122,9 @@ export default function HeroAnswer({ bestResult, onSelect }: HeroAnswerProps) {
               </Badge>
               <Badge
                 variant="secondary"
-                className={cn(onPhoto && "bg-white text-slate-900 border-transparent")}
+                className={cn(
+                  onPhoto && "bg-white text-slate-900 border-transparent dark:bg-slate-900/90 dark:text-slate-100"
+                )}
               >
                 {messages.hero.from(fmt(maxPricePerPerson(bestResult)))}
               </Badge>
