@@ -152,7 +152,7 @@ Notă: login rămâne „mai târziu” (link-only). Car/transfer affiliate: nu 
 - Booking.com NOT connected (review: needs 3 months stable traffic + travel content) → re-apply after 9 Nov.
 
 ## Travelpayouts review unblock plan (owner: traffic + content)
-1. Blog /blog with 3-5 real posts (owner writes) — infra next faja
+1. Blog /blog DONE (infra live, commit 926165e) — owner adds 3-5 real posts in content/blog/*.md (frontmatter: title,date,excerpt,lang). Seed posts exist (en+ro), rewrite them.
 2. TikTok start after blog exists (assets ready: share cards, OG, map, gap-0 results)
 3. Destination pages already live (this faja) — count as content base
 4. Re-submit Midspot project for review after 9 Nov with traffic stats + blog
