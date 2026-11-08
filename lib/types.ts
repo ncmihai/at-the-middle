@@ -51,7 +51,7 @@ export type FlightProvider = {
 export type SearchRequest = {
   origins: string[]; // 2–8 unique IATA codes, 1 adult each
   windowStart: string; // YYYY-MM-DD, earliest departure
-  windowEnd: string; // YYYY-MM-DD, latest departure (windowEnd - windowStart <= 13)
+  windowEnd: string; // YYYY-MM-DD, latest departure (windowEnd - windowStart <= 30; whole-month mode = first..last day of month)
   nights: number; // 1–30, return = departure + nights for everyone
   budgetPerPersonEur: number; // 20–5000, includes outbound + return
   maxFlightMinutes?: number | null; // optional per-leg cap

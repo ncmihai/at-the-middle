@@ -25,10 +25,10 @@ export const searchRequestSchema = z
       const we = new Date(v.windowEnd + "T00:00:00Z");
       if (Number.isNaN(ws.getTime()) || Number.isNaN(we.getTime())) return false;
       if (we <= ws) return false;
-      // max 14 departure dates: windowEnd - windowStart <= 13 days
-      return (we.getTime() - ws.getTime()) / 86400000 <= 13;
+      // max 31 departure dates (whole-month mode): windowEnd - windowStart <= 30 days
+      return (we.getTime() - ws.getTime()) / 86400000 <= 30;
     },
-    { message: "window must be 1..14 departure days (windowEnd - windowStart <= 13)" }
+    { message: "window must be 1..31 departure days (windowEnd - windowStart <= 30)" }
   );
 
 export type SearchRequestInput = z.infer<typeof searchRequestSchema>;

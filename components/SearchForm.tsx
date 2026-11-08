@@ -17,6 +17,7 @@ import {
   MinusIcon,
   PlaneIcon,
   PlusIcon,
+  SlidersHorizontalIcon,
   UsersIcon,
   WalletIcon,
 } from "lucide-react";
@@ -48,9 +49,15 @@ type FormOutput = z.output<typeof searchRequestSchema>;
 
 const MIN_ORIGINS = 2;
 const MAX_ORIGINS = 8;
-const MAX_WINDOW_DAYS = 14; // windowEnd - windowStart <= 13
+// The calendar range is now TRIP DATES (departure -> return): nights = to - from,
+// capped at MAX_NIGHTS. The departure window sent to the API is windowStart = departure,
+// windowEnd = departure + flexDays (see FLEX_OPTIONS).
 const MIN_NIGHTS = 1;
 const MAX_NIGHTS = 30;
+/** "Flexibilitate plecare" options (±days): windowEnd = departure + flexDays */
+const FLEX_OPTIONS = [0, 1, 2, 3, 5, 7] as const;
+const DEFAULT_FLEX_DAYS = 3;
+type SearchMode = "dates" | "month";
 const BUDGET_SLIDER_MIN = 50;
 const BUDGET_SLIDER_MAX = 1000;
 
@@ -78,6 +85,9 @@ export default function SearchForm() {
   ]);
   const nextRowId = React.useRef(2);
   const [range, setRange] = React.useState<DateRange | undefined>(undefined);
+  const [mode, setMode] = React.useState<SearchMode>("dates");
+  const [flexDays, setFlexDays] = React.useState<number>(DEFAULT_FLEX_DAYS);
+  const [month, setMonth] = React.useState<string>(() => format(new Date(), "yyyy-MM"));
   const [dateOpen, setDateOpen] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [locating, setLocating] = React.useState(false);
@@ -189,6 +199,66 @@ export default function SearchForm() {
   const rangeComplete = (r: DateRange | undefined) =>
     !!r?.from && !!r.to && differenceInCalendarDays(r.to, r.from) > 0;
 
+  // Normal mode: the calendar range is TRIP DATES (departure -> return).
+  // windowStart = departure, windowEnd = departure + flexDays, nights = to - from.
+  // The schema requires windowEnd > windowStart, so a 0-flex window is emitted with a
+  // minimum 1-day span (flex is clamped to >= 1 when computing windowEnd).
+  const applyDatesMode = (r: DateRange | undefined, flex: number) => {
+    if (!r?.from) {
+      setValue("windowStart", "", { shouldDirty: true });
+      setValue("windowEnd", "", { shouldDirty: true });
+      return;
+    }
+    setValue("windowStart", format(r.from, "yyyy-MM-dd"), { shouldDirty: true });
+    setValue("windowEnd", format(addDays(r.from, Math.max(flex, 1)), "yyyy-MM-dd"), {
+      shouldDirty: true,
+    });
+    if (r.to && differenceInCalendarDays(r.to, r.from) > 0) {
+      setValue("nights", differenceInCalendarDays(r.to, r.from), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  };
+
+  // Month mode ("Doar luna"): windowStart = first day of the month, windowEnd = last day
+  // of the month. windowStart is clamped to today because the API requires
+  // windowStart >= today (UTC); windowEnd is kept > windowStart for the same reason.
+  const applyMonthMode = (m: string) => {
+    if (!m) {
+      setValue("windowStart", "", { shouldDirty: true });
+      setValue("windowEnd", "", { shouldDirty: true });
+      return;
+    }
+    const [y, mo] = m.split("-").map(Number);
+    const first = new Date(y, mo - 1, 1);
+    const last = new Date(y, mo, 0);
+    let ws = format(first, "yyyy-MM-dd");
+    const todayStr = format(today, "yyyy-MM-dd");
+    if (ws < todayStr) ws = todayStr;
+    let we = format(last, "yyyy-MM-dd");
+    if (we <= ws) we = format(addDays(new Date(`${ws}T00:00:00`), 1), "yyyy-MM-dd");
+    setValue("windowStart", ws, { shouldDirty: true });
+    setValue("windowEnd", we, { shouldDirty: true });
+  };
+
+  const switchMode = (next: SearchMode) => {
+    setMode(next);
+    if (next === "dates") applyDatesMode(range, flexDays);
+    else applyMonthMode(month);
+  };
+
+  const onFlexChange = (v: string) => {
+    const f = Number(v);
+    setFlexDays(f);
+    if (mode === "dates") applyDatesMode(range, f);
+  };
+
+  const onMonthChange = (v: string) => {
+    setMonth(v);
+    if (mode === "month") applyMonthMode(v);
+  };
+
   const onRangeSelect = (next: DateRange | undefined) => {
     if (!next?.from) {
       setRange(undefined);
@@ -198,17 +268,14 @@ export default function SearchForm() {
     }
     const { from } = next;
     let { to } = next;
-    // max span: 14 departure days => windowEnd - windowStart <= 13 days
-    if (from && to && differenceInCalendarDays(to, from) > MAX_WINDOW_DAYS - 1) {
-      to = addDays(from, MAX_WINDOW_DAYS - 1);
+    // trip dates: departure -> return; nights = to - from, capped at MAX_NIGHTS
+    if (from && to && differenceInCalendarDays(to, from) > MAX_NIGHTS) {
+      to = addDays(from, MAX_NIGHTS);
     }
     setRange({ from, to });
-    setValue("windowStart", format(from, "yyyy-MM-dd"), { shouldDirty: true });
+    if (mode === "dates") applyDatesMode({ from, to }, flexDays);
     if (to && differenceInCalendarDays(to, from) > 0) {
-      setValue("windowEnd", format(to, "yyyy-MM-dd"), { shouldDirty: true });
       setDateOpen(false);
-    } else {
-      setValue("windowEnd", "", { shouldDirty: true });
     }
   };
 
@@ -343,97 +410,165 @@ export default function SearchForm() {
               {originsError && <p className="text-sm text-destructive">{originsError}</p>}
             </div>
 
-            {/* departure window */}
+            {/* trip dates (departure -> return) / whole month */}
             <div className="flex flex-col gap-2">
-              <Label className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <CalendarDaysIcon className="h-4 w-4 text-primary" />
-                {messages.form.datesLabel}
-              </Label>
-              {/* Custom dropdown (NOT radix Popover): radix closed the calendar after
-                  the first range click. Here it closes only on backdrop click when the
-                  range is complete, on Escape, or after `to` is picked (onRangeSelect). */}
-              <div className="relative flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal text-muted-foreground sm:w-96"
-                  onClick={() => setDateOpen((o) => !o)}
-                  aria-expanded={dateOpen}
-                >
-                  <CalendarDaysIcon className="h-4 w-4" />
-                  {messages.form.datesPlaceholder}
-                </Button>
-                {range?.from && (
-                  <span className="whitespace-nowrap text-sm text-foreground">
-                    {rangeComplete(range)
-                      ? `${format(range.from, "MMM d")} → ${format(range.to!, "MMM d, yyyy")}`
-                      : `${format(range.from, "MMM d, yyyy")} → …`}
-                  </span>
-                )}
-                {/* portaled to body so the panel always sits above the consent banner
-                    (z-[60] at body level beats the banner's z-50) */}
-                {dateOpen &&
-                  createPortal(
-                    <>
-                      <div
-                        className="fixed inset-0 z-[55] cursor-default"
-                        onClick={() => {
-                          if (!range?.from || rangeComplete(range)) setDateOpen(false);
-                        }}
-                        aria-hidden
-                      />
-                      <div className="fixed z-[60] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-3 shadow-lg max-sm:inset-x-2 max-sm:top-auto max-sm:bottom-2 max-sm:translate-x-0 max-sm:translate-y-0">
-                        <Calendar
-                          mode="range"
-                          selected={range}
-                          onSelect={onRangeSelect}
-                          disabled={[{ before: today }]}
-                          defaultMonth={range?.from ?? today}
-                          numberOfMonths={1}
-                        />
-                      </div>
-                    </>,
-                    document.body
-                  )}
+                <div className="flex gap-1 rounded-lg border border-border p-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={mode === "dates" ? "default" : "ghost"}
+                    onClick={() => switchMode("dates")}
+                    aria-pressed={mode === "dates"}
+                  >
+                    {messages.form.datesLabel}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={mode === "month" ? "default" : "ghost"}
+                    onClick={() => switchMode("month")}
+                    aria-pressed={mode === "month"}
+                  >
+                    {messages.form.monthMode}
+                  </Button>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">{messages.form.datesHint}</p>
+              {mode === "dates" ? (
+                <>
+                  {/* Custom dropdown (NOT radix Popover): radix closed the calendar after
+                      the first range click. Here it closes only on backdrop click when the
+                      range is complete, on Escape, or after `to` is picked (onRangeSelect). */}
+                  <div className="relative flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal text-muted-foreground sm:w-96"
+                      onClick={() => setDateOpen((o) => !o)}
+                      aria-expanded={dateOpen}
+                    >
+                      <CalendarDaysIcon className="h-4 w-4" />
+                      {messages.form.datesPlaceholder}
+                    </Button>
+                    {range?.from && (
+                      <span className="whitespace-nowrap text-sm text-foreground">
+                        {rangeComplete(range)
+                          ? `${format(range.from, "MMM d")} → ${format(range.to!, "MMM d, yyyy")} · ${messages.results.nights(differenceInCalendarDays(range.to!, range.from))}`
+                          : `${format(range.from, "MMM d, yyyy")} → …`}
+                      </span>
+                    )}
+                    {/* portaled to body so the panel always sits above the consent banner
+                        (z-[60] at body level beats the banner's z-50) */}
+                    {dateOpen &&
+                      createPortal(
+                        <>
+                          <div
+                            className="fixed inset-0 z-[55] cursor-default"
+                            onClick={() => {
+                              if (!range?.from || rangeComplete(range)) setDateOpen(false);
+                            }}
+                            aria-hidden
+                          />
+                          <div className="fixed z-[60] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-3 shadow-lg max-sm:inset-x-2 max-sm:top-auto max-sm:bottom-2 max-sm:translate-x-0 max-sm:translate-y-0">
+                            <Calendar
+                              mode="range"
+                              selected={range}
+                              onSelect={onRangeSelect}
+                              disabled={[{ before: today }]}
+                              defaultMonth={range?.from ?? today}
+                              numberOfMonths={1}
+                            />
+                          </div>
+                        </>,
+                        document.body
+                      )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{messages.form.datesHint}</p>
+                </>
+              ) : (
+                <>
+                  <Input
+                    type="month"
+                    value={month}
+                    min={format(today, "yyyy-MM")}
+                    onChange={(e) => onMonthChange(e.target.value)}
+                    className="sm:w-96"
+                    aria-label={messages.form.monthLabel}
+                  />
+                  <p className="text-xs text-muted-foreground">{messages.form.monthHint}</p>
+                </>
+              )}
+              {/* departure flexibility — normal (trip dates) mode only; in month mode the
+                  window is the whole month, so there is nothing to flex */}
+              {mode === "dates" && (
+                <div className="flex flex-col gap-2">
+                  <Label className="flex items-center gap-2">
+                    <SlidersHorizontalIcon className="h-4 w-4 text-primary" />
+                    {messages.form.flexLabel}
+                  </Label>
+                  <Select value={String(flexDays)} onValueChange={onFlexChange}>
+                    <SelectTrigger className="sm:w-96" aria-label={messages.form.flexLabel}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FLEX_OPTIONS.map((d) => (
+                        <SelectItem key={d} value={String(d)}>
+                          {messages.form.flexDays(d)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               {(errors.windowStart ?? errors.windowEnd) && (
                 <p className="text-sm text-destructive">{messages.form.errors.datesRequired}</p>
               )}
             </div>
 
-            {/* nights */}
+            {/* nights — stepper only in month mode; in trip-dates mode nights = return - departure */}
             <div className="flex flex-col gap-2">
               <Label className="flex items-center gap-2">
                 <BedDoubleIcon className="h-4 w-4 text-primary" />
-                {messages.form.nightsLabel}
+                {mode === "month" ? messages.form.nightsLabelMonth : messages.form.nightsLabel}
               </Label>
-              <div className="flex items-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setNights((nights ?? MIN_NIGHTS) - 1)}
-                  disabled={nights <= MIN_NIGHTS}
-                  aria-label={messages.form.fewerNights}
-                >
-                  <MinusIcon className="h-4 w-4" />
-                </Button>
-                <span className="w-20 text-center text-sm font-medium">
-                  {messages.results.nights(nights ?? MIN_NIGHTS)}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setNights((nights ?? MIN_NIGHTS) + 1)}
-                  disabled={nights >= MAX_NIGHTS}
-                  aria-label={messages.form.moreNights}
-                >
-                  <PlusIcon className="h-4 w-4" />
-                </Button>
-                <span className="text-xs text-muted-foreground">{messages.form.nightsHint}</span>
-              </div>
+              {mode === "month" ? (
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setNights((nights ?? MIN_NIGHTS) - 1)}
+                    disabled={nights <= MIN_NIGHTS}
+                    aria-label={messages.form.fewerNights}
+                  >
+                    <MinusIcon className="h-4 w-4" />
+                  </Button>
+                  <span className="w-20 text-center text-sm font-medium">
+                    {messages.results.nights(nights ?? MIN_NIGHTS)}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setNights((nights ?? MIN_NIGHTS) + 1)}
+                    disabled={nights >= MAX_NIGHTS}
+                    aria-label={messages.form.moreNights}
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                  </Button>
+                  <span className="text-xs text-muted-foreground">{messages.form.nightsHint}</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium">
+                    {messages.results.nights(nights ?? MIN_NIGHTS)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {messages.form.nightsAutoHint}
+                  </span>
+                </div>
+              )}
               {errors.nights && (
                 <p className="text-sm text-destructive">{messages.form.errors.nightsRequired}</p>
               )}

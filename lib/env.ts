@@ -48,6 +48,8 @@ export type MidspotConfig = {
   providerMonthlyCap: number;
   /** soft per-job time budget: stop scanning destinations past this and keep partial results */
   jobTimeBudgetMs: number;
+  /** hard per-job cap on external provider calls (cache misses in cachedPerCity/cachedRange + month-matrix sampling); past it the deep-search loop stops and the job completes with partial results — anti dynamic-pricing guard */
+  maxCallsPerJob: number;
   adsEnabled: boolean;
   ethicalAdsId?: string;
   carbonAdsServeId?: string;
@@ -104,6 +106,7 @@ function buildConfig(): MidspotConfig {
     searchRetentionDays: num(process.env.SEARCH_RETENTION_DAYS, 7),
     providerMonthlyCap: num(process.env.PROVIDER_MONTHLY_CAP, 200),
     jobTimeBudgetMs: num(process.env.JOB_TIME_BUDGET_MS, 10 * 60 * 1000),
+    maxCallsPerJob: num(process.env.MAX_CALLS_PER_JOB, 400),
     adsEnabled: process.env.NEXT_PUBLIC_ADS_ENABLED === "true",
     ethicalAdsId: process.env.NEXT_PUBLIC_ETHICALADS_ID,
     carbonAdsServeId: process.env.NEXT_PUBLIC_CARBONADS_SERVE_ID,

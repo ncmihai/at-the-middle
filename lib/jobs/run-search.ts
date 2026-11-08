@@ -11,6 +11,21 @@
 // Ranking: gap asc, then total price asc; top 20 persisted incrementally into `results`
 //   so polling clients see partial results. Soft per-job time budget (JOB_TIME_BUDGET_MS,
 //   ~10 min) → completed with partial results.
+//
+// Month mode (window span > 14 days, e.g. a whole month): before phases 1-2 we pick the
+//   CHEAPEST contiguous 14-day sub-window via the Travelpayouts Data API
+//   /v2/prices/month-matrix (currency=eur, origin, month=YYYY-MM, one call per origin)
+//   and run phases 1-2 on that sub-window. Fallback (API error / no token / no data):
+//   the first 14 days of the window.
+//
+// Anti dynamic-pricing guards: repeated identical searches against a flight provider can
+//   trigger dynamic price increases (fare bucketing), so alongside the 30-min flight_cache,
+//   the 5/min POST /api/search rate limit and PROVIDER_MONTHLY_CAP, every job also has a
+//   hard budget of external provider calls (MAX_CALLS_PER_JOB, default 400). The counter
+//   below is threaded through the cache layer — cachedPerCity/cachedRange call the provider
+//   only on a cache MISS — so wrapping the provider counts exactly those external calls
+//   (plus the month-matrix sampling calls). When the budget is exhausted the deep-search
+//   loop stops and the job completes with partial results + a progress note.
 import { eq, inArray } from "drizzle-orm";
 
 import { CANDIDATES_BY_IATA, CANDIDATE_DESTINATIONS, type CandidateDestination } from "@/db/candidates";
@@ -19,8 +34,18 @@ import { airports, results, searchJobs, searches, type OriginInput, type ResultL
 import { getConfig } from "@/lib/env";
 import type { FlightOption } from "@/lib/types";
 import { cachedPerCity, cachedRange } from "@/lib/flights/cache";
-import { getRankingProvider } from "@/lib/flights/provider";
-import { getUsage } from "@/lib/flights/usage";
+import {
+  asNum,
+  asObj,
+  callWithBackoff,
+  getRankingProvider,
+  ProviderError,
+  ProviderRateLimitedError,
+  withConcurrency,
+  type RankingFlightProvider,
+} from "@/lib/flights/provider";
+import { bumpUsage, getUsage } from "@/lib/flights/usage";
+import { en } from "@/lib/i18n/en";
 
 export interface RunSearchContext {
   isCancelled: () => Promise<boolean>;
@@ -38,6 +63,8 @@ interface CandidateEntry {
 }
 
 const TOP_RESULTS = 20;
+/** month mode: phases 1-2 run on the cheapest contiguous SUB_WINDOW_DAYS-day sub-window */
+const SUB_WINDOW_DAYS = 14;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 function addDays(dateIso: string, days: number): string {
@@ -84,6 +111,102 @@ function groupByDate(options: FlightOption[]): Map<string, FlightOption[]> {
 const cheapest = (opts: FlightOption[]): FlightOption =>
   opts.reduce((a, b) => (b.priceEur < a.priceEur ? b : a));
 
+// ---------------------------------------------------------------------------
+// Month-mode sampling: Travelpayouts Data API /v2/prices/month-matrix
+// ---------------------------------------------------------------------------
+
+const DATA_API_BASE = "https://api.travelpayouts.com";
+
+/** Extract a price from a month-matrix cell: number | {price|value} | array of those. */
+function matrixPrice(v: unknown): number {
+  if (typeof v === "number") return v;
+  if (Array.isArray(v)) {
+    let min = Infinity;
+    for (const item of v) {
+      const p = matrixPrice(item);
+      if (Number.isFinite(p) && p < min) min = p;
+    }
+    return min;
+  }
+  const o = asObj(v);
+  return asNum(o.price ?? o.value);
+}
+
+/**
+ * ONE Travelpayouts Data API /v2/prices/month-matrix call per origin+month
+ * (currency=eur, origin, month=YYYY-MM). Returns date -> cheapest price over all
+ * destinations that day (EUR). Counts toward the per-job external-call budget
+ * (callCounter) and the monthly provider usage (PROVIDER_MONTHLY_CAP accounting).
+ * Returns an empty map when TRAVELPAYOUTS_API_KEY is not set (caller falls back).
+ */
+async function fetchMonthMatrix(
+  callCounter: { calls: number },
+  origin: string,
+  month: string
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const token = getConfig().travelpayoutsApiKey;
+  if (!token) return out;
+  callCounter.calls++; // external provider call — anti dynamic-pricing budget
+  void bumpUsage("travelpayouts-data"); // keep the monthly cap accounting consistent
+  const url = new URL(`${DATA_API_BASE}/v2/prices/month-matrix`);
+  url.searchParams.set("currency", "eur");
+  url.searchParams.set("origin", origin.toUpperCase());
+  url.searchParams.set("month", month);
+  url.searchParams.set("token", token);
+  const body = await withConcurrency(() =>
+    callWithBackoff(
+      async () => {
+        const res = await fetch(url.toString(), {
+          headers: { "X-Access-Token": token, accept: "application/json" },
+          cache: "no-store",
+        });
+        if (res.status === 429) {
+          const reset = Number(res.headers.get("x-rate-limit-reset"));
+          const seconds =
+            Number.isFinite(reset) && reset > 0
+              ? Math.max(1, reset - Math.floor(Date.now() / 1000))
+              : 30;
+          throw new ProviderRateLimitedError(`month-matrix ${origin} ${month} 429`, seconds);
+        }
+        if (res.status < 200 || res.status >= 300) {
+          throw new ProviderError(
+            `month-matrix ${origin} ${month} HTTP ${res.status}`,
+            res.status,
+            res.status >= 500
+          );
+        }
+        return (await res.json().catch(() => null)) as unknown;
+      },
+      { label: `month-matrix ${origin} ${month}` }
+    )
+  );
+  // Response shape is data[dest][date] = cell or data[date][dest] = cell (cell may be an
+  // array grouped by transfers) — handle both, keeping the cheapest price per date.
+  const data = asObj(asObj(body).data);
+  const add = (date: string, price: number) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(price)) return;
+    const prev = out.get(date);
+    if (prev == null || price < prev) out.set(date, price);
+  };
+  for (const [k, v] of Object.entries(data)) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(k)) {
+      const direct = matrixPrice(v);
+      if (Number.isFinite(direct)) add(k, direct);
+      else {
+        for (const dv of Object.values(asObj(v))) {
+          const p = matrixPrice(dv);
+          if (Number.isFinite(p)) add(k, p);
+        }
+      }
+    } else {
+      for (const [date, dv] of Object.entries(asObj(v))) add(date, matrixPrice(dv));
+    }
+  }
+  return out;
+}
+
+
 async function coordsForOrigins(
   origins: OriginInput[]
 ): Promise<Map<string, { lat: number; lon: number } | undefined>> {
@@ -123,15 +246,15 @@ export async function runSearchJob(jobId: string, ctx: RunSearchContext): Promis
     return true;
   });
   const originSet = new Set(origins.map((o) => o.iata));
-  const ws = search.windowStart;
-  const we = search.windowEnd;
+  // ws/we may be narrowed to the cheapest 14-day sub-window in month mode (see 0c below)
+  let ws = search.windowStart;
+  let we = search.windowEnd;
   const nights = search.nights;
   const budget = Number(search.budgetEur);
   const maxFlight = search.maxFlightMinutes ?? null;
   const topK = Math.max(1, Math.min(search.topK || cfg.topKDeepSearch, cfg.topKDeepSearch));
   const gapLimitHours = search.maxGapHours || cfg.gapLimitHours;
   const relaxedHours = cfg.gapRelaxedHours;
-  const windowDays = listDates(ws, we);
 
   let lastProgressWrite = 0;
   const writeProgress = async (done: number, total: number, step: string, force = false) => {
@@ -175,6 +298,84 @@ export async function runSearchJob(jobId: string, ctx: RunSearchContext): Promis
     true
   );
 
+  // ---- 0b. Per-job external-call budget (anti dynamic-pricing guard — see the header
+  //         comment). The counter is threaded through the cache layer: cachedPerCity /
+  //         cachedRange invoke the provider ONLY on a cache miss, so wrapping the provider
+  //         counts exactly those external calls (plus the month-matrix calls in 0c).
+  const callCounter = { calls: 0 };
+  const maxCallsPerJob = cfg.maxCallsPerJob;
+  const capReached = () => callCounter.calls >= maxCallsPerJob;
+  const countingProvider: RankingFlightProvider = {
+    ...provider,
+    searchOneWayRange: (origin, dest, dateFrom, dateTo, adults) => {
+      callCounter.calls++; // cache miss in cachedRange → one external provider call
+      return provider.searchOneWayRange(origin, dest, dateFrom, dateTo, adults);
+    },
+  };
+  if (typeof provider.searchCheapestPerCity === "function") {
+    countingProvider.searchCheapestPerCity = (origin, destCodes, dateFrom, dateTo, adults) => {
+      callCounter.calls++; // cache miss in cachedPerCity → one external provider call
+      return provider.searchCheapestPerCity!(origin, destCodes, dateFrom, dateTo, adults);
+    };
+  }
+
+  // ---- 0c. Month mode (window span > 14 days, e.g. a whole month): pick the CHEAPEST
+  //         contiguous 14-day sub-window before phases 1-2. One month-matrix call per
+  //         origin (Travelpayouts Data API /v2/prices/month-matrix, currency=eur,
+  //         month=YYYY-MM); per day we take each origin's cheapest destination price and
+  //         aggregate across origins (max = the bottleneck traveler). The sub-window with
+  //         the lowest max-over-origins price wins; fallback: the first 14 days.
+  const allWindowDays = listDates(ws, we);
+  if (allWindowDays.length > SUB_WINDOW_DAYS) {
+    const month = ws.slice(0, 7);
+    await writeProgress(0, 1, en.form.monthSampling(month), true);
+    const matrices = await Promise.all(
+      origins.map((o) =>
+        fetchMonthMatrix(callCounter, o.iata, month).catch((err) => {
+          console.warn(`[run-search] month-matrix failed for ${o.iata} ${month}:`, err);
+          return new Map<string, number>();
+        })
+      )
+    );
+    let bestStart: string | null = null;
+    let bestScore = Infinity;
+    for (let i = 0; i + SUB_WINDOW_DAYS <= allWindowDays.length; i++) {
+      const win = allWindowDays.slice(i, i + SUB_WINDOW_DAYS);
+      let score = -Infinity;
+      let ok = true;
+      for (const m of matrices) {
+        let min = Infinity;
+        for (const d of win) {
+          const p = m.get(d);
+          if (p != null && Number.isFinite(p) && p < min) min = p;
+        }
+        if (!Number.isFinite(min)) {
+          ok = false; // this origin has no price anywhere in the window
+          break;
+        }
+        score = Math.max(score, min); // max over origins of the in-window cheapest
+      }
+      if (ok && score < bestScore) {
+        bestScore = score;
+        bestStart = win[0];
+      }
+    }
+    if (bestStart) {
+      ws = bestStart;
+      we = addDays(bestStart, SUB_WINDOW_DAYS - 1);
+      console.log(
+        `[run-search] job ${jobId}: month mode — cheapest ${SUB_WINDOW_DAYS}-day sub-window ${ws}..${we} (max-over-origins €${round2(bestScore)})`
+      );
+    } else {
+      // fallback: API failed / no token / no usable data → first 14 days of the window
+      we = addDays(ws, SUB_WINDOW_DAYS - 1);
+      console.warn(
+        `[run-search] job ${jobId}: month-matrix unusable — falling back to the first ${SUB_WINDOW_DAYS} days ${ws}..${we}`
+      );
+    }
+  }
+  const windowDays = listDates(ws, we);
+
   // ---- 1. Candidate destinations: EU shortlist minus origins, ordered by haversine
   //         distance to the origins' centroid ascending, capped at FLIGHTS_MAX_CANDIDATE_DESTINATIONS.
   const originCoords = await coordsForOrigins(origins);
@@ -200,18 +401,19 @@ export async function runSearchJob(jobId: string, ctx: RunSearchContext): Promis
   }
 
   // ---- 2. Phase 1 — cold ranking: ONE call per origin (fly_to=<C>&one_for_city=1).
-  //         When usageLimited, cachedPerCity reads only flight_cache (no external call).
+  //         When usageLimited (or the per-job call budget is already spent), cachedPerCity
+  //         reads only flight_cache (no external call).
   const priceByDest = new Map<string, Map<string, number>>(); // dest → origin → cheapest one-way
   await Promise.all(
     origins.map(async (o) => {
       const entries = await cachedPerCity(
-        provider,
+        countingProvider,
         o.iata,
         candidates.map((c) => c.iata),
         ws,
         we,
         1,
-        { cacheOnly: usageLimited }
+        { cacheOnly: usageLimited || capReached() }
       ).catch((err) => {
         console.warn(`[run-search] phase-1 ranking failed for ${o.iata}:`, err);
         return [];
@@ -252,8 +454,18 @@ export async function runSearchJob(jobId: string, ctx: RunSearchContext): Promis
   // ---- 3. Phase 2 — hot deep search: per (dest, origin) one outbound + one return range call.
   const allEntries: CandidateEntry[] = [];
   let doneSteps = 1;
+  let callCapHit = false;
   for (const destCode of ranked) {
     if (await ctx.isCancelled()) return;
+    if (capReached()) {
+      // per-job external-call budget exhausted (MAX_CALLS_PER_JOB) → stop the deep-search
+      // loop and complete with the partial results gathered so far
+      callCapHit = true;
+      console.warn(
+        `[run-search] job ${jobId}: per-job call budget reached (${callCounter.calls}/${maxCallsPerJob} external calls) — completing with partial results`
+      );
+      break;
+    }
     if (Date.now() - ctx.startedAtMs > cfg.jobTimeBudgetMs) {
       console.warn(`[run-search] job ${jobId} hit the time budget — completing with partial results`);
       break;
@@ -272,9 +484,11 @@ export async function runSearchJob(jobId: string, ctx: RunSearchContext): Promis
       await Promise.all(
         origins.map(async (o) => {
           const [out, ret] = await Promise.all([
-            cachedRange(provider, o.iata, destCode, ws, we, 1, { cacheOnly: usageLimited }),
-            cachedRange(provider, destCode, o.iata, addDays(ws, nights), addDays(we, nights), 1, {
-              cacheOnly: usageLimited,
+            cachedRange(countingProvider, o.iata, destCode, ws, we, 1, {
+              cacheOnly: usageLimited || capReached(),
+            }),
+            cachedRange(countingProvider, destCode, o.iata, addDays(ws, nights), addDays(we, nights), 1, {
+              cacheOnly: usageLimited || capReached(),
             }),
           ]);
           outboundByOrigin.set(o.iata, groupByDate(out));
@@ -352,9 +566,11 @@ export async function runSearchJob(jobId: string, ctx: RunSearchContext): Promis
   await writeProgress(
     totalSteps,
     totalSteps,
-    usageLimited
-      ? `done — monthly provider limit reached (${providerCalls}/${providerCap}), cache-only results`
-      : "done",
+    callCapHit
+      ? `done — per-job call budget reached (${callCounter.calls}/${maxCallsPerJob} external calls), partial results`
+      : usageLimited
+        ? `done — monthly provider limit reached (${providerCalls}/${providerCap}), cache-only results`
+        : "done",
     true
   );
 }
