@@ -40,11 +40,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install cloudflared (official apt repo — NOT GitHub releases; those 504)
+      - name: Install cloudflared (pinned deb from pkg.cloudflare.com — NOT GitHub releases, those 504)
         run: |
-          curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloudflare-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/cloudflare-archive-keyring.gpg] https://pkg.cloudflare.com/cloudflared $(. /etc/os-release && echo $VERSION_CODENAME) main" | sudo tee /etc/apt/sources.list.d/cloudflared.list
-          sudo apt-get update -qq && sudo apt-get install -y -qq cloudflared
+          # the apt repo has no Release file for newer ubuntu codenames; fetch the deb directly
+          VER=2026.10.7  # pinned (same as on the box); bump deliberately
+          for i in 1 2 3 4 5; do
+            curl -sfL --retry 3 -o cloudflared.deb "https://pkg.cloudflare.com/cloudflared/pool/main/c/cloudflared/cloudflared_${VER}_amd64.deb" && break
+            sleep 5
+          done
+          test -s cloudflared.deb
+          sudo dpkg -i cloudflared.deb
           cloudflared --version
 
       - name: Pull the production environment from Infisical (REST API, no CLI binary)
