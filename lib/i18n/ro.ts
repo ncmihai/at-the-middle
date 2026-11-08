@@ -127,6 +127,13 @@ export const ro: LangMessages = {
       title: "Hartă",
       origins: "Aeroporturi de acasă",
       destinations: "Destinații",
+      airports: "Toate aeroporturile candidate",
+      tooltip: {
+        gap: (text: string) => `toți sosesc în interval de ${text}`,
+        dates: (dep: string, ret: string) => `${dep} → ${ret}`,
+        total: "Total pentru grup",
+        perPerson: "per persoană",
+      },
     },
     toolbar: {
       sortLabel: "Sortează după",

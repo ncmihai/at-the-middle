@@ -127,6 +127,13 @@ export const de: LangMessages = {
       title: "Karte",
       origins: "Heimatflughäfen",
       destinations: "Ziele",
+      airports: "Alle Kandidaten-Flughäfen",
+      tooltip: {
+        gap: (text: string) => `Ankünfte innerhalb von ${text}`,
+        dates: (dep: string, ret: string) => `${dep} → ${ret}`,
+        total: "Gesamt für die Gruppe",
+        perPerson: "pro Person",
+      },
     },
     toolbar: {
       sortLabel: "Sortieren nach",

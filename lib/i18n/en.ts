@@ -150,6 +150,13 @@ export const en = {
       title: "Map",
       origins: "Home airports",
       destinations: "Destinations",
+      airports: "All candidate airports",
+      tooltip: {
+        gap: (text: string) => `arrivals within ${text}`,
+        dates: (dep: string, ret: string) => `${dep} → ${ret}`,
+        total: "Total for the group",
+        perPerson: "per person",
+      },
     },
     toolbar: {
       sortLabel: "Sort by",

@@ -127,6 +127,13 @@ export const es: LangMessages = {
       title: "Mapa",
       origins: "Aeropuertos de origen",
       destinations: "Destinos",
+      airports: "Todos los aeropuertos candidatos",
+      tooltip: {
+        gap: (text: string) => `llegadas dentro de ${text}`,
+        dates: (dep: string, ret: string) => `${dep} → ${ret}`,
+        total: "Total del grupo",
+        perPerson: "por persona",
+      },
     },
     toolbar: {
       sortLabel: "Ordenar por",

@@ -11,7 +11,6 @@ import {
 
 import type { ResultEntry, SearchResponse, SearchStatus } from "@/lib/types";
 import { useMessages } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 import { CANDIDATES_BY_IATA } from "@/db/candidates";
 import AdsSlot from "@/components/AdsSlot";
 import ResultsList from "@/components/ResultsList";
@@ -291,49 +290,40 @@ export default function SearchResultPage({
                 </p>
               )}
             </div>
-            <div className="flex flex-col gap-4 md:grid md:grid-cols-5 md:items-start">
-              {data.request && mapOrigins.length + mapDestinations.length > 0 && (
-                <div className="md:sticky md:top-6 md:col-span-2">
-                  <ResultsMap
-                    origins={mapOrigins}
-                    destinations={mapDestinations}
-                    selectedIata={selectedEntry?.destinationIata ?? null}
-                    onSelectIata={(iata) => {
-                      const e = data.results.find((r) => r.destinationIata === iata);
-                      setSelectedKey(e ? entryKey(e) : null);
-                    }}
-                  />
-                </div>
-              )}
-              <div
-                className={cn(
-                  "flex flex-col gap-4",
-                  data.request && mapOrigins.length + mapDestinations.length > 0
-                    ? "md:col-span-3"
-                    : "md:col-span-5"
-                )}
-              >
-                {data.results.length > 0 && (
-                  <ResultsToolbar
-                    value={toolbar}
-                    onChange={setToolbar}
-                    priceCap={priceCap}
-                    shown={visibleResults.length}
-                    total={data.results.length}
-                  />
-                )}
-                <ResultsList
-                  results={visibleResults}
-                  request={data.request}
-                  usageLimited={data.usageLimited}
-                  selectedKey={selectedKey}
-                  onSelect={setSelectedKey}
-                  bestResult={bestResult}
-                  slug={slug}
+            {/* map v2: full-width block above the results list (no side grid) */}
+            {data.request && mapOrigins.length + mapDestinations.length > 0 && (
+              <ResultsMap
+                origins={mapOrigins}
+                destinations={mapDestinations}
+                selectedIata={selectedEntry?.destinationIata ?? null}
+                onSelectIata={(iata) => {
+                  const e = data.results.find((r) => r.destinationIata === iata);
+                  setSelectedKey(e ? entryKey(e) : null);
+                }}
+                selectedEntry={selectedEntry}
+              />
+            )}
+            <div className="flex flex-col gap-4">
+              {data.results.length > 0 && (
+                <ResultsToolbar
+                  value={toolbar}
+                  onChange={setToolbar}
+                  priceCap={priceCap}
+                  shown={visibleResults.length}
+                  total={data.results.length}
                 />
-                {/* one ad slot after the results list — never between cards (app-spec §9) */}
-                <AdsSlot position="results" />
-              </div>
+              )}
+              <ResultsList
+                results={visibleResults}
+                request={data.request}
+                usageLimited={data.usageLimited}
+                selectedKey={selectedKey}
+                onSelect={setSelectedKey}
+                bestResult={bestResult}
+                slug={slug}
+              />
+              {/* one ad slot after the results list — never between cards (app-spec §9) */}
+              <AdsSlot position="results" />
             </div>
           </div>
         )}

@@ -1,16 +1,31 @@
 "use client";
 
-// ResultsMap — stylized SVG map of Europe on /r/[slug] (PLAN.md Faza 4 lot 1).
-// No external libs/tiles: a compact low-poly Europe outline is embedded as
-// [lon, lat] polygons and projected equirectangularly into a fixed viewBox.
-// Pins: home airports (amber) + one pin per result destination (sky);
-// the selected result's destination is highlighted and linked to every origin
-// with a dashed route line. Selection state is lifted to the page.
+// ResultsMap — full-width SVG map of Europe on /r/[slug] (PLAN.md Faza 4 lot 1, map v2).
+//
+// Basemap: vendored public-domain Natural Earth 110m country polygons
+// (public/maps/europe.json, EEA + UK + CH + NO/IS + Western Balkans + UA/BY/MD),
+// fetched once client-side with cache and rendered as SVG <path>s through an
+// equirectangular projection over a fixed Europe bbox — no runtime CDN/tiles.
+//
+// Layers (bottom → top): country polygons → blurred "all candidate airports" dot
+// layer (CANDIDATE_DESTINATIONS, feGaussianBlur) → dashed routes origin→selected
+// destination → sky destination pins (selected = bigger + halo + city label) →
+// amber origin pins with white ring + IATA label. Only origins + result
+// destinations are colored; everything else stays muted.
+//
+// Hovering a destination pin OR its result card lifts the selection to the page
+// (selectedIata/onSelectIata, same selectedKey as the cards) and shows an HTML
+// tooltip next to the pin with city, country, dates, arrival gap, total price
+// and price/person — absolutely positioned, pointer-events-none, clamped to
+// the map container.
 import * as React from "react";
 import { MapPinIcon } from "lucide-react";
 
+import type { ResultEntry } from "@/lib/types";
 import { useMessages } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
+import { cn, formatDateDay, formatGap, formatMoney } from "@/lib/utils";
+import { CANDIDATE_DESTINATIONS } from "@/db/candidates";
+import { maxPricePerPerson } from "@/components/ResultCard";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export type MapOriginPin = {
@@ -28,90 +43,82 @@ export type MapDestinationPin = {
 };
 
 /* ---- projection: equirectangular over a fixed Europe bbox ---- */
-const LON_MIN = -32;
-const LON_MAX = 45;
-const LAT_MIN = 27;
-const LAT_MAX = 72;
-const VIEW_W = 360;
-const VIEW_H = 400;
+const LON0 = -25;
+const LON1 = 45;
+const LAT0 = 34;
+const LAT1 = 72;
+const K = 10; // viewBox units per degree
+const VIEW_W = (LON1 - LON0) * K; // 700
+const VIEW_H = (LAT1 - LAT0) * K; // 380
 
 function project(lon: number, lat: number): { x: number; y: number } {
   return {
-    x: ((lon - LON_MIN) / (LON_MAX - LON_MIN)) * VIEW_W,
-    y: ((LAT_MAX - lat) / (LAT_MAX - LAT_MIN)) * VIEW_H,
+    x: (lon - LON0) * K,
+    y: (LAT1 - lat) * K,
   };
 }
 
-/** [lon, lat][] -> closed SVG path */
-function polyPath(points: [number, number][]): string {
-  return (
-    points
-      .map((p, i) => {
-        const { x, y } = project(p[0], p[1]);
-        return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-      })
-      .join(" ") + " Z"
-  );
+/* ---- vendored basemap (public/maps/europe.json) ---- */
+type Ring = [number, number][];
+type BasemapFeature = {
+  id: string;
+  properties: { name: string };
+  geometry:
+    | { type: "Polygon"; coordinates: Ring[] }
+    | { type: "MultiPolygon"; coordinates: Ring[][] };
+};
+type Basemap = { type: "FeatureCollection"; features: BasemapFeature[] };
+
+let basemapPromise: Promise<Basemap> | null = null;
+function loadBasemap(): Promise<Basemap> {
+  if (!basemapPromise) {
+    basemapPromise = fetch("/maps/europe.json", { cache: "force-cache" }).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json() as Promise<Basemap>;
+    });
+    // allow a retry on failure instead of caching the rejection forever
+    basemapPromise.catch(() => {
+      basemapPromise = null;
+    });
+  }
+  return basemapPromise;
 }
 
-/* ---- stylized low-poly Europe outline ([lon, lat], hand-simplified) ---- */
-const LAND_MAINLAND: [number, number][] = [
-  [-5.4, 36.1], [-6.3, 36.5], [-9.1, 38.7], [-8.6, 41.1], [-8.4, 43.4],
-  [-2.9, 43.3], [-1.2, 45.6], [-4.7, 48.4], [-1.6, 49.6], [1.9, 50.9],
-  [2.9, 51.2], [4.9, 52.4], [4.8, 53.0], [9.9, 53.6], [8.5, 55.5],
-  [10.6, 57.7], [7.0, 58.0], [5.7, 59.0], [5.3, 60.4], [10.4, 63.4],
-  [14.4, 67.3], [18.9, 69.6], [25.8, 71.0], [33.0, 69.5], [42.0, 66.0],
-  [42.0, 44.0], [36.9, 36.8], [30.7, 36.9], [27.1, 38.4], [26.5, 40.0],
-  [29.0, 41.0], [23.5, 40.6], [23.7, 38.0], [21.5, 38.2], [20.3, 39.8],
-  [19.4, 42.2], [18.0, 43.5], [16.5, 44.3], [13.5, 45.6], [13.5, 44.8],
-  [16.0, 42.5], [17.5, 41.5], [18.4, 40.1], [15.7, 38.0], [14.3, 40.8],
-  [12.5, 41.9], [8.9, 44.4], [5.4, 43.3], [3.0, 42.4], [2.2, 41.4],
-  [-0.4, 39.5], [-1.0, 37.6],
-];
-const LAND_UK: [number, number][] = [
-  [-5.7, 50.1], [-3.0, 51.5], [-5.0, 53.0], [-4.7, 55.0], [-5.5, 56.5],
-  [-5.0, 57.5], [-3.0, 58.5], [-2.0, 57.5], [-1.5, 55.5], [0.5, 53.5],
-  [1.4, 52.5], [1.8, 51.0], [-1.5, 50.7],
-];
-const LAND_IRELAND: [number, number][] = [
-  [-6.0, 52.2], [-8.0, 51.8], [-10.0, 51.9], [-9.8, 53.3], [-8.0, 55.3],
-  [-6.2, 55.2], [-5.8, 54.0],
-];
-const LAND_ICELAND: [number, number][] = [
-  [-22.5, 63.8], [-18.0, 63.4], [-14.5, 64.5], [-15.5, 66.0], [-21.0, 66.5],
-  [-24.0, 65.0],
-];
-/** inland seas painted over the landmass with the sea color */
-const SEA_BALTIC: [number, number][] = [
-  [10.6, 57.7], [12.6, 55.7], [13.0, 55.6], [16.4, 56.7], [18.1, 59.3],
-  [17.1, 60.7], [20.3, 63.8], [22.1, 65.6], [25.5, 65.8], [24.0, 63.5],
-  [21.6, 63.1], [22.3, 60.5], [24.9, 60.2], [30.3, 59.9], [28.0, 59.0],
-  [24.8, 59.4], [24.1, 57.0], [21.0, 55.7], [18.6, 54.4], [14.6, 53.4],
-  [10.0, 53.8], [8.5, 55.5],
-];
-const SEA_BLACK: [number, number][] = [
-  [27.9, 43.2], [30.7, 46.5], [33.5, 45.5], [36.5, 45.8], [39.5, 44.5],
-  [41.5, 43.5], [41.0, 42.0], [38.5, 42.5], [36.0, 43.5], [33.0, 44.5],
-];
-const SEA_ADRIATIC: [number, number][] = [
-  [12.6, 45.5], [14.0, 45.0], [16.0, 43.8], [18.5, 42.8], [19.4, 42.2],
-  [18.5, 41.0], [17.5, 40.5], [18.4, 40.1], [16.5, 40.8], [15.0, 41.8],
-  [13.8, 42.8], [12.3, 44.2],
-];
-const SEA_AEGEAN: [number, number][] = [
-  [23.5, 40.5], [26.5, 40.0], [27.5, 38.5], [26.0, 37.5], [24.5, 37.5],
-  [23.0, 38.5],
-];
-const LAND_POLYS = [LAND_MAINLAND, LAND_UK, LAND_IRELAND, LAND_ICELAND];
-const SEA_POLYS = [SEA_BALTIC, SEA_BLACK, SEA_ADRIATIC, SEA_AEGEAN];
+/** GeoJSON feature → one SVG path `d` (all rings/polygons as subpaths) */
+function featurePath(feature: BasemapFeature): string {
+  const polys =
+    feature.geometry.type === "Polygon"
+      ? [feature.geometry.coordinates]
+      : feature.geometry.coordinates;
+  return polys
+    .map((rings) =>
+      rings
+        .map((ring) => {
+          const pts = ring.map((pt, i) => {
+            const { x, y } = project(pt[0], pt[1]);
+            return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+          });
+          return pts.join(" ") + " Z";
+        })
+        .join(" ")
+    )
+    .join(" ");
+}
+
+/** all candidate airports as projected dots, clipped to the view bounds */
+const AIRPORT_DOTS = CANDIDATE_DESTINATIONS.filter(
+  (c) => c.longitude >= LON0 && c.longitude <= LON1 && c.latitude >= LAT0 && c.latitude <= LAT1
+).map((c) => ({ iata: c.iata, ...project(c.longitude, c.latitude) }));
 
 export type ResultsMapProps = {
   origins: MapOriginPin[];
   destinations: MapDestinationPin[];
-  /** destination IATA currently highlighted (card hover/select) */
+  /** destination IATA currently highlighted (card hover/select or pin hover) */
   selectedIata?: string | null;
   /** clicking/hovering a destination pin lifts the selection to the page */
   onSelectIata?: (iata: string | null) => void;
+  /** the selected result entry — powers the tooltip (dates, gap, prices) */
+  selectedEntry?: ResultEntry | null;
 };
 
 export default function ResultsMap({
@@ -119,9 +126,76 @@ export default function ResultsMap({
   destinations,
   selectedIata = null,
   onSelectIata,
+  selectedEntry = null,
 }: ResultsMapProps) {
   const messages = useMessages();
+  const [basemap, setBasemap] = React.useState<Basemap | null>(null);
+
+  React.useEffect(() => {
+    let alive = true;
+    loadBasemap()
+      .then((b) => {
+        if (alive) setBasemap(b);
+      })
+      .catch(() => {
+        // map still renders pins/routes without the land layer
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const landPaths = React.useMemo(
+    () =>
+      basemap?.features.map((f) => ({
+        id: f.id,
+        name: f.properties.name,
+        d: featurePath(f),
+      })) ?? [],
+    [basemap]
+  );
+
   const selected = destinations.find((d) => d.iata === selectedIata) ?? null;
+
+  /* rendered <-> viewBox transform: the svg letterboxes inside the container
+   * (preserveAspectRatio="xMidYMid meet"), so the tooltip position must account
+   * for the uniform scale + centering offset */
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [box, setBox] = React.useState({ w: 0, h: 0 });
+  React.useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => setBox({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const tipRef = React.useRef<HTMLDivElement>(null);
+  const [tipSize, setTipSize] = React.useState({ w: 0, h: 0 });
+  React.useLayoutEffect(() => {
+    const el = tipRef.current;
+    if (el) setTipSize({ w: el.offsetWidth, h: el.offsetHeight });
+  }, [selectedEntry, selectedIata, box, messages]);
+
+  const tooltipPos = React.useMemo(() => {
+    if (!selected || box.w === 0 || box.h === 0) return null;
+    const scale = Math.min(box.w / VIEW_W, box.h / VIEW_H);
+    const ox = (box.w - VIEW_W * scale) / 2;
+    const oy = (box.h - VIEW_H * scale) / 2;
+    const p = project(selected.longitude, selected.latitude);
+    let left = ox + p.x * scale + 14;
+    let top = oy + p.y * scale - tipSize.h - 14; // default: above-right of the pin
+    if (tipSize.w > 0) {
+      if (left + tipSize.w > box.w - 8) left = ox + p.x * scale - tipSize.w - 14; // flip left
+      if (left < 8) left = 8;
+      if (top < 8) top = oy + p.y * scale + 16; // flip below
+      if (top + tipSize.h > box.h - 8) top = box.h - tipSize.h - 8;
+      if (top < 8) top = 8;
+    }
+    return { left, top };
+  }, [selected, box, tipSize]);
 
   return (
     <Card>
@@ -132,110 +206,180 @@ export default function ResultsMap({
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <svg
-          viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-          className="w-full rounded-xl border border-border bg-sky-50"
-          role="img"
-          aria-label={messages.results.map.title}
+        <div
+          ref={containerRef}
+          className="relative aspect-[4/3] w-full max-h-[70vh] overflow-hidden rounded-xl border border-border bg-sky-50 md:aspect-[16/10]"
         >
-          {/* landmass */}
-          {LAND_POLYS.map((poly, i) => (
-            <path
-              key={i}
-              d={polyPath(poly)}
-              className="fill-white stroke-sky-200"
-              strokeWidth={1}
-              strokeLinejoin="round"
-            />
-          ))}
-          {/* inland seas */}
-          {SEA_POLYS.map((poly, i) => (
-            <path key={i} d={polyPath(poly)} className="fill-sky-50" />
-          ))}
-          {/* dashed routes from every origin to the selected destination */}
-          {selected &&
-            origins.map((o) => {
-              const a = project(o.longitude, o.latitude);
-              const b = project(selected.longitude, selected.latitude);
-              return (
-                <line
-                  key={o.iata}
-                  x1={a.x}
-                  y1={a.y}
-                  x2={b.x}
-                  y2={b.y}
-                  className="stroke-sky-400"
-                  strokeWidth={1.2}
-                  strokeDasharray="3 3"
-                  opacity={0.7}
+          <svg
+            viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+            preserveAspectRatio="xMidYMid meet"
+            className="absolute inset-0 h-full w-full"
+            role="img"
+            aria-label={messages.results.map.title}
+          >
+            <defs>
+              <filter id="midspot-soft" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation={2.2} />
+              </filter>
+            </defs>
+            {/* vendored Natural Earth basemap */}
+            {landPaths.map((f) => (
+              <path
+                key={f.id}
+                d={f.d}
+                className="fill-[#f1f5f9] stroke-[#cbd5e1]"
+                strokeWidth={0.7}
+                strokeLinejoin="round"
+              />
+            ))}
+            {/* blurred layer of ALL candidate airports ("punct difuz") */}
+            <g filter="url(#midspot-soft)" className="pointer-events-none">
+              {AIRPORT_DOTS.map((d) => (
+                <circle
+                  key={d.iata}
+                  cx={d.x}
+                  cy={d.y}
+                  r={2.4}
+                  className="fill-slate-400"
+                  opacity={0.38}
                 />
+              ))}
+            </g>
+            {/* dashed routes from every origin to the selected destination (under pins) */}
+            {selected && (
+              <g className="pointer-events-none">
+                {origins.map((o) => {
+                  const a = project(o.longitude, o.latitude);
+                  const b = project(selected.longitude, selected.latitude);
+                  return (
+                    <line
+                      key={o.iata}
+                      x1={a.x}
+                      y1={a.y}
+                      x2={b.x}
+                      y2={b.y}
+                      className="stroke-sky-500"
+                      strokeWidth={1.4}
+                      strokeDasharray="4 3"
+                      opacity={0.75}
+                    />
+                  );
+                })}
+              </g>
+            )}
+            {/* destination pins (result destinations) */}
+            {destinations.map((d) => {
+              const p = project(d.longitude, d.latitude);
+              const isSelected = d.iata === selectedIata;
+              return (
+                <g
+                  key={d.iata}
+                  className="cursor-pointer"
+                  onClick={() => onSelectIata?.(isSelected ? null : d.iata)}
+                  onMouseEnter={() => onSelectIata?.(d.iata)}
+                  onMouseLeave={() => onSelectIata?.(null)}
+                >
+                  {isSelected && (
+                    <circle cx={p.x} cy={p.y} r={11} className="fill-sky-500/25" />
+                  )}
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={isSelected ? 5.5 : 3.5}
+                    className={cn(
+                      "stroke-white",
+                      isSelected ? "fill-sky-600" : "fill-sky-500/90"
+                    )}
+                    strokeWidth={1.6}
+                  />
+                  {isSelected && (
+                    <text
+                      x={p.x + 9}
+                      y={p.y + 3}
+                      fontSize={9.5}
+                      className="fill-slate-700 font-semibold"
+                    >
+                      {d.label}
+                    </text>
+                  )}
+                </g>
               );
             })}
-          {/* destination pins */}
-          {destinations.map((d) => {
-            const p = project(d.longitude, d.latitude);
-            const isSelected = d.iata === selectedIata;
-            return (
-              <g
-                key={d.iata}
-                className="cursor-pointer"
-                onClick={() => onSelectIata?.(isSelected ? null : d.iata)}
-                onMouseEnter={() => onSelectIata?.(d.iata)}
-                onMouseLeave={() => onSelectIata?.(null)}
-              >
-                {isSelected && (
-                  <circle cx={p.x} cy={p.y} r={10} className="fill-sky-600/20" />
-                )}
-                <circle
-                  cx={p.x}
-                  cy={p.y}
-                  r={isSelected ? 5.5 : 3.5}
-                  className={cn(
-                    "stroke-white",
-                    isSelected ? "fill-sky-600" : "fill-sky-500/80"
-                  )}
-                  strokeWidth={1.5}
-                />
-                {isSelected && (
+            {/* origin pins (home airports): solid amber + white ring + IATA label */}
+            {origins.map((o) => {
+              const p = project(o.longitude, o.latitude);
+              return (
+                <g key={o.iata} className="pointer-events-none">
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={4.2}
+                    className="fill-amber-500 stroke-white"
+                    strokeWidth={1.6}
+                  />
                   <text
-                    x={p.x + 8}
-                    y={p.y + 3}
-                    fontSize={9}
-                    className="fill-slate-700 font-semibold"
+                    x={p.x + 6}
+                    y={p.y - 5}
+                    fontSize={8}
+                    className="fill-slate-600 font-medium"
                   >
-                    {d.label}
+                    {o.iata}
                   </text>
+                </g>
+              );
+            })}
+          </svg>
+          {/* tooltip near the selected destination pin — clamped to the map */}
+          {tooltipPos && selected && selectedEntry && (
+            <div
+              ref={tipRef}
+              className="pointer-events-none absolute z-10 w-56 rounded-lg border border-border bg-background/95 p-3 shadow-lg backdrop-blur-sm"
+              style={{ left: tooltipPos.left, top: tooltipPos.top }}
+            >
+              <p className="text-sm font-semibold leading-tight">
+                {selectedEntry.destinationCity}, {selectedEntry.destinationCountry}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {selectedEntry.destinationIata} ·{" "}
+                {messages.results.map.tooltip.dates(
+                  formatDateDay(selectedEntry.departureDate),
+                  formatDateDay(selectedEntry.returnDate)
                 )}
-              </g>
-            );
-          })}
-          {/* origin pins */}
-          {origins.map((o) => {
-            const p = project(o.longitude, o.latitude);
-            return (
-              <g key={o.iata}>
-                <circle
-                  cx={p.x}
-                  cy={p.y}
-                  r={4}
-                  className="fill-amber-500 stroke-white"
-                  strokeWidth={1.5}
-                />
-                <text x={p.x + 6} y={p.y - 4} fontSize={7.5} className="fill-slate-500">
-                  {o.iata}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {messages.results.map.tooltip.gap(formatGap(selectedEntry.gapMinutes))}
+              </p>
+              <div className="mt-1.5 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">
+                  {messages.results.map.tooltip.total}
+                </span>
+                <span className="font-semibold">
+                  {formatMoney(selectedEntry.totalPriceEur)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">
+                  {messages.results.map.tooltip.perPerson}
+                </span>
+                <span className="font-medium">
+                  {formatMoney(maxPricePerPerson(selectedEntry))}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-white" />
             {messages.results.map.origins}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-sky-500" />
+            <span className="h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-white" />
             {messages.results.map.destinations}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-slate-400/50 blur-[1.5px]" />
+            {messages.results.map.airports}
           </span>
         </div>
       </CardContent>
