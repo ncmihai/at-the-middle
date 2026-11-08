@@ -9,7 +9,7 @@
 // sitemap and the OG image route.
 import { CANDIDATE_DESTINATIONS, type CandidateDestination } from "@/db/candidates";
 
-export const MAX_DESTINATION_CITIES = 120;
+// (cap removed — all candidate cities get a page)
 
 export type DestinationCity = {
   /** URL slug, derived from the city name (ASCII, lowercase, dashes) */
@@ -72,11 +72,13 @@ function buildCities(): DestinationCity[] {
   }
 
   // Most airports first; alphabetical on ties (deterministic build output).
+  // NO cutoff: single-airport cities (Krakow, Budapest, Bucharest…) are exactly the
+  // long-tail SEO gold, so every candidate city gets a page.
   cities.sort((a, b) => b.airportCount - a.airportCount || a.slug.localeCompare(b.slug));
-  return cities.slice(0, MAX_DESTINATION_CITIES);
+  return cities;
 }
 
-/** The ~120 destination cities, sorted by airport count then slug. */
+/** All destination cities, sorted by airport count then slug. */
 export const DESTINATION_CITIES: DestinationCity[] = buildCities();
 
 /** Slugs in the same order — used by generateStaticParams and the sitemap. */
