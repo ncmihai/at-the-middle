@@ -5,6 +5,10 @@
 // + arrival-gap badge ("everyone arrives within X h Y min") + "from €X / person"
 // + dep→ret dates + the two primary actions (scroll to the rank-1 card /
 // open the first outbound booking link). Rendered only when bestResult exists.
+//
+// Faza 9 visual rework: the city photo is the card background with a bottom-up
+// dark scrim (.photo-scrim) and ALL text white (drop-shadowed); badges get
+// solid backgrounds. No photo → the previous light gradient card.
 import * as React from "react";
 import {
   CalendarDaysIcon,
@@ -15,9 +19,9 @@ import {
 } from "lucide-react";
 
 import type { ResultEntry } from "@/lib/types";
-import { CITY_IMAGES } from "@/db/city-images";
+import { cityPhotoForCity, cityPhotoForIata } from "@/lib/city-photo";
 import { useMessages } from "@/lib/i18n";
-import { formatDateDay, formatGap, formatMoney } from "@/lib/utils";
+import { cn, formatDateDay, formatGap, formatMoney } from "@/lib/utils";
 import { entryKey, maxPricePerPerson } from "@/components/ResultCard";
 import { cardDomId } from "@/components/ResultsList";
 import { Badge } from "@/components/ui/badge";
@@ -39,8 +43,12 @@ export default function HeroAnswer({ bestResult, onSelect }: HeroAnswerProps) {
   const key = entryKey(bestResult);
   const green = bestResult.gapMinutes <= GREEN_GAP_MINUTES;
   const firstOutbound = bestResult.outbound[0];
-  // Faza 8A: city photo (Wikimedia Commons → Digi Storage mirror) as hero background
-  const photo = CITY_IMAGES[bestResult.destinationCity] ?? null;
+  // Faza 9: city photo (Wikimedia Commons → Digi Storage mirror) as hero
+  // background — via IATA (slug map) with the city-name map as fallback
+  const photo =
+    cityPhotoForIata(bestResult.destinationIata) ??
+    cityPhotoForCity(bestResult.destinationCity);
+  const onPhoto = Boolean(photo);
 
   const showOnCard = () => {
     onSelect(key);
@@ -51,11 +59,12 @@ export default function HeroAnswer({ bestResult, onSelect }: HeroAnswerProps) {
 
   return (
     <Card
-      className={`relative overflow-hidden border-primary/40 ${
-        photo
-          ? ""
-          : "bg-gradient-to-br from-sky-50 to-background dark:from-sky-950/40"
-      }`}
+      className={cn(
+        "relative overflow-hidden rounded-2xl",
+        onPhoto
+          ? "border-white/25 text-white"
+          : "border-primary/40 bg-gradient-to-br from-sky-50 to-background dark:from-sky-950/40"
+      )}
     >
       {photo && (
         <>
@@ -65,27 +74,54 @@ export default function HeroAnswer({ bestResult, onSelect }: HeroAnswerProps) {
             loading="eager"
             className="absolute inset-0 h-full w-full object-cover"
           />
-          {/* light/dark-aware overlay so the text stays legible on the photo */}
-          <div className="absolute inset-0 bg-gradient-to-br from-sky-50/95 via-background/80 to-background/60 dark:from-sky-950/95 dark:via-sky-950/80 dark:to-background/70" />
+          {/* bottom-up dark scrim — keeps the white text legible on any photo */}
+          <div className="photo-scrim absolute inset-0" />
         </>
       )}
-      <CardContent className="relative flex flex-col gap-3 p-5">
+      <CardContent
+        className={cn("relative flex flex-col gap-3 p-5", onPhoto && "pb-7 drop-shadow-sm")}
+      >
         <div className="flex items-start gap-2.5">
-          <SparklesIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+          <SparklesIcon
+            className={cn("mt-0.5 h-5 w-5 shrink-0", onPhoto ? "text-sky-300" : "text-primary")}
+          />
           <div className="flex min-w-0 flex-col gap-1.5">
-            <h2 className="text-lg font-bold tracking-tight">
+            <h2
+              className={cn(
+                "text-lg font-bold tracking-tight",
+                onPhoto ? "text-white drop-shadow-md" : ""
+              )}
+            >
               {messages.hero.title(bestResult.destinationCity, bestResult.destinationCountry)}
             </h2>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm text-muted-foreground">
+            <div
+              className={cn(
+                "flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm",
+                onPhoto ? "text-white/85" : "text-muted-foreground"
+              )}
+            >
               <span className="inline-flex items-center gap-1.5">
                 <MapPinIcon className="h-4 w-4" />
                 {bestResult.destinationIata}
               </span>
-              <Badge variant={green ? "success" : "warning"}>
+              <Badge
+                variant={green ? "success" : "warning"}
+                className={cn(
+                  "border-transparent",
+                  onPhoto
+                    ? green
+                      ? "bg-emerald-600 text-white"
+                      : "bg-amber-500 text-amber-950"
+                    : ""
+                )}
+              >
                 <ClockIcon className="h-3 w-3" />
                 {messages.hero.gap(formatGap(bestResult.gapMinutes))}
               </Badge>
-              <Badge variant="secondary">
+              <Badge
+                variant="secondary"
+                className={cn(onPhoto && "bg-white text-slate-900 border-transparent")}
+              >
                 {messages.hero.from(formatMoney(maxPricePerPerson(bestResult)))}
               </Badge>
               <span className="inline-flex items-center gap-1.5">
@@ -103,7 +139,15 @@ export default function HeroAnswer({ bestResult, onSelect }: HeroAnswerProps) {
             {messages.hero.cta}
           </Button>
           {firstOutbound && (
-            <Button asChild size="sm" variant="outline">
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className={cn(
+                onPhoto &&
+                  "border-white/50 bg-white/10 text-white shadow-sm hover:bg-white/25 hover:text-white"
+              )}
+            >
               <a href={firstOutbound.bookingUrl} target="_blank" rel="noopener sponsored">
                 <ExternalLinkIcon className="h-3.5 w-3.5" />
                 {messages.results.bookOutbound}
@@ -111,19 +155,17 @@ export default function HeroAnswer({ bestResult, onSelect }: HeroAnswerProps) {
             </Button>
           )}
         </div>
-        {photo && (
-          <p className="text-[10px] leading-snug text-muted-foreground/90">
-            <a
-              href={photo.source}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-foreground hover:underline"
-            >
-              {messages.results.photoCredit(photo.credit, photo.license)}
-            </a>
-          </p>
-        )}
       </CardContent>
+      {photo && (
+        <a
+          href={photo.source}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute bottom-1.5 right-3 z-10 max-w-[80%] truncate text-[10px] leading-snug text-white/80 hover:text-white hover:underline"
+        >
+          {messages.results.photoCredit(photo.credit, photo.license)}
+        </a>
+      )}
     </Card>
   );
 }

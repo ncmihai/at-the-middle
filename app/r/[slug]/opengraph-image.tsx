@@ -6,16 +6,17 @@
 //
 // 1200x630 PNG, Node runtime, rendered on demand (force-dynamic) because it
 // reads the search + its best result from Postgres per request. No external
-// fonts (ImageResponse default font only). Faza 8A: when the best result's
+// fonts (ImageResponse default font only). Faza 8A/9: when the best result's
 // city has a photo in db/city-images.ts, it is fetched (no-store) and drawn as
-// the card background with a brand-tinted overlay; any failure → the plain
-// brand gradient. Unknown/expired slug or DB hiccup → static brand fallback card.
+// the card background with the same bottom-up dark scrim as the site cards
+// (white text stays legible); any failure → the plain brand gradient.
+// Unknown/expired slug or DB hiccup → static brand fallback card.
 import { ImageResponse } from "next/og";
 import { asc, eq } from "drizzle-orm";
 
 import { CANDIDATES_BY_IATA } from "@/db/candidates";
 import { getDb, isDatabaseConfigured } from "@/db/client";
-import { CITY_IMAGES } from "@/db/city-images";
+import { cityPhotoForIata } from "@/lib/city-photo";
 import { results, searches } from "@/db/schema";
 import { en } from "@/lib/i18n";
 import {
@@ -40,10 +41,10 @@ function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3005").replace(/\/+$/, "");
 }
 
-/** Best (rank 1) result for the slug → card model + city name; null when unknown/expired/DB down. */
+/** Best (rank 1) result for the slug → card model + city name + iata; null when unknown/expired/DB down. */
 async function loadCardModel(
   slug: string
-): Promise<{ model: ShareCardModel; cityName: string } | null> {
+): Promise<{ model: ShareCardModel; cityName: string; destinationIata: string } | null> {
   if (!isDatabaseConfigured()) return null;
   try {
     const db = getDb();
@@ -76,6 +77,7 @@ async function loadCardModel(
         slug
       ),
       cityName,
+      destinationIata: top.destinationIata,
     };
   } catch (err) {
     console.warn("[opengraph-image] DB lookup failed, rendering fallback card:", err);
@@ -148,9 +150,10 @@ export default async function OpengraphImage({
     url: siteUrl(),
   };
   const hasResult = Boolean(model.gapText);
-  // Faza 8A: city photo as card background (brand-tinted overlay keeps text legible)
+  // Faza 9: city photo as card background, resolved via the destination IATA
+  // (slug map) — the same photo the result cards show
   const photoSrc = loaded
-    ? await loadPhotoDataUrl(CITY_IMAGES[loaded.cityName]?.url ?? "")
+    ? await loadPhotoDataUrl(cityPhotoForIata(loaded.destinationIata)?.url ?? "")
     : null;
 
   return new ImageResponse(
@@ -190,8 +193,9 @@ export default async function OpengraphImage({
               left: 0,
               width: "100%",
               height: "100%",
+              // Faza 9: same bottom-up dark scrim as the site cards — white text stays legible
               background:
-                "linear-gradient(135deg, rgba(56,189,248,0.82) 0%, rgba(37,99,235,0.90) 100%)",
+                "linear-gradient(to top, rgba(2,6,23,0.88) 0%, rgba(2,6,23,0.55) 45%, rgba(2,6,23,0.15) 75%, rgba(2,6,23,0.05) 100%)",
             }}
           />
         )}
@@ -202,6 +206,7 @@ export default async function OpengraphImage({
             flexDirection: "column",
             width: "100%",
             height: "100%",
+            textShadow: photoSrc ? "0 2px 14px rgba(2,6,23,0.65)" : undefined,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -242,7 +247,8 @@ export default async function OpengraphImage({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  background: C.pillBg,
+                  // solid chip on photo cards (white text needs a dark bg), brand glass otherwise
+                  background: photoSrc ? "rgba(2,6,23,0.72)" : C.pillBg,
                   borderRadius: 999,
                   padding: "12px 26px",
                   fontSize: 28,

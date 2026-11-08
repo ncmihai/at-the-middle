@@ -50,3 +50,17 @@ body {
 ::selection {
   background: var(--color-sky-200);
 }
+
+/* Faza 9: shared scrim drawn over city photos (hero answer, result cards,
+   destination pages, destination index rows). Bottom-up dark gradient so the
+   white text on top stays legible on any photo — replaces the old flat
+   blue/low-opacity overlay. */
+.photo-scrim {
+  background: linear-gradient(
+    to top,
+    rgba(2, 6, 23, 0.88) 0%,
+    rgba(2, 6, 23, 0.55) 45%,
+    rgba(2, 6, 23, 0.15) 75%,
+    rgba(2, 6, 23, 0.05) 100%
+  );
+}

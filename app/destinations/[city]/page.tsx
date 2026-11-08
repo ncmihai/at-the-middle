@@ -13,7 +13,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { WeatherStrip } from "@/components/ResultCard";
-import { CITY_IMAGES_BY_SLUG } from "@/db/city-images";
+import type { CityImage } from "@/db/city-images";
+import { cityPhotoForSlug } from "@/lib/city-photo";
 import { en } from "@/lib/i18n";
 import { fetchForecast, nextDaysRange } from "@/lib/weather";
 
@@ -57,9 +58,9 @@ export default async function DestinationCityPage({ params }: Props) {
   const city = DESTINATIONS_BY_SLUG[slug];
   if (!city) notFound();
   const counts = await getChosenCountsBySlug();
-  // Faza 8A: free city photo (Wikimedia Commons → Digi Storage mirror), null when
+  // Faza 8A/9: free city photo (Wikimedia Commons → Digi Storage mirror), null when
   // the city has no accepted photo → CityView falls back to the plain gradient hero.
-  const photo = CITY_IMAGES_BY_SLUG[slug] ?? null;
+  const photo: CityImage | null = cityPhotoForSlug(slug);
   // Faza 8B: "Weather in {city} — next 7 days" widget (open-meteo, free, no key).
   // Runs at build and at most once per hourly ISR revalidate per city; lib/weather.ts
   // adds a 30-min in-memory cache on top and never throws → null just hides the widget.

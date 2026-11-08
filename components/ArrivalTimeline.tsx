@@ -9,11 +9,18 @@ import { parseISO } from "date-fns";
 
 import type { PersonLeg } from "@/lib/types";
 import { useMessages } from "@/lib/i18n";
-import { formatGap, formatLocalTime } from "@/lib/utils";
+import { cn, formatGap, formatLocalTime } from "@/lib/utils";
 
 const PAD_MS = 30 * 60 * 1000; // half-hour padding around the first/last arrival
 
-export default function ArrivalTimeline({ legs }: { legs: PersonLeg[] }) {
+export default function ArrivalTimeline({
+  legs,
+  dark = false,
+}: {
+  legs: PersonLeg[];
+  /** Faza 9: true on photo-background result cards — white text variant */
+  dark?: boolean;
+}) {
   const messages = useMessages();
 
   const arrivals = React.useMemo(
@@ -42,18 +49,28 @@ export default function ArrivalTimeline({ legs }: { legs: PersonLeg[] }) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+      <div
+        className={cn(
+          "flex items-center justify-between gap-2 text-xs",
+          dark ? "text-white/80" : "text-muted-foreground"
+        )}
+      >
         <span className="font-semibold uppercase tracking-wide">
           {messages.results.timeline.title}
         </span>
-        <span className="shrink-0 font-medium text-foreground">
+        <span className={cn("shrink-0 font-medium", dark ? "text-white" : "text-foreground")}>
           {messages.results.timeline.arriveWithin(formatGap(gapMinutes))}
         </span>
       </div>
-      <div className="relative h-2 w-full rounded-full bg-muted">
+      <div
+        className={cn("relative h-2 w-full rounded-full", dark ? "bg-white/25" : "bg-muted")}
+      >
         {/* the gap: highlighted span from first to last arrival */}
         <div
-          className="absolute h-full rounded-full bg-primary/25"
+          className={cn(
+            "absolute h-full rounded-full",
+            dark ? "bg-sky-300/60" : "bg-primary/25"
+          )}
           style={{
             left: `${pct(min)}%`,
             width: `${Math.max(2, pct(max) - pct(min))}%`,
@@ -63,12 +80,20 @@ export default function ArrivalTimeline({ legs }: { legs: PersonLeg[] }) {
           <div
             key={a.origin}
             title={`${a.origin} · ${formatLocalTime(a.arriveLocal)}`}
-            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-primary shadow-sm"
+            className={cn(
+              "absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-sm",
+              dark ? "bg-sky-300" : "bg-primary"
+            )}
             style={{ left: `${pct(a.t)}%` }}
           />
         ))}
       </div>
-      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+      <div
+        className={cn(
+          "flex items-center justify-between text-[10px]",
+          dark ? "text-white/70" : "text-muted-foreground"
+        )}
+      >
         <span>
           {first.origin} · {formatLocalTime(first.arriveLocal)}
         </span>

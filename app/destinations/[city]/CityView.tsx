@@ -10,6 +10,7 @@ import { ArrowLeftIcon, MapPinIcon, PlaneIcon, PlaneTakeoffIcon } from "lucide-r
 import { Button } from "@/components/ui/button";
 import type { CityImage } from "@/db/city-images";
 import { useMessages } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 import type { DestinationCity } from "../cities";
 
@@ -25,30 +26,10 @@ export default function CityView({ city, chosenCount, photo }: Props) {
   const messages = useMessages();
   const t = messages.destinations.city;
 
+  const onPhoto = Boolean(photo);
+
   return (
     <div className="flex flex-col gap-10">
-      {photo && (
-        <figure className="flex flex-col gap-1.5">
-          {/* plain <img> (not next/image): the photo is a remote mirror on Digi Storage,
-              eager + 16/9 hero at the top of the page */}
-          <img
-            src={photo.url}
-            alt={city.city}
-            loading="eager"
-            className="aspect-video w-full rounded-2xl border border-border object-cover shadow-sm"
-          />
-          <figcaption className="text-[11px] leading-snug text-muted-foreground">
-            <a
-              href={photo.source}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-foreground hover:underline"
-            >
-              {messages.destinations.photoCredit(photo.credit, photo.license)}
-            </a>
-          </figcaption>
-        </figure>
-      )}
       <Link
         href="/destinations"
         className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground hover:underline"
@@ -57,17 +38,70 @@ export default function CityView({ city, chosenCount, photo }: Props) {
         {t.back}
       </Link>
 
-      <header className="flex flex-col gap-3">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-          {t.pitch(city.city)}
-        </h1>
-        <p className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-          <MapPinIcon className="h-4 w-4" />
-          {city.city}, {city.country}
-        </p>
-        <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
-          {t.pitchBody(city.city, city.country)}
-        </p>
+      {/* Faza 9 hero: city photo as background + bottom-up dark scrim + white text
+          (credit bottom-right); no photo → plain light gradient hero */}
+      <header
+        className={cn(
+          "relative overflow-hidden rounded-2xl border shadow-sm",
+          onPhoto
+            ? "border-white/25 text-white"
+            : "border-border bg-gradient-to-br from-sky-50 to-background dark:from-sky-950/40"
+        )}
+      >
+        {photo && (
+          <>
+            {/* plain <img> (not next/image): the photo is a remote mirror on Digi Storage */}
+            <img
+              src={photo.url}
+              alt={city.city}
+              loading="eager"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="photo-scrim absolute inset-0" />
+          </>
+        )}
+        <div
+          className={cn(
+            "relative flex flex-col gap-3 p-6 md:p-8",
+            onPhoto && "pb-8 drop-shadow-sm md:pb-10"
+          )}
+        >
+          <h1
+            className={cn(
+              "text-3xl font-bold tracking-tight md:text-4xl",
+              onPhoto ? "text-white drop-shadow-md" : "text-foreground"
+            )}
+          >
+            {t.pitch(city.city)}
+          </h1>
+          <p
+            className={cn(
+              "flex items-center gap-1.5 text-sm font-medium",
+              onPhoto ? "text-white/90" : "text-muted-foreground"
+            )}
+          >
+            <MapPinIcon className="h-4 w-4" />
+            {city.city}, {city.country}
+          </p>
+          <p
+            className={cn(
+              "text-sm leading-relaxed md:text-base",
+              onPhoto ? "text-white/85" : "text-muted-foreground"
+            )}
+          >
+            {t.pitchBody(city.city, city.country)}
+          </p>
+        </div>
+        {photo && (
+          <a
+            href={photo.source}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute bottom-1.5 right-3 z-10 max-w-[80%] truncate text-[10px] leading-snug text-white/80 hover:text-white hover:underline"
+          >
+            {messages.destinations.photoCredit(photo.credit, photo.license)}
+          </a>
+        )}
       </header>
 
       <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm">

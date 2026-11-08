@@ -5,7 +5,7 @@
 // namespace; metadata follows the existing pattern and stays English (like /).
 import type { Metadata } from "next";
 
-import { CITY_IMAGES_BY_SLUG } from "@/db/city-images";
+import { cityPhotoForSlug } from "@/lib/city-photo";
 import { en } from "@/lib/i18n";
 
 import DestinationsBrowser from "./DestinationsBrowser";
@@ -45,7 +45,7 @@ export default async function DestinationsPage() {
       countryCode,
       iatas,
       airportCount,
-      photoUrl: CITY_IMAGES_BY_SLUG[slug]?.url ?? null,
+      photoUrl: cityPhotoForSlug(slug)?.url ?? null,
     })
   );
   return (

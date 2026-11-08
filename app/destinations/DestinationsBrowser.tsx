@@ -11,6 +11,7 @@ import { MapPinIcon, SearchIcon } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { useMessages } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 import type { DestinationCity } from "./cities";
 
@@ -77,48 +78,94 @@ export default function DestinationsBrowser({ cities, counts }: Props) {
           {t.empty}
         </p>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {filtered.map((c) => (
-            <li key={c.slug}>
-              <Link
-                href={`/destinations/${c.slug}`}
-                className="group flex h-full flex-col gap-2 rounded-2xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/60 hover:bg-muted/40"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 flex-1 items-start gap-3">
-                    {c.photoUrl && (
+        // Faza 9: horizontal rows — photo thumb left (fixed 96–112px), full city
+        // name (wrapping, never truncated) + country + airport chips + count on
+        // the right. Photo rows get the dark scrim + white text.
+        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {filtered.map((c) => {
+            const onPhoto = Boolean(c.photoUrl);
+            return (
+              <li key={c.slug}>
+                <Link
+                  href={`/destinations/${c.slug}`}
+                  className={cn(
+                    "group relative flex h-full items-stretch gap-3 overflow-hidden rounded-2xl border p-3 shadow-sm transition-colors",
+                    onPhoto
+                      ? "border-white/25 text-white hover:border-white/50"
+                      : "border-border bg-card hover:border-primary/60 hover:bg-muted/40"
+                  )}
+                >
+                  {c.photoUrl && (
+                    <>
                       <img
                         src={c.photoUrl}
-                        alt={c.city}
+                        alt=""
                         loading="lazy"
-                        className="h-14 w-14 shrink-0 rounded-xl border border-border object-cover"
+                        className="absolute inset-0 h-full w-full object-cover"
                       />
-                    )}
-                    <div className="min-w-0">
-                      <div className="truncate text-base font-semibold text-foreground group-hover:text-primary">
-                        {c.city}
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPinIcon className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{c.country}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                    {c.iatas.join(" · ")}
+                      <div className="photo-scrim absolute inset-0" />
+                    </>
+                  )}
+                  {c.photoUrl ? (
+                    <img
+                      src={c.photoUrl}
+                      alt={c.city}
+                      loading="lazy"
+                      className="relative h-24 w-24 shrink-0 rounded-xl border border-white/30 object-cover sm:h-28 sm:w-28"
+                    />
+                  ) : (
+                    <span className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground sm:h-28 sm:w-28">
+                      <MapPinIcon className="h-6 w-6" />
+                    </span>
+                  )}
+                  <span className="relative flex min-w-0 flex-1 flex-col gap-1">
+                    <span
+                      className={cn(
+                        "text-base font-semibold leading-snug break-words",
+                        onPhoto
+                          ? "text-white drop-shadow-sm"
+                          : "text-foreground group-hover:text-primary"
+                      )}
+                    >
+                      {c.city}
+                    </span>
+                    <span
+                      className={cn(
+                        "flex items-center gap-1 text-xs",
+                        onPhoto ? "text-white/85" : "text-muted-foreground"
+                      )}
+                    >
+                      <MapPinIcon className="h-3.5 w-3.5 shrink-0" />
+                      <span>{c.country}</span>
+                    </span>
+                    <span className="mt-1 flex flex-wrap gap-1">
+                      {c.iatas.map((iata) => (
+                        <span
+                          key={iata}
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[11px] font-medium",
+                            onPhoto
+                              ? "border border-white/20 bg-slate-950/55 text-white"
+                              : "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          {iata}
+                        </span>
+                      ))}
+                    </span>
+                    <span
+                      className={cn(
+                        "mt-auto pt-1 text-xs",
+                        onPhoto ? "text-white/85" : "font-medium text-primary"
+                      )}
+                    >
+                      {t.chosen(counts[c.slug] ?? 0)}
+                    </span>
                   </span>
-                </div>
-                <div className="mt-auto flex items-center justify-between gap-2 text-xs">
-                  <span className="text-muted-foreground">
-                    {t.airports(c.iatas.join(", "))}
-                  </span>
-                  <span className="font-medium text-primary">
-                    {t.chosen(counts[c.slug] ?? 0)}
-                  </span>
-                </div>
-              </Link>
-            </li>
-          ))}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

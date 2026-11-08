@@ -11,7 +11,7 @@ import { DownloadIcon, Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { ResultEntry } from "@/lib/types";
-import { CITY_IMAGES } from "@/db/city-images";
+import { cityPhotoForIata } from "@/lib/city-photo";
 import { useMessages } from "@/lib/i18n";
 import {
   SHARE_CARD_COLORS as C,
@@ -80,7 +80,8 @@ function loadPhoto(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
-/** cover-crop the photo over the whole card, then tint it with the brand gradient */
+/** cover-crop the photo over the whole card, then lay the same bottom-up dark
+ *  scrim as the site cards (.photo-scrim) so the white text stays legible */
 function drawPhotoBackground(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -93,9 +94,12 @@ function drawPhotoBackground(
   const sx = (img.width - sw) / 2;
   const sy = (img.height - sh) / 2;
   ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
-  const grad = ctx.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, "rgba(56,189,248,0.78)"); // sky-400 @ ~78%
-  grad.addColorStop(1, "rgba(37,99,235,0.90)"); // blue-600 @ ~90% — keeps text legible
+  // vertical gradient, dark at the bottom → transparent at the top (to top)
+  const grad = ctx.createLinearGradient(0, H, 0, 0);
+  grad.addColorStop(0, "rgba(2,6,23,0.88)");
+  grad.addColorStop(0.45, "rgba(2,6,23,0.55)");
+  grad.addColorStop(0.75, "rgba(2,6,23,0.15)");
+  grad.addColorStop(1, "rgba(2,6,23,0.05)");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 }
@@ -111,8 +115,12 @@ function drawShareCard(
   const pad = 64;
 
   if (photo) {
-    // Faza 8A: city photo background + brand-tinted overlay
+    // Faza 9: city photo background + the same bottom-up dark scrim as the site
     drawPhotoBackground(ctx, photo, W, H);
+    // white text on the photo → soft dark text-shadow for legibility
+    ctx.shadowColor = "rgba(2,6,23,0.65)";
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 2;
   } else {
     // brand gradient background (sky-400 → blue-600, 135°)
     const grad = ctx.createLinearGradient(0, 0, W, H);
@@ -166,7 +174,8 @@ function drawShareCard(
   const pillH = 56;
   ctx.font = font(28, 600);
   const pillW = ctx.measureText(model.gapText).width + 52;
-  ctx.fillStyle = C.pillBg;
+  // solid dark chip on photo cards (white text), brand glass on the plain gradient
+  ctx.fillStyle = photo ? "rgba(2,6,23,0.72)" : C.pillBg;
   roundRect(ctx, pad, pillY, pillW, pillH, pillH / 2);
   ctx.fill();
   ctx.fillStyle = C.text;
@@ -181,6 +190,11 @@ function drawShareCard(
   ctx.globalAlpha = 0.75;
   ctx.fillText(model.url, pad, H - pad - 11);
   ctx.globalAlpha = 1;
+
+  // reset the photo text-shadow so a redraw without the photo stays clean
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
 }
 
 export type ShareCardButtonProps = {
@@ -215,8 +229,9 @@ export default function ShareCardButton({ result, slug, className }: ShareCardBu
       canvas.height = SHARE_CARD_SIZE.height;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("2d context unavailable");
-      // Faza 8A: city photo as card background when the destination has one
-      const photoUrl = CITY_IMAGES[result.destinationCity]?.url;
+      // Faza 9: city photo as card background when the destination has one —
+      // resolved via the destination IATA (slug map), same photo as the cards
+      const photoUrl = cityPhotoForIata(result.destinationIata)?.url;
       const photo = photoUrl ? await loadPhoto(photoUrl) : null;
       drawShareCard(ctx, model, photo);
       let dataUrl: string;
