@@ -34,7 +34,13 @@ function plusDaysUtc(iso: string, days: number): string {
  * navigate to the new share page. Server auto-relaxes the gap to 30 h, so the
  * gap button re-submits the same params (useful after usageLimited / cache-only).
  */
-export function RelaxPanel({ request }: { request: SearchRequest }) {
+export function RelaxPanel({
+  request,
+  usageLimited = false,
+}: {
+  request: SearchRequest;
+  usageLimited?: boolean;
+}) {
   const messages = useMessages();
   const router = useRouter();
   const [busy, setBusy] = React.useState<string | null>(null);
@@ -42,6 +48,10 @@ export function RelaxPanel({ request }: { request: SearchRequest }) {
   const run = async (key: string, patch: Partial<SearchRequest>) => {
     if (busy) return;
     setBusy(key);
+    // always give visible feedback — otherwise a cache-only re-run (usage limit)
+    // looks like "nothing happened"
+    toast.info(messages.results.relax.running);
+    if (usageLimited) toast.warning(messages.results.usageLimited);
     try {
       const res = await fetch("/api/search", {
         method: "POST",
@@ -130,6 +140,8 @@ export type ResultsListProps = {
   bestResult?: ResultEntry | null;
   /** share slug of this search — used for the card's URL line + download filename */
   slug?: string;
+  /** monthly provider cap reached — relax re-runs are cache-only */
+  usageLimited?: boolean;
 };
 
 export default function ResultsList({
@@ -139,6 +151,7 @@ export default function ResultsList({
   onSelect,
   bestResult = null,
   slug,
+  usageLimited = false,
 }: ResultsListProps) {
   const messages = useMessages();
 
@@ -146,7 +159,7 @@ export default function ResultsList({
     return (
       <div className="flex flex-col gap-3">
         <p className="text-sm text-muted-foreground">{messages.results.empty}</p>
-        {request && <RelaxPanel request={request} />}
+        {request && <RelaxPanel request={request} usageLimited={usageLimited} />}
       </div>
     );
   }

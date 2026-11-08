@@ -248,6 +248,7 @@ export default function SearchResultPage({
             onCancel={() => void cancel()}
             cancelling={cancelling}
             request={data.request}
+            usageLimited={data.usageLimited}
           />
         )}
 
@@ -324,6 +325,7 @@ export default function SearchResultPage({
                 <ResultsList
                   results={visibleResults}
                   request={data.request}
+                  usageLimited={data.usageLimited}
                   selectedKey={selectedKey}
                   onSelect={setSelectedKey}
                   bestResult={bestResult}

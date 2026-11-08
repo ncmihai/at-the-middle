@@ -28,6 +28,8 @@ type WaitingScreenProps = {
   cancelling?: boolean;
   /** original search params — enables the one-click relax buttons when nothing matched yet */
   request?: SearchRequest;
+  /** monthly provider cap reached — relax re-runs are cache-only */
+  usageLimited?: boolean;
 };
 
 export default function WaitingScreen({
@@ -36,6 +38,7 @@ export default function WaitingScreen({
   onCancel,
   cancelling = false,
   request,
+  usageLimited = false,
 }: WaitingScreenProps) {
   const messages = useMessages();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -122,7 +125,7 @@ export default function WaitingScreen({
               </Card>
             ))}
           </div>
-          {request && <RelaxPanel request={request} />}
+          {request && <RelaxPanel request={request} usageLimited={usageLimited} />}
         </div>
       )}
 

@@ -332,35 +332,47 @@ export default function SearchForm() {
                 <CalendarDaysIcon className="h-4 w-4 text-primary" />
                 {messages.form.datesLabel}
               </Label>
-              <Popover open={dateOpen} onOpenChange={setDateOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal sm:w-96",
-                      !range?.from && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarDaysIcon className="h-4 w-4" />
-                    {range?.from
-                      ? range.to
-                        ? `${format(range.from, "MMM d, yyyy")} → ${format(range.to, "MMM d, yyyy")}`
-                        : format(range.from, "MMM d, yyyy")
-                      : messages.form.datesPlaceholder}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="range"
-                    selected={range}
-                    onSelect={onRangeSelect}
-                    disabled={[{ before: today }]}
-                    defaultMonth={range?.from ?? today}
-                    numberOfMonths={1}
-                  />
-                </PopoverContent>
-              </Popover>
+              {/* Trigger content stays STATIC on purpose: changing it after the first
+                  date made radix close the popover mid-range. The selected range is
+                  shown next to the trigger instead. */}
+              <div className="flex items-center gap-2">
+                <Popover
+                  open={dateOpen}
+                  onOpenChange={(o) => {
+                    // never close mid-range (from picked, to pending)
+                    if (!o && range?.from && !range.to) return;
+                    setDateOpen(o);
+                  }}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal text-muted-foreground sm:w-96"
+                    >
+                      <CalendarDaysIcon className="h-4 w-4" />
+                      {messages.form.datesPlaceholder}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="range"
+                      selected={range}
+                      onSelect={onRangeSelect}
+                      disabled={[{ before: today }]}
+                      defaultMonth={range?.from ?? today}
+                      numberOfMonths={1}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {range?.from && (
+                  <span className="whitespace-nowrap text-sm text-foreground">
+                    {range.to
+                      ? `${format(range.from, "MMM d")} → ${format(range.to, "MMM d, yyyy")}`
+                      : `${format(range.from, "MMM d, yyyy")} → …`}
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">{messages.form.datesHint}</p>
               {(errors.windowStart ?? errors.windowEnd) && (
                 <p className="text-sm text-destructive">{messages.form.errors.datesRequired}</p>
