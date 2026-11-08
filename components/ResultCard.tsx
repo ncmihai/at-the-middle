@@ -3,14 +3,19 @@
 import {
   ArrowRightIcon,
   CalendarDaysIcon,
+  CarIcon,
+  CarTaxiFrontIcon,
   ClockIcon,
   ExternalLinkIcon,
   HotelIcon,
   MapPinIcon,
+  SmartphoneIcon,
+  TicketIcon,
+  type LucideIcon,
 } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from "date-fns";
 
-import type { PersonLeg, ResultEntry } from "@/lib/types";
+import type { PersonLeg, ResultEntry, ResultExtraKey } from "@/lib/types";
 import { useMessages } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
@@ -29,6 +34,14 @@ import { Separator } from "@/components/ui/separator";
 
 /** gap badge is green when everyone arrives within 6 h (docs/app-spec.md §6.3) */
 const GREEN_GAP_MINUTES = 6 * 60;
+
+/** ADDITIVE (Faza 7): icon per affiliate "extra" kind (ResultEntry.extras) */
+const EXTRA_ICONS: Record<ResultExtraKey, LucideIcon> = {
+  transfer: CarTaxiFrontIcon,
+  car: CarIcon,
+  esim: SmartphoneIcon,
+  activities: TicketIcon,
+};
 
 /** stable id for a result entry — used to lift hover/select state to the page and the map */
 export function entryKey(entry: ResultEntry): string {
@@ -178,6 +191,24 @@ export default function ResultCard({ entry, selected = false, onSelect }: Result
             <span className="text-[11px] text-muted-foreground">
               {messages.results.stayNote}
             </span>
+          </div>
+        )}
+        {entry.extras && entry.extras.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {messages.results.extras.title}
+            </span>
+            {entry.extras.map((extra) => {
+              const ExtraIcon = EXTRA_ICONS[extra.key];
+              return (
+                <Button key={extra.key} asChild size="sm" variant="outline">
+                  <a href={extra.url} target="_blank" rel="noopener sponsored">
+                    <ExtraIcon className="h-3.5 w-3.5" />
+                    {messages.results.extras[extra.key]}
+                  </a>
+                </Button>
+              );
+            })}
           </div>
         )}
         <p className="text-xs text-muted-foreground">{messages.results.priceNote}</p>

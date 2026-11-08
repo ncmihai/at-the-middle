@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { CANDIDATES_BY_IATA } from "@/db/candidates";
 import { getDb } from "@/db/client";
 import { airports, results, searchJobs, searches, type ResultLeg } from "@/db/schema";
-import { bookingAffiliateLink } from "@/lib/affiliate";
+import { bookingAffiliateLink, extrasAffiliateLinks } from "@/lib/affiliate";
 import { getConfig } from "@/lib/env";
 import type {
   AirportCoords,
@@ -23,6 +23,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** ADDITIVE (Faza 7): affiliate "extras" are attached to the top N results only. */
+const EXTRAS_TOP_RESULTS = 10;
 
 function json(body: unknown, status = 200) {
   return NextResponse.json(body, { status, headers: { "cache-control": "no-store" } });
@@ -94,6 +97,26 @@ export async function GET(
     };
     })
   );
+
+  // ADDITIVE (Faza 7): affiliate "extras" (airport transfer / car rental / eSIM /
+  // activities — Welcome Pickups, QEEQ, Airalo, Tiqets, all connected to trs 597282)
+  // for the TOP 10 results only. Per result the 4 brand URLs go through the Links API
+  // in ONE batched call (lib/affiliate.ts extrasAffiliateLinks); the loop is sequential
+  // and convertViaLinksApi spaces real API calls ≥650 ms apart (100 req/min per marker
+  // limit), with every converted URL cached 1 h so repeat polls are free. Any failure
+  // just omits that extra — extras must never break the search response.
+  for (const entry of resultEntries.slice(0, EXTRAS_TOP_RESULTS)) {
+    try {
+      entry.extras = await extrasAffiliateLinks({
+        city: entry.destinationCity,
+        country: entry.destinationCountry,
+        checkin: entry.departureDate,
+        checkout: entry.returnDate,
+      });
+    } catch (err) {
+      console.warn(`[api/search] extras conversion failed for rank ${entry.rank}:`, err);
+    }
+  }
 
   const status = (job?.status === "done" ? "completed" : search.status) as SearchStatus;
 

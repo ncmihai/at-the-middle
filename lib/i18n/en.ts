@@ -129,6 +129,14 @@ export const en = {
     bookReturn: "Book return",
     stay: (city: string) => `Stay in ${city}`,
     stayNote: "Affiliate link",
+    // ADDITIVE (Faza 7): labels for the per-result affiliate "extras" buttons
+    extras: {
+      title: "Extras",
+      transfer: "Airport transfer",
+      car: "Car rental",
+      esim: "eSIM",
+      activities: "Activities",
+    },
     priceNote: "Prices are from the moment of search — the booking site shows the live price.",
     share: "Copy share link",
     copied: "Share link copied!",

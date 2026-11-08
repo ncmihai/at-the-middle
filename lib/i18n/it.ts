@@ -105,6 +105,14 @@ export const it: LangMessages = {
     bookReturn: "Prenota ritorno",
     stay: (city: string) => `Alloggio a ${city}`,
     stayNote: "Link di affiliazione",
+    // ADDITIVE (Faza 7): etichette dei pulsanti affiliati «extra» per risultato
+    extras: {
+      title: "Extra",
+      transfer: "Transfer aeroporto",
+      car: "Noleggio auto",
+      esim: "eSIM",
+      activities: "Attività",
+    },
     priceNote:
       "I prezzi sono di quando è stata fatta la ricerca — il sito di prenotazione mostra il prezzo in tempo reale.",
     share: "Copia link di condivisione",

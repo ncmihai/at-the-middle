@@ -105,6 +105,14 @@ export const fr: LangMessages = {
     bookReturn: "Réserver le retour",
     stay: (city: string) => `Logement à ${city}`,
     stayNote: "Lien affilié",
+    // ADDITIVE (Faza 7) : libellés des boutons affiliés « extras » par résultat
+    extras: {
+      title: "Extras",
+      transfer: "Transfert aéroport",
+      car: "Location de voiture",
+      esim: "eSIM",
+      activities: "Activités",
+    },
     priceNote:
       "Prix au moment de la recherche — le site de réservation affiche le prix en direct.",
     share: "Copier le lien de partage",

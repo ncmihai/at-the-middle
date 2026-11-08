@@ -144,6 +144,7 @@ https://c111.travelpayouts.com/click?shmarker=78606.kiwicom&promo_id=3791&source
   `{"trs": <PROJECT_ID>, "marker": <PARTNER_ID>, "shorten": false, "links": [{"url": "<brand URL complet>", "sub_id": "midspot"}]}` (max 10 linkuri/apel).
 - Raspuns: `result.links[].partner_url`.
 - Limite: **max 100 req/min per marker**, max 10 linkuri/req, doar linkuri lungi (nu short). Kiwi.com e exclus (vezi 2.1).
+- Implementare: `convertViaLinksApi(urls[], subId)` in `lib/affiliate.ts` — batching in apeluri de ≤10 linkuri, apeluri reale distantate ≥650 ms (100 req/min per marker), fiecare URL convertit cache-uit in-memory 1 h (`linkCache`).
 - Pentru **Skyscanner**: programul exista in Travelpayouts; se creaza deep link din dashboard **Tools → Links** (lipesti URL-ul de cautare skyscanner, ex. `https://www.skyscanner.net/transport/flights/otp/bcn/261205/...`), optional SubID. Doc generic: https://support.travelpayouts.com/hc/en-us/articles/360027634052-How-to-create-an-affiliate-link-to-any-page-on-the-brand-s-website ; programul Skyscanner: https://www.partners.skyscanner.net/product/affiliates (si varianta Travelpayouts: https://www.travelpayouts.com/blog/skyscanner-flights-api/).
 
 ### 2.3 Rate limits Travelpayouts (oficial)
@@ -161,6 +162,19 @@ link       = https://c111.travelpayouts.com/click?shmarker={TRAVELPAYOUTS_MARKER
 ```
 
 `ss` = destination city name (from the candidate shortlist), `checkin`/`checkout` = the result's departure/return dates. Implemented in `lib/affiliate.ts` (`bookingSearchUrl` / `bookingAffiliateLink`, server-only), surfaced on `ResultEntry.stayUrl` and rendered by `ResultCard` ("Stay in `<city>`", `rel="noopener sponsored"`). Env-overridable via `TRAVELPAYOUTS_BOOKING_PROMO_ID` (default `3650`); with no marker or no promo id it degrades to the plain booking.com search URL (no tracking). User books at the SAME price — commission is paid by Booking.com.
+
+### 2.5 Per-result affiliate "extras" (Faza 7) — Welcome Pickups / QEEQ / Airalo / Tiqets
+
+Fiecare dintre primele **10 rezultate** primeste pana la 4 linkuri afiliate extra (`ResultEntry.extras`: `transfer` / `car` / `esim` / `activities`), convertite la read-time prin acelasi Links API (§2.2) — **un singur apel batch per rezultat** (4 linkuri ≤ limita de 10/apel), apelurile reale distantate ≥650 ms, URL-urile convertite cache-uite 1 h. La orice eroare extra-ul respectiv e omis — extras nu trebuie sa strice niciodata raspunsul de search (try/catch per rezultat in `app/api/search/[slug]/route.ts`). Toate cele 4 programe sunt **deja conectate** la proiectul Midspot (trs 597282) in Travelpayouts. Brand deep links (verificate impotriva site-urilor live; Links API converteste orice URL complet de brand):
+
+- **Welcome Pickups** (transfers, 8–9%): `https://www.welcomepickups.com/<city-slug>/airport-transfer/` — pagina de oras cu formularul de transfer pre-completat "From: <aeroport destinatie>" (verificat `/barcelona/airport-transfer/`, `/paris/airport-transfer/`). Atentie: `/en/search?location=…` NU exista (404) — pagina de oras e entry point-ul real.
+- **QEEQ** (car rental, 5–10%): `https://www.qeeq.com/en/search?location=<city>&pickUpDate=<YYYY-MM-DD>&dropOffDate=<YYYY-MM-DD>` — ruta SPA de cautare (intoarce aplicatia, nu 404).
+- **Airalo** (eSIM, 12%): `https://www.airalo.com/<country-name-slug>-esim` — slug pe NUMELE tarii, NU cod ISO (verificat: `/spain-esim`, `/germany-esim`, `/united-kingdom-esim` sunt pagini reale; `/es-esim` e pagina de eroare). Fallback: `https://www.airalo.com/esim`.
+- **Tiqets** (activities, 3.5–8%): `https://www.tiqets.com/en/search?q=<city>` — verificat, intoarce "Things to do in `<city>`".
+
+`city-slug`/`country-name-slug` = lowercase, diacritice eliminate, secvente non-alfanumerice → `-` (lib/affiliate.ts `slugify`). Implementat in `lib/affiliate.ts` (`welcomePickupsUrl` / `qeeqUrl` / `airaloUrl` / `tiqetsUrl` / `buildExtrasUrls` / `extrasAffiliateLinks`), atasat pe `ResultEntry.extras` in `app/api/search/[slug]/route.ts` (top 10 rezultate) si randat de `ResultCard` (butoane outline cu iconite lucide, `rel="noopener sponsored"`, label-uri i18n `results.extras.*` in toate cele 6 limbi).
+
+**Booking.com ramane neschimbat (§2.4) pana cand review-ul programului trece** — programul NU este inca conectat la proiect, deci stay link-ul pastreaza comportamentul Links-API-then-static-c84-fallback; nu il eliminam.
 
 ---
 

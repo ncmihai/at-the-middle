@@ -69,6 +69,12 @@ export type PersonLeg = {
   bookingUrl: string;
 };
 
+/** ADDITIVE (Faza 7): kinds of affiliate "extras" offered per result. */
+export type ResultExtraKey = "transfer" | "car" | "esim" | "activities";
+
+/** ADDITIVE (Faza 7): one converted affiliate "extra" link (see ResultEntry.extras). */
+export type ResultExtra = { key: ResultExtraKey; url: string };
+
 export type ResultEntry = {
   rank: number;
   destinationIata: string;
@@ -87,6 +93,14 @@ export type ResultEntry = {
    * lib/affiliate.ts bookingAffiliateLink — the "Stay in <city>" button opens it.
    */
   stayUrl?: string;
+  /**
+   * ADDITIVE (Faza 7): per-result affiliate "extras" — airport transfer (Welcome Pickups),
+   * car rental (QEEQ), eSIM (Airalo), activities (Tiqets) — converted server-side via the
+   * Travelpayouts Links API (lib/affiliate.ts extrasAffiliateLinks: one batched call of 4
+   * links per result, converted URLs cached 1 h). Present only for the top-10 results and
+   * only for the extras that converted successfully; absent otherwise.
+   */
+  extras?: ResultExtra[];
 };
 
 export type SearchProgress = {

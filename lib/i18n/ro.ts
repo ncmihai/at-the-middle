@@ -105,6 +105,14 @@ export const ro: LangMessages = {
     bookReturn: "Rezervă întors",
     stay: (city: string) => `Cazare în ${city}`,
     stayNote: "Link afiliat",
+    // ADDITIVE (Faza 7): etichetele butoanelor afiliate "extra" per rezultat
+    extras: {
+      title: "Extra",
+      transfer: "Transfer aeroport",
+      car: "Mașină de închiriat",
+      esim: "eSIM",
+      activities: "Activități",
+    },
     priceNote:
       "Prețurile sunt din momentul căutării — site-ul de rezervare arată prețul live.",
     share: "Copiază linkul de partajare",
