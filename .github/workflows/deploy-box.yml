@@ -40,33 +40,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install cloudflared and the Infisical CLI
+      - name: Install cloudflared (official apt repo — NOT GitHub releases; those 504)
         run: |
-          # pinned + retried downloads — the "latest" API call is rate-limited and produced
-          # truncated archives before (tar: Error is not recoverable)
-          for i in 1 2 3 4 5; do
-            curl -sfL --retry 3 -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 && break
-            sleep 5
-          done
-          test -s cloudflared
-          sudo install -m 755 cloudflared /usr/local/bin/cloudflared
-          VER=v0.45.4  # pinned (same as on the box); bump deliberately
-          for i in 1 2 3 4 5; do
-            curl -sfL --retry 3 -o cli.tgz "https://github.com/Infisical/cli/releases/download/$VER/cli_${VER#v}_linux_amd64.tar.gz" && break
-            sleep 5
-          done
-          test -s cli.tgz
-          tar xzf cli.tgz && sudo install -m 755 infisical /usr/local/bin/infisical
+          curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloudflare-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/cloudflare-archive-keyring.gpg] https://pkg.cloudflare.com/cloudflared $(. /etc/os-release && echo $VERSION_CODENAME) main" | sudo tee /etc/apt/sources.list.d/cloudflared.list
+          sudo apt-get update -qq && sudo apt-get install -y -qq cloudflared
+          cloudflared --version
 
-      - name: Pull the production environment from Infisical
+      - name: Pull the production environment from Infisical (REST API, no CLI binary)
         run: |
-          TOKEN=$(infisical login --method universal-auth \
-            --client-id "${{ secrets.INFISICAL_CLIENT_ID }}" \
-            --client-secret "${{ secrets.INFISICAL_CLIENT_SECRET }}" \
-            --domain https://eu.infisical.com --plain 2>/dev/null | tail -1)
-          infisical export --format dotenv --projectId "${{ secrets.INFISICAL_PROJECT_ID }}" \
-            --env prod --token "$TOKEN" --domain https://eu.infisical.com --silent > prod.env
+          # universal-auth login -> access token, then secrets/raw -> dotenv (python3 on runner)
+          TOKEN=$(curl -s -X POST https://eu.infisical.com/api/v1/auth/universal-auth/login \
+            -H 'Content-Type: application/json' \
+            -d "{\"clientId\":\"${{ secrets.INFISICAL_CLIENT_ID }}\",\"clientSecret\":\"${{ secrets.INFISICAL_CLIENT_SECRET }}\"}" \
+            | jq -r '.accessToken')
+          test -n "$TOKEN"
+          curl -sf "https://eu.infisical.com/api/v3/secrets/raw?workspaceId=${{ secrets.INFISICAL_PROJECT_ID }}&environment=prod" \
+            -H "Authorization: Bearer $TOKEN" \
+            | jq -r '.secrets[] | "\(.secretKey)=\(.secretValue | @sh)"' > prod.env
           test -s prod.env
+          grep -c '=' prod.env
 
       - name: Build the standalone artefact (prod env, NEXT_PUBLIC_* baked)
         run: |
