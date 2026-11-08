@@ -29,7 +29,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+// Popover removed for the date range — custom dropdown (radix closed it mid-range)
+
 import {
   Select,
   SelectContent,
@@ -84,6 +85,16 @@ export default function SearchForm() {
     d.setHours(0, 0, 0, 0);
     return d;
   }, []);
+
+  // Escape closes the date dropdown (unless mid-range: from picked, to pending)
+  React.useEffect(() => {
+    if (!dateOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && (!range?.from || range.to)) setDateOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dateOpen, range]);
 
   const form = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(searchRequestSchema),
@@ -331,45 +342,47 @@ export default function SearchForm() {
                 <CalendarDaysIcon className="h-4 w-4 text-primary" />
                 {messages.form.datesLabel}
               </Label>
-              {/* Trigger content stays STATIC on purpose: changing it after the first
-                  date made radix close the popover mid-range. The selected range is
-                  shown next to the trigger instead. */}
-              <div className="flex items-center gap-2">
-                <Popover
-                  open={dateOpen}
-                  onOpenChange={(o) => {
-                    // never close mid-range (from picked, to pending)
-                    if (!o && range?.from && !range.to) return;
-                    setDateOpen(o);
-                  }}
+              {/* Custom dropdown (NOT radix Popover): radix closed the calendar after
+                  the first range click. Here it closes only on backdrop click when the
+                  range is complete, on Escape, or after `to` is picked (onRangeSelect). */}
+              <div className="relative flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal text-muted-foreground sm:w-96"
+                  onClick={() => setDateOpen((o) => !o)}
+                  aria-expanded={dateOpen}
                 >
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal text-muted-foreground sm:w-96"
-                    >
-                      <CalendarDaysIcon className="h-4 w-4" />
-                      {messages.form.datesPlaceholder}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="range"
-                      selected={range}
-                      onSelect={onRangeSelect}
-                      disabled={[{ before: today }]}
-                      defaultMonth={range?.from ?? today}
-                      numberOfMonths={1}
-                    />
-                  </PopoverContent>
-                </Popover>
+                  <CalendarDaysIcon className="h-4 w-4" />
+                  {messages.form.datesPlaceholder}
+                </Button>
                 {range?.from && (
                   <span className="whitespace-nowrap text-sm text-foreground">
                     {range.to
                       ? `${format(range.from, "MMM d")} → ${format(range.to, "MMM d, yyyy")}`
                       : `${format(range.from, "MMM d, yyyy")} → …`}
                   </span>
+                )}
+                {dateOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40 cursor-default"
+                      onClick={() => {
+                        if (!range?.from || range.to) setDateOpen(false);
+                      }}
+                      aria-hidden
+                    />
+                    <div className="absolute left-0 top-full z-50 mt-2 rounded-xl border border-border bg-card p-3 shadow-md">
+                      <Calendar
+                        mode="range"
+                        selected={range}
+                        onSelect={onRangeSelect}
+                        disabled={[{ before: today }]}
+                        defaultMonth={range?.from ?? today}
+                        numberOfMonths={1}
+                      />
+                    </div>
+                  </>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">{messages.form.datesHint}</p>
