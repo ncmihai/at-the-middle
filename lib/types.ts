@@ -89,6 +89,9 @@ export type SearchProgress = {
   currentStep: string;
 };
 
+/** lat/lon of an airport (airports table / candidate shortlist) — used by the results map */
+export type AirportCoords = { latitude: number; longitude: number };
+
 export type SearchResponse = {
   slug: string;
   status: SearchStatus;
@@ -100,4 +103,8 @@ export type SearchResponse = {
   /** true when the search ran cache-only because the provider hit PROVIDER_MONTHLY_CAP this month */
   usageLimited?: boolean;
   createdAt: string;
+  /** ADDITIVE (Faza 4): the stored search params, echoed back so the results page can offer one-click "relax" re-searches */
+  request?: SearchRequest;
+  /** ADDITIVE (Faza 4): resolved coordinates for request.origins (airports table, candidate shortlist fallback), keyed by IATA — for the results map pins */
+  originCoords?: Record<string, AirportCoords | null>;
 };

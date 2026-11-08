@@ -2,14 +2,21 @@
 // Returns the SearchResponse shape (lib/types.ts): status, progress, results (ranked),
 // relaxedGapHours, error. Opportunistic cleanup of expired searches (SEARCH_RETENTION_DAYS).
 // docs/app-spec.md §3.
-import { eq, lt, or } from "drizzle-orm";
+import { eq, inArray, lt, or } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { CANDIDATES_BY_IATA } from "@/db/candidates";
 import { getDb } from "@/db/client";
-import { results, searchJobs, searches, type ResultLeg } from "@/db/schema";
+import { airports, results, searchJobs, searches, type ResultLeg } from "@/db/schema";
 import { getConfig } from "@/lib/env";
-import type { PersonLeg, ResultEntry, SearchResponse, SearchStatus } from "@/lib/types";
+import type {
+  AirportCoords,
+  PersonLeg,
+  ResultEntry,
+  SearchRequest,
+  SearchResponse,
+  SearchStatus,
+} from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,6 +87,41 @@ export async function GET(
   });
 
   const status = (job?.status === "done" ? "completed" : search.status) as SearchStatus;
+
+  // ADDITIVE (Faza 4): echo the stored search params so the results page can offer
+  // one-click "relax" re-searches (gap 30h / +50€ / +3 days).
+  const request: SearchRequest = {
+    origins: search.origins.map((o) => o.iata),
+    windowStart: search.windowStart,
+    windowEnd: search.windowEnd,
+    nights: search.nights,
+    budgetPerPersonEur: Number(search.budgetEur),
+    maxFlightMinutes: search.maxFlightMinutes ?? null,
+  };
+
+  // ADDITIVE (Faza 4): origin coordinates for the results map — airports table first,
+  // candidate shortlist as fallback (origins are usually EU airports in both).
+  const originIatas = search.origins.map((o) => o.iata);
+  const originCoords: Record<string, AirportCoords | null> = {};
+  try {
+    const rows = await db
+      .select({ iata: airports.iata, latitude: airports.latitude, longitude: airports.longitude })
+      .from(airports)
+      .where(inArray(airports.iata, originIatas));
+    for (const iata of originIatas) {
+      const row = rows.find((r) => r.iata === iata);
+      const cand = CANDIDATES_BY_IATA[iata];
+      const latitude = row?.latitude ?? cand?.latitude ?? null;
+      const longitude = row?.longitude ?? cand?.longitude ?? null;
+      originCoords[iata] =
+        latitude != null && longitude != null
+          ? { latitude: Number(latitude), longitude: Number(longitude) }
+          : null;
+    }
+  } catch (err) {
+    console.warn("[api/search] origin coords lookup failed:", err);
+  }
+
   const response: SearchResponse & { id: string } = {
     id: search.id,
     slug: search.slug,
@@ -94,6 +136,8 @@ export async function GET(
     usageLimited: search.usageLimited ? true : undefined,
     createdAt: search.createdAt.toISOString(),
     error: job?.error ?? undefined,
+    request,
+    originCoords,
   };
   return json(response);
 }

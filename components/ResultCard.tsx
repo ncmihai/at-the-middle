@@ -11,6 +11,7 @@ import { differenceInCalendarDays, parseISO } from "date-fns";
 
 import type { PersonLeg, ResultEntry } from "@/lib/types";
 import { useMessages } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import {
   formatDateDay,
   formatDateShort,
@@ -19,6 +20,7 @@ import {
   formatLocalTime,
   formatMoney,
 } from "@/lib/utils";
+import ArrivalTimeline from "@/components/ArrivalTimeline";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -26,6 +28,20 @@ import { Separator } from "@/components/ui/separator";
 
 /** gap badge is green when everyone arrives within 6 h (docs/app-spec.md §6.3) */
 const GREEN_GAP_MINUTES = 6 * 60;
+
+/** stable id for a result entry — used to lift hover/select state to the page and the map */
+export function entryKey(entry: ResultEntry): string {
+  return `${entry.rank}-${entry.destinationIata}-${entry.departureDate}`;
+}
+
+/** max over travelers of (outbound + return price) — the per-person price of this option */
+export function maxPricePerPerson(entry: ResultEntry): number {
+  const returnByOrigin = new Map(entry.return.map((l) => [l.origin, l.priceEur]));
+  return entry.outbound.reduce(
+    (m, o) => Math.max(m, o.priceEur + (returnByOrigin.get(o.origin) ?? 0)),
+    0
+  );
+}
 
 function LegRow({ leg, bookLabel }: { leg: PersonLeg; bookLabel: string }) {
   return (
@@ -59,7 +75,15 @@ function LegRow({ leg, bookLabel }: { leg: PersonLeg; bookLabel: string }) {
   );
 }
 
-export default function ResultCard({ entry }: { entry: ResultEntry }) {
+export type ResultCardProps = {
+  entry: ResultEntry;
+  /** highlighted because its map pin (or the card itself) is hovered/selected */
+  selected?: boolean;
+  /** lift hover/select to the page so the map pin can highlight in sync */
+  onSelect?: (key: string | null) => void;
+};
+
+export default function ResultCard({ entry, selected = false, onSelect }: ResultCardProps) {
   const messages = useMessages();
   const green = entry.gapMinutes <= GREEN_GAP_MINUTES;
   const returnByOrigin = new Map(entry.return.map((l) => [l.origin, l]));
@@ -71,9 +95,18 @@ export default function ResultCard({ entry }: { entry: ResultEntry }) {
     parseISO(`${entry.returnDate}T00:00:00`),
     parseISO(`${entry.departureDate}T00:00:00`)
   );
+  const key = entryKey(entry);
 
   return (
-    <Card className="overflow-hidden">
+    <Card
+      className={cn(
+        "overflow-hidden transition-shadow",
+        selected && "ring-2 ring-primary"
+      )}
+      onMouseEnter={() => onSelect?.(key)}
+      onMouseLeave={() => onSelect?.(null)}
+      onClick={() => onSelect?.(key)}
+    >
       <CardHeader className="gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
@@ -100,6 +133,7 @@ export default function ResultCard({ entry }: { entry: ResultEntry }) {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        <ArrivalTimeline legs={entry.outbound} />
         <div className="flex flex-col gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {messages.results.outbound(formatDateShort(entry.departureDate))}

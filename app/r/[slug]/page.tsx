@@ -9,10 +9,21 @@ import {
   PlaneIcon,
 } from "lucide-react";
 
-import type { SearchResponse, SearchStatus } from "@/lib/types";
+import type { ResultEntry, SearchResponse, SearchStatus } from "@/lib/types";
 import { useMessages } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
+import { CANDIDATES_BY_IATA } from "@/db/candidates";
 import AdsSlot from "@/components/AdsSlot";
 import ResultsList from "@/components/ResultsList";
+import ResultsMap, {
+  type MapDestinationPin,
+  type MapOriginPin,
+} from "@/components/ResultsMap";
+import ResultsToolbar, {
+  DEFAULT_TOOLBAR,
+  type ToolbarState,
+} from "@/components/ResultsToolbar";
+import { entryKey, maxPricePerPerson } from "@/components/ResultCard";
 import ShareButton from "@/components/ShareButton";
 import WaitingScreen from "@/components/WaitingScreen";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +46,76 @@ export default function SearchResultPage({
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [notFound, setNotFound] = React.useState(false);
   const [cancelling, setCancelling] = React.useState(false);
+  /** hovered/selected result — lifted so the map pin highlights in sync */
+  const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
+  const [toolbar, setToolbar] = React.useState<ToolbarState>(DEFAULT_TOOLBAR);
+
+  // client-side sort/filter over the fetched results (Faza 4 lot 2)
+  const visibleResults = React.useMemo<ResultEntry[]>(() => {
+    const all = data?.results ?? [];
+    let list = [...all];
+    if (toolbar.maxGapHours != null) {
+      const cap = toolbar.maxGapHours * 60;
+      list = list.filter((e) => e.gapMinutes <= cap);
+    }
+    if (toolbar.maxPriceEur != null) {
+      const cap = toolbar.maxPriceEur;
+      list = list.filter((e) => maxPricePerPerson(e) <= cap);
+    }
+    switch (toolbar.sort) {
+      case "price":
+        list.sort((a, b) => a.totalPriceEur - b.totalPriceEur);
+        break;
+      case "destination":
+        list.sort((a, b) => a.destinationCity.localeCompare(b.destinationCity));
+        break;
+      default:
+        // gap asc (server ranking), then price asc
+        list.sort((a, b) => a.gapMinutes - b.gapMinutes || a.totalPriceEur - b.totalPriceEur);
+    }
+    return list;
+  }, [data, toolbar]);
+
+  const priceCap = React.useMemo(() => {
+    const all = data?.results ?? [];
+    const fromResults = all.reduce((m, e) => Math.max(m, maxPricePerPerson(e)), 0);
+    return Math.max(fromResults, data?.request?.budgetPerPersonEur ?? 0, 1);
+  }, [data]);
+
+  // map pins: origins from the echoed request coords, destinations from the candidate shortlist
+  const mapOrigins = React.useMemo<MapOriginPin[]>(() => {
+    const req = data?.request;
+    if (!req) return [];
+    return req.origins
+      .map((iata) => {
+        const c = data?.originCoords?.[iata];
+        return c ? { iata, latitude: c.latitude, longitude: c.longitude } : null;
+      })
+      .filter((p): p is MapOriginPin => p !== null);
+  }, [data]);
+
+  const mapDestinations = React.useMemo<MapDestinationPin[]>(() => {
+    const seen = new Set<string>();
+    const pins: MapDestinationPin[] = [];
+    for (const e of data?.results ?? []) {
+      if (seen.has(e.destinationIata)) continue;
+      const c = CANDIDATES_BY_IATA[e.destinationIata];
+      if (!c) continue;
+      seen.add(e.destinationIata);
+      pins.push({
+        iata: e.destinationIata,
+        label: e.destinationCity,
+        latitude: c.latitude,
+        longitude: c.longitude,
+      });
+    }
+    return pins;
+  }, [data]);
+
+  const selectedEntry = React.useMemo(
+    () => data?.results.find((r) => entryKey(r) === selectedKey) ?? null,
+    [data, selectedKey]
+  );
 
   React.useEffect(() => {
     let stopped = false;
@@ -148,6 +229,7 @@ export default function SearchResultPage({
             results={data.results}
             onCancel={() => void cancel()}
             cancelling={cancelling}
+            request={data.request}
           />
         )}
 
@@ -184,10 +266,53 @@ export default function SearchResultPage({
                   {messages.results.gapRelaxed(data.relaxedGapHours)}
                 </p>
               )}
+              {data.usageLimited && (
+                <p className="text-xs text-muted-foreground">
+                  {messages.results.usageLimited}
+                </p>
+              )}
             </div>
-            <ResultsList results={data.results} />
-            {/* one ad slot after the results list — never between cards (app-spec §9) */}
-            <AdsSlot position="results" />
+            <div className="flex flex-col gap-4 md:grid md:grid-cols-5 md:items-start">
+              {data.request && mapOrigins.length + mapDestinations.length > 0 && (
+                <div className="md:sticky md:top-6 md:col-span-2">
+                  <ResultsMap
+                    origins={mapOrigins}
+                    destinations={mapDestinations}
+                    selectedIata={selectedEntry?.destinationIata ?? null}
+                    onSelectIata={(iata) => {
+                      const e = data.results.find((r) => r.destinationIata === iata);
+                      setSelectedKey(e ? entryKey(e) : null);
+                    }}
+                  />
+                </div>
+              )}
+              <div
+                className={cn(
+                  "flex flex-col gap-4",
+                  data.request && mapOrigins.length + mapDestinations.length > 0
+                    ? "md:col-span-3"
+                    : "md:col-span-5"
+                )}
+              >
+                {data.results.length > 0 && (
+                  <ResultsToolbar
+                    value={toolbar}
+                    onChange={setToolbar}
+                    priceCap={priceCap}
+                    shown={visibleResults.length}
+                    total={data.results.length}
+                  />
+                )}
+                <ResultsList
+                  results={visibleResults}
+                  request={data.request}
+                  selectedKey={selectedKey}
+                  onSelect={setSelectedKey}
+                />
+                {/* one ad slot after the results list — never between cards (app-spec §9) */}
+                <AdsSlot position="results" />
+              </div>
+            </div>
           </div>
         )}
       </div>

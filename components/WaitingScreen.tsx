@@ -3,9 +3,9 @@
 import * as React from "react";
 import { Loader2Icon } from "lucide-react";
 
-import type { ResultEntry, SearchProgress } from "@/lib/types";
+import type { ResultEntry, SearchProgress, SearchRequest } from "@/lib/types";
 import { useMessages } from "@/lib/i18n";
-import ResultsList from "@/components/ResultsList";
+import ResultsList, { RelaxPanel } from "@/components/ResultsList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -26,6 +26,8 @@ type WaitingScreenProps = {
   results: ResultEntry[];
   onCancel: () => void;
   cancelling?: boolean;
+  /** original search params — enables the one-click relax buttons when nothing matched yet */
+  request?: SearchRequest;
 };
 
 export default function WaitingScreen({
@@ -33,6 +35,7 @@ export default function WaitingScreen({
   results,
   onCancel,
   cancelling = false,
+  request,
 }: WaitingScreenProps) {
   const messages = useMessages();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -106,17 +109,20 @@ export default function WaitingScreen({
       </Card>
 
       {results.length === 0 && (
-        <div className="flex flex-col gap-4" aria-hidden>
-          {[0, 1, 2].map((i) => (
-            <Card key={i}>
-              <CardContent className="flex flex-col gap-3 p-6">
-                <Skeleton className="h-5 w-44" />
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-              </CardContent>
-            </Card>
-          ))}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4" aria-hidden>
+            {[0, 1, 2].map((i) => (
+              <Card key={i}>
+                <CardContent className="flex flex-col gap-3 p-6">
+                  <Skeleton className="h-5 w-44" />
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          {request && <RelaxPanel request={request} />}
         </div>
       )}
 
