@@ -24,6 +24,8 @@ import ResultsToolbar, {
   type ToolbarState,
 } from "@/components/ResultsToolbar";
 import { entryKey, maxPricePerPerson } from "@/components/ResultCard";
+import InviteButton from "@/components/InviteButton";
+import { setHistoryTopDestination } from "@/components/RecentSearches";
 import ShareButton from "@/components/ShareButton";
 import WaitingScreen from "@/components/WaitingScreen";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +84,11 @@ export default function SearchResultPage({
     const all = data?.results ?? [];
     return all.find((r) => r.rank === 1) ?? all[0] ?? null;
   }, [data]);
+
+  // Faza 4 lot 6: remember the rank-1 destination in this slug's local history entry
+  React.useEffect(() => {
+    if (bestResult) setHistoryTopDestination(slug, bestResult.destinationIata);
+  }, [bestResult, slug]);
 
   const priceCap = React.useMemo(() => {
     const all = data?.results ?? [];
@@ -193,7 +200,11 @@ export default function SearchResultPage({
             </span>
             {messages.brand.name}
           </Link>
-          {data && <ShareButton slug={slug} />}
+          <div className="flex items-center gap-2">
+            {data && <ShareButton slug={slug} />}
+            {/* Faza 4 lot 6: prefilled invite for the best result, next to the share link */}
+            {data && bestResult && <InviteButton result={bestResult} slug={slug} />}
+          </div>
         </header>
 
         {notFound && (

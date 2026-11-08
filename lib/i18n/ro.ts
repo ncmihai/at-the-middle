@@ -76,6 +76,11 @@ export const ro: LangMessages = {
     cancelDialogConfirm: "Da, anulează",
     cancelDialogDismiss: "Continuă căutarea",
   },
+  history: {
+    title: "Căutări recente",
+    clear: "Șterge",
+    chipAria: (label: string) => `Deschide căutarea: ${label}`,
+  },
   results: {
     title: "Destinațiile voastre la mijloc",
     subtitle: "Sortate după cât de aproape ajunge toată lumea, apoi după prețul total.",
@@ -99,6 +104,10 @@ export const ro: LangMessages = {
     shareCard: "Descarcă cardul de partajare",
     shareCardDownloaded: "Card de partajare descărcat — îl găsești la descărcări!",
     shareCardFailed: "Nu am putut crea cardul de partajare — mai încearcă o dată",
+    invite: "Copiază invitația",
+    inviteCopied: "Invitație copiată — lipește-o în grupul vostru!",
+    inviteTemplate: ({ city, country, dep, ret, gap, url }) =>
+      `Ne vedem în ${city} (${country}), ${dep} → ${ret}! Am găsit zboruri care ne fac să aterizăm la ${gap} diferență: ${url}`,
     cancelledBanner: "Căutare anulată — afișăm destinațiile găsite până acum.",
     failedTitle: "Căutarea a eșuat",
     failedRetry: "Pornește o căutare nouă de pe pagina principală",

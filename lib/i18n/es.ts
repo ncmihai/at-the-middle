@@ -76,6 +76,11 @@ export const es: LangMessages = {
     cancelDialogConfirm: "Sí, cancelar",
     cancelDialogDismiss: "Seguir buscando",
   },
+  history: {
+    title: "Búsquedas recientes",
+    clear: "Borrar",
+    chipAria: (label: string) => `Abrir búsqueda: ${label}`,
+  },
   results: {
     title: "Vuestros sitios en el medio",
     subtitle: "Ordenados por lo cerca que llegan todos, luego por precio total.",
@@ -99,6 +104,10 @@ export const es: LangMessages = {
     shareCard: "Descargar tarjeta para compartir",
     shareCardDownloaded: "¡Tarjeta descargada! Revísala en tus descargas.",
     shareCardFailed: "No se pudo crear la tarjeta para compartir — inténtalo de nuevo",
+    invite: "Copiar invitación",
+    inviteCopied: "¡Invitación copiada! Pégala en el chat del grupo.",
+    inviteTemplate: ({ city, country, dep, ret, gap, url }) =>
+      `¡Nos vemos en ${city} (${country}), ${dep} → ${ret}! Hemos encontrado vuelos que nos hacen aterrizar con ${gap} de diferencia: ${url}`,
     cancelledBanner: "Búsqueda cancelada: se muestran los destinos encontrados hasta ahora.",
     failedTitle: "La búsqueda ha fallado",
     failedRetry: "Inicia una nueva búsqueda desde la página principal",

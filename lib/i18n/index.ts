@@ -23,7 +23,7 @@ import { fr } from "./fr";
 import { es } from "./es";
 import { it } from "./it";
 
-export type { LangMessages, LegalContent, LegalDoc, LegalSection, Messages } from "./en";
+export type { LangMessages, LegalContent, LegalDoc, LegalSection, Messages, InviteArgs } from "./en";
 export { en };
 
 /** Cookie that stores the chosen language (read client-side, set by LangSwitcher). */

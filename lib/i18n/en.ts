@@ -13,6 +13,19 @@ export type LegalDoc = {
 };
 export type LegalContent = { privacy: LegalDoc; terms: LegalDoc };
 
+/** Placeholders of the prefilled invite message (PLAN.md Faza 4 lot 6) — lib/share.ts inviteText() fills them. */
+export type InviteArgs = {
+  city: string;
+  country: string;
+  /** short departure date, e.g. "Nov 20" */
+  dep: string;
+  /** short return date, e.g. "Nov 24" */
+  ret: string;
+  /** arrival gap, e.g. "1 h 35 min" */
+  gap: string;
+  url: string;
+};
+
 export const en = {
   brand: {
     name: "midspot",
@@ -87,6 +100,11 @@ export const en = {
     cancelDialogConfirm: "Yes, cancel",
     cancelDialogDismiss: "Keep searching",
   },
+  history: {
+    title: "Recent searches",
+    clear: "Clear",
+    chipAria: (label: string) => `Open search: ${label}`,
+  },
   results: {
     title: "Your middle spots",
     subtitle: "Ranked by how close together everyone arrives, then by total price.",
@@ -109,6 +127,10 @@ export const en = {
     shareCard: "Download share card",
     shareCardDownloaded: "Share card downloaded — check your downloads!",
     shareCardFailed: "Could not create the share card — please try again",
+    invite: "Copy invite",
+    inviteCopied: "Invitation copied — paste it to your group chat!",
+    inviteTemplate: ({ city, country, dep, ret, gap, url }: InviteArgs) =>
+      `Let's meet in ${city} (${country}), ${dep} → ${ret}! We found flights that land everyone within ${gap} of each other: ${url}`,
     cancelledBanner: "Search cancelled — showing the destinations found so far.",
     failedTitle: "The search failed",
     failedRetry: "Start a new search from the home page",

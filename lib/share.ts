@@ -1,9 +1,11 @@
 // lib/share.ts — pure, client-safe helpers shared by the dynamic OG image
-// (app/r/[slug]/opengraph-image.tsx, server) and the downloadable canvas share
-// card (components/ShareCardButton.tsx, client). PLAN.md Faza 4 lot 4+5.
+// (app/r/[slug]/opengraph-image.tsx, server), the downloadable canvas share
+// card (components/ShareCardButton.tsx, client) and the copy-invite button
+// (components/InviteButton.tsx, client). PLAN.md Faza 4 lot 4+5+6.
 //
 // No node-only or browser-only APIs at module scope: safe to import from both
 // a server route and a "use client" component.
+import { getMessages, type Language } from "@/lib/i18n";
 
 /** Canonical share-card canvas size (OG standard). */
 export const SHARE_CARD_SIZE = { width: 1200, height: 630 } as const;
@@ -90,6 +92,37 @@ export function getSiteUrl(): string {
 /** Full share URL for a search slug. */
 export function shareUrlFor(slug: string, siteUrl: string = getSiteUrl()): string {
   return `${siteUrl.replace(/\/+$/, "")}/r/${encodeURIComponent(slug)}`;
+}
+
+/** What inviteText() needs — a ResultEntry maps directly onto it. */
+export type InviteInput = {
+  destinationCity: string;
+  destinationCountry: string;
+  /** YYYY-MM-DD */
+  departureDate: string;
+  /** YYYY-MM-DD */
+  returnDate: string;
+  /** max(arriveUtc) − min(arriveUtc) of outbound legs, minutes */
+  gapMinutes: number;
+};
+
+/**
+ * Prefilled invite message for the best result, localized in `lang`
+ * (PLAN.md Faza 4 lot 6 — the "Copy invite" button on /r/[slug]).
+ * Dates/gap use the same dependency-free formatters as the share card
+ * ("Nov 20", "1 h 35 min"); the sentence template itself is per-language,
+ * from lib/i18n (results.inviteTemplate).
+ */
+export function inviteText(result: InviteInput, url: string, lang: Language): string {
+  const template = getMessages(lang).results.inviteTemplate;
+  return template({
+    city: result.destinationCity,
+    country: result.destinationCountry,
+    dep: formatCardDate(result.departureDate),
+    ret: formatCardDate(result.returnDate),
+    gap: formatGap(result.gapMinutes),
+    url,
+  });
 }
 
 /** "https://midspot.ncmihai.dev/r/x" → "midspot.ncmihai.dev" (never throws). */

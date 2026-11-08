@@ -76,6 +76,11 @@ export const it: LangMessages = {
     cancelDialogConfirm: "Sì, annulla",
     cancelDialogDismiss: "Continua la ricerca",
   },
+  history: {
+    title: "Ricerche recenti",
+    clear: "Cancella",
+    chipAria: (label: string) => `Apri ricerca: ${label}`,
+  },
   results: {
     title: "I vostri posti a metà strada",
     subtitle: "Ordinati per quanto sono vicini gli arrivi di tutti, poi per prezzo totale.",
@@ -99,6 +104,10 @@ export const it: LangMessages = {
     shareCard: "Scarica la card di condivisione",
     shareCardDownloaded: "Card di condivisione scaricata — controlla i download!",
     shareCardFailed: "Impossibile creare la card di condivisione — riprova",
+    invite: "Copia invito",
+    inviteCopied: "Invito copiato — incollalo nella chat del gruppo!",
+    inviteTemplate: ({ city, country, dep, ret, gap, url }) =>
+      `Ci vediamo a ${city} (${country}), ${dep} → ${ret}! Abbiamo trovato voli che ci fanno atterrare a ${gap} di differenza: ${url}`,
     cancelledBanner: "Ricerca annullata — mostriamo le destinazioni trovate finora.",
     failedTitle: "La ricerca è fallita",
     failedRetry: "Avvia una nuova ricerca dalla home",

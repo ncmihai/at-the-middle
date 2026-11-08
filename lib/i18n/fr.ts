@@ -76,6 +76,11 @@ export const fr: LangMessages = {
     cancelDialogConfirm: "Oui, annuler",
     cancelDialogDismiss: "Continuer la recherche",
   },
+  history: {
+    title: "Recherches récentes",
+    clear: "Effacer",
+    chipAria: (label: string) => `Ouvrir la recherche : ${label}`,
+  },
   results: {
     title: "Vos lieux du milieu",
     subtitle: "Classés selon la proximité d'arrivée de tous, puis par prix total.",
@@ -99,6 +104,10 @@ export const fr: LangMessages = {
     shareCard: "Télécharger la carte de partage",
     shareCardDownloaded: "Carte de partage téléchargée — vérifiez vos téléchargements !",
     shareCardFailed: "Impossible de créer la carte de partage — veuillez réessayer",
+    invite: "Copier l'invitation",
+    inviteCopied: "Invitation copiée — collez-la dans votre groupe !",
+    inviteTemplate: ({ city, country, dep, ret, gap, url }) =>
+      `On se retrouve à ${city} (${country}), ${dep} → ${ret} ! On a trouvé des vols qui nous font arriver à ${gap} d'écart les uns des autres : ${url}`,
     cancelledBanner: "Recherche annulée — destinations trouvées jusqu'ici affichées.",
     failedTitle: "La recherche a échoué",
     failedRetry: "Lancer une nouvelle recherche depuis l'accueil",

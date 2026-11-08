@@ -76,6 +76,11 @@ export const de: LangMessages = {
     cancelDialogConfirm: "Ja, abbrechen",
     cancelDialogDismiss: "Weiter suchen",
   },
+  history: {
+    title: "Zuletzt gesucht",
+    clear: "Leeren",
+    chipAria: (label: string) => `Suche öffnen: ${label}`,
+  },
   results: {
     title: "Eure Mittleren Orte",
     subtitle: "Sortiert danach, wie nah alle ankommen, dann nach dem Gesamtpreis.",
@@ -99,6 +104,10 @@ export const de: LangMessages = {
     shareCard: "Share-Karte herunterladen",
     shareCardDownloaded: "Share-Karte heruntergeladen — schau in deine Downloads!",
     shareCardFailed: "Share-Karte konnte nicht erstellt werden — bitte erneut versuchen",
+    invite: "Einladung kopieren",
+    inviteCopied: "Einladung kopiert — schick sie an deine Gruppe!",
+    inviteTemplate: ({ city, country, dep, ret, gap, url }) =>
+      `Wir treffen uns in ${city} (${country}), ${dep} → ${ret}! Wir haben Flüge gefunden, die uns alle innerhalb von ${gap} landen lassen: ${url}`,
     cancelledBanner: "Suche abgebrochen — bisher gefundene Ziele werden angezeigt.",
     failedTitle: "Die Suche ist fehlgeschlagen",
     failedRetry: "Neue Suche über die Startseite starten",
