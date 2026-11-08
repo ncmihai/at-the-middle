@@ -70,7 +70,8 @@ export async function GET(
     .orderBy(results.rank);
 
   const cfg = getConfig();
-  const resultEntries: ResultEntry[] = resultRows.map((r) => {
+  const resultEntries: ResultEntry[] = await Promise.all(
+    resultRows.map(async (r) => {
     const legs = r.legs as ResultLeg[];
     const dest = CANDIDATES_BY_IATA[r.destinationIata];
     const destinationCity = dest?.city ?? r.destinationIata;
@@ -84,14 +85,15 @@ export async function GET(
       gapMinutes: r.gapMinutes,
       totalPriceEur: Number(r.totalPriceEur),
       // ADDITIVE (Faza 4 lot 3): Booking.com stay link per result — city + trip dates as
-      // checkin/checkout, wrapped in the Travelpayouts click template server-side
-      // (lib/affiliate.ts). Computed at read time: no results-table migration needed and
-      // searches stored before this lot get a stay link too.
-      stayUrl: bookingAffiliateLink(destinationCity, r.departureDate, r.returnDate),
+      // checkin/checkout. Now via the Travelpayouts Links API at runtime (lib/affiliate.ts,
+      // cached 1 h) with a static c84-template fallback; computed at read time so no
+      // results-table migration is needed and older searches get a stay link too.
+      stayUrl: await bookingAffiliateLink(destinationCity, r.departureDate, r.returnDate),
       outbound: legs.map((l) => toPersonLeg(l.outbound, l.origin.iata)),
       return: legs.map((l) => toPersonLeg(l.return, l.origin.iata)),
     };
-  });
+    })
+  );
 
   const status = (job?.status === "done" ? "completed" : search.status) as SearchStatus;
 
