@@ -173,6 +173,16 @@ Notă: login rămâne „mai târziu” (link-only). Car/transfer affiliate: nu 
   STATS_SECRET (în Infisical) + /api/stats JSON — dovadă de trafic pt re-review TP (+ dashboard CF).
 - **F. Edge cache**: paginile sunt ISR; rețeta Cache Rule Cloudflare pt /destinations+/blog e în ops/README (owner o lipește în dashboard).
 
+## Faza 9 — DONE 2026-11-08 (commit 863a0d2, CI green, playwright-verified)
+
+- **Poza orașului ca fundal peste tot**: hero „Best middle" + FIECARE card de rezultat +
+  rândurile din /destinations au poza orașului full-bleed, cu scrim gradient dark bottom-up
+  (`.photo-scrim`) → text alb lizibil (rezolvat problema cu overlay-ul albastru care îneca textul).
+- Cardurile /destinations nu mai trunchiază numele („Lon...") — layout refăcut pe 2 coloane de conținut.
+- Orașele fără poză (ex. Basel) păstrează fallback-ul light cu iconiță pin.
+- Acelasi tratament pe OG cards + share card PNG. Credit foto păstrat pe imagine.
+- Verificat playwright: 5 carduri cu poză pe rezultate, 0 nume trunchiate, 0 pageerrors.
+
 ## Rămas din brainstorm (nealese încă)
 C vot pe rezultate · D badge „mai ieftin decât de obicei" · G mai multe limbi · H valută · I dark mode ·
 J PWA · K prefill origine din IP · L compară 2 rezultate · M alerte preț pe email (după review) · N webhook.
