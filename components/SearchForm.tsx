@@ -87,11 +87,12 @@ export default function SearchForm() {
     return d;
   }, []);
 
-  // Escape closes the date dropdown (unless mid-range: from picked, to pending)
+  // Escape closes the date dropdown (unless mid-range: from picked, to not yet picked)
   React.useEffect(() => {
     if (!dateOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && (!range?.from || range.to)) setDateOpen(false);
+      if (e.key === "Escape" && rangeComplete(range)) setDateOpen(false);
+      else if (e.key === "Escape" && !range?.from) setDateOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -183,6 +184,11 @@ export default function SearchForm() {
     return firstErrorMessage(errors.origins);
   }, [errors.origins, rows, messages]);
 
+  // rdp v10 returns {from: date, to: date} on the FIRST range click (single-day range),
+  // so "complete" means to is strictly after from — otherwise we'd close after one click
+  const rangeComplete = (r: DateRange | undefined) =>
+    !!r?.from && !!r.to && differenceInCalendarDays(r.to, r.from) > 0;
+
   const onRangeSelect = (next: DateRange | undefined) => {
     if (!next?.from) {
       setRange(undefined);
@@ -198,7 +204,7 @@ export default function SearchForm() {
     }
     setRange({ from, to });
     setValue("windowStart", format(from, "yyyy-MM-dd"), { shouldDirty: true });
-    if (to) {
+    if (to && differenceInCalendarDays(to, from) > 0) {
       setValue("windowEnd", format(to, "yyyy-MM-dd"), { shouldDirty: true });
       setDateOpen(false);
     } else {
@@ -359,8 +365,8 @@ export default function SearchForm() {
                 </Button>
                 {range?.from && (
                   <span className="whitespace-nowrap text-sm text-foreground">
-                    {range.to
-                      ? `${format(range.from, "MMM d")} → ${format(range.to, "MMM d, yyyy")}`
+                    {rangeComplete(range)
+                      ? `${format(range.from, "MMM d")} → ${format(range.to!, "MMM d, yyyy")}`
                       : `${format(range.from, "MMM d, yyyy")} → …`}
                   </span>
                 )}
@@ -372,7 +378,7 @@ export default function SearchForm() {
                       <div
                         className="fixed inset-0 z-[55] cursor-default"
                         onClick={() => {
-                          if (!range?.from || range.to) setDateOpen(false);
+                          if (!range?.from || rangeComplete(range)) setDateOpen(false);
                         }}
                         aria-hidden
                       />
