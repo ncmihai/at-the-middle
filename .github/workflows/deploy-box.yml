@@ -42,10 +42,20 @@ jobs:
 
       - name: Install cloudflared and the Infisical CLI
         run: |
-          curl -sL -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          # pinned + retried downloads — the "latest" API call is rate-limited and produced
+          # truncated archives before (tar: Error is not recoverable)
+          for i in 1 2 3 4 5; do
+            curl -sfL --retry 3 -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 && break
+            sleep 5
+          done
+          test -s cloudflared
           sudo install -m 755 cloudflared /usr/local/bin/cloudflared
-          VER=$(curl -s https://api.github.com/repos/Infisical/cli/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
-          curl -sL -o cli.tgz "https://github.com/Infisical/cli/releases/download/$VER/cli_${VER#v}_linux_amd64.tar.gz"
+          VER=v0.45.4  # pinned (same as on the box); bump deliberately
+          for i in 1 2 3 4 5; do
+            curl -sfL --retry 3 -o cli.tgz "https://github.com/Infisical/cli/releases/download/$VER/cli_${VER#v}_linux_amd64.tar.gz" && break
+            sleep 5
+          done
+          test -s cli.tgz
           tar xzf cli.tgz && sudo install -m 755 infisical /usr/local/bin/infisical
 
       - name: Pull the production environment from Infisical
