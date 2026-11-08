@@ -50,7 +50,7 @@ export const it: LangMessages = {
     fewerNights: "Meno notti",
     moreNights: "Più notti",
     budgetLabel: "Budget a persona",
-    budgetHint: "Copre andata + ritorno, in EUR",
+    budgetHint: (cur: string) => `Copre andata + ritorno, in ${cur}`,
     maxFlightLabel: "Tempo max di volo (opzionale)",
     maxFlightAny: "Qualsiasi durata",
     maxFlightHours: (h: number) => `Fino a ${h} h`,
@@ -61,7 +61,8 @@ export const it: LangMessages = {
       originsUnique: "Ogni viaggiatore deve avere un aeroporto di partenza diverso",
       datesRequired: "Seleziona partenza e ritorno",
       nightsRequired: "Scegli quante notti (1–30)",
-      budgetRequired: "Il budget deve essere tra 20 € e 5.000 € a persona",
+      budgetRequired: (min: string, max: string) =>
+        `Il budget deve essere tra ${min} e ${max} a persona`,
       validationFailed: "Controlla il modulo — alcuni campi non sono validi",
       rateLimited: (retryAfterSeconds?: number) =>
         `Troppe ricerche — attendi${retryAfterSeconds ? ` ${retryAfterSeconds} s` : " un momento"} e riprova`,
@@ -165,7 +166,7 @@ export const it: LangMessages = {
       title: "Nessuna corrispondenza ancora",
       body: "Amplia la ricerca e rieseguila — le ricerche ripetute riutilizzano i prezzi in cache.",
       gap30: "Allarga la differenza a 30 h",
-      budget50: "+50 € di budget",
+      budget50: (amount: string) => `+${amount} di budget`,
       days3: "+3 giorni di finestra",
       running: "Avvio nuova ricerca…",
     },
@@ -359,5 +360,10 @@ export const it: LangMessages = {
   },
   lang: {
     label: "Lingua",
+  },
+  currency: {
+    label: "Valuta",
+    rateLine: ({ rate, cur, date }: { rate: string; cur: string; date: string }) =>
+      `1 EUR = ${rate} ${cur} · tasso BCE del ${date}`,
   },
 };

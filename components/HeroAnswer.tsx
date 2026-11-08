@@ -20,8 +20,9 @@ import {
 
 import type { ResultEntry } from "@/lib/types";
 import { cityPhotoForCity, cityPhotoForIata } from "@/lib/city-photo";
+import { useCurrency } from "@/lib/currency";
 import { useMessages } from "@/lib/i18n";
-import { cn, formatDateDay, formatGap, formatMoney } from "@/lib/utils";
+import { cn, formatDateDay, formatGap } from "@/lib/utils";
 import { entryKey, maxPricePerPerson } from "@/components/ResultCard";
 import { cardDomId } from "@/components/ResultsList";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,7 @@ export type HeroAnswerProps = {
 
 export default function HeroAnswer({ bestResult, onSelect }: HeroAnswerProps) {
   const messages = useMessages();
+  const { fmt } = useCurrency();
   const key = entryKey(bestResult);
   const green = bestResult.gapMinutes <= GREEN_GAP_MINUTES;
   const firstOutbound = bestResult.outbound[0];
@@ -122,7 +124,7 @@ export default function HeroAnswer({ bestResult, onSelect }: HeroAnswerProps) {
                 variant="secondary"
                 className={cn(onPhoto && "bg-white text-slate-900 border-transparent")}
               >
-                {messages.hero.from(formatMoney(maxPricePerPerson(bestResult)))}
+                {messages.hero.from(fmt(maxPricePerPerson(bestResult)))}
               </Badge>
               <span className="inline-flex items-center gap-1.5">
                 <CalendarDaysIcon className="h-4 w-4" />

@@ -24,13 +24,21 @@
 // Kiwi.com flight links are the exception: Kiwi is on the Links API exclusion list, those
 // keep using the manual c111 click template (lib/flights/provider.ts affiliateLink).
 import { getConfig } from "@/lib/env";
+import { isCurrencyCode } from "@/lib/currency";
 import type { ResultExtra, ResultExtraKey } from "@/lib/types";
 
 /**
  * booking.com search URL for a destination city and a date range.
- * Dates are YYYY-MM-DD (checkin / checkout).
+ * Dates are YYYY-MM-DD (checkin / checkout). `currency` is the display currency
+ * passed as booking's selected_currency — only codes from our 15 supported
+ * currencies are accepted, anything else falls back to EUR.
  */
-export function bookingSearchUrl(city: string, checkin: string, checkout: string): string {
+export function bookingSearchUrl(
+  city: string,
+  checkin: string,
+  checkout: string,
+  currency: string = "EUR"
+): string {
   const params = new URLSearchParams({
     ss: city,
     checkin,
@@ -38,7 +46,7 @@ export function bookingSearchUrl(city: string, checkin: string, checkout: string
     group_adults: "2",
     no_rooms: "1",
     group_children: "0",
-    selected_currency: "EUR",
+    selected_currency: isCurrencyCode(currency) ? currency : "EUR",
   });
   return `https://www.booking.com/searchresults.html?${params.toString()}`;
 }
@@ -133,13 +141,16 @@ export async function convertViaLinksApi(urls: string[], subId: string): Promise
  * Affiliate link for a stay in `city` between `checkin` and `checkout`.
  * Uses the Links API (correct partner_url for our project) with a 1 h cache,
  * falling back to the static c84 click template, then to the plain search URL.
+ * `currency` (one of our 15 display codes) is forwarded as booking's
+ * selected_currency so the partner page opens in the visitor's currency.
  */
 export async function bookingAffiliateLink(
   city: string,
   checkin: string,
-  checkout: string
+  checkout: string,
+  currency: string = "EUR"
 ): Promise<string> {
-  const searchUrl = bookingSearchUrl(city, checkin, checkout);
+  const searchUrl = bookingSearchUrl(city, checkin, checkout, currency);
   const cached = linkCache.get(searchUrl);
   if (cached && Date.now() - cached.at < LINK_CACHE_TTL_MS) return cached.url;
   const [viaApi] = await convertViaLinksApi([searchUrl], "midspot-stay");

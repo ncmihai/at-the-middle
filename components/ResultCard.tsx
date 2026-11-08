@@ -33,6 +33,7 @@ import type {
   WeatherIconName,
 } from "@/lib/types";
 import { cityPhotoForCity, cityPhotoForIata } from "@/lib/city-photo";
+import { useCurrency } from "@/lib/currency";
 import { useMessages } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
@@ -41,7 +42,6 @@ import {
   formatDuration,
   formatGap,
   formatLocalTime,
-  formatMoney,
 } from "@/lib/utils";
 import ArrivalTimeline from "@/components/ArrivalTimeline";
 import { Badge } from "@/components/ui/badge";
@@ -240,6 +240,7 @@ function LegRow({
   bookLabel: string;
   dark?: boolean;
 }) {
+  const { fmt } = useCurrency();
   const tMuted = dark ? "text-white/80" : "text-muted-foreground";
   const tStrong = dark ? "text-white" : "text-foreground";
   return (
@@ -271,7 +272,7 @@ function LegRow({
         </div>
       </div>
       <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:gap-1">
-        <span className="text-sm font-semibold">{formatMoney(leg.priceEur)}</span>
+        <span className="text-sm font-semibold">{fmt(leg.priceEur)}</span>
         <Button
           asChild
           size="sm"
@@ -301,6 +302,7 @@ export type ResultCardProps = {
 
 export default function ResultCard({ entry, selected = false, onSelect }: ResultCardProps) {
   const messages = useMessages();
+  const { fmt } = useCurrency();
   const green = entry.gapMinutes <= GREEN_GAP_MINUTES;
   const returnByOrigin = new Map(entry.return.map((l) => [l.origin, l]));
   const perPerson = entry.outbound.map((o) => ({
@@ -436,14 +438,14 @@ export default function ResultCard({ entry, selected = false, onSelect }: Result
         <div className="flex flex-wrap items-center gap-2">
           {perPerson.map((p) => (
             <Badge key={p.origin} variant="secondary" className={solidBadge}>
-              {p.origin}: {formatMoney(p.total)} {messages.results.perPersonTotal}
+              {p.origin}: {fmt(p.total)} {messages.results.perPersonTotal}
             </Badge>
           ))}
         </div>
         <div className="flex items-center justify-between gap-2">
           <span className={cn("text-sm", tMuted)}>{messages.results.groupTotal}</span>
           <span className={cn("text-xl font-bold", onPhoto ? "text-white" : "text-primary")}>
-            {formatMoney(entry.totalPriceEur)}
+            {fmt(entry.totalPriceEur)}
           </span>
         </div>
         {entry.stayUrl && (

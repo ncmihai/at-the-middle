@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PlaneIcon } from "lucide-react";
 
 import { CONSENT_OPEN_EVENT, useMessages } from "@/lib/i18n";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
 import LangSwitcher from "@/components/LangSwitcher";
 
 /**
@@ -47,7 +48,10 @@ export default function Footer() {
           >
             {messages.footer.cookieSettings}
           </button>
-          <LangSwitcher />
+          <div className="flex items-center gap-2">
+            <CurrencySwitcher />
+            <LangSwitcher />
+          </div>
         </nav>
       </div>
     </footer>

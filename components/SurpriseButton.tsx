@@ -10,8 +10,9 @@ import { DicesIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { ResultEntry } from "@/lib/types";
+import { useCurrency } from "@/lib/currency";
 import { useMessages } from "@/lib/i18n";
-import { formatGap, formatMoney } from "@/lib/utils";
+import { formatGap } from "@/lib/utils";
 import { entryKey } from "@/components/ResultCard";
 import { cardDomId } from "@/components/ResultsList";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export default function SurpriseButton({
   className,
 }: SurpriseButtonProps) {
   const messages = useMessages();
+  const { fmt } = useCurrency();
 
   const surprise = () => {
     const top = [...results].sort((a, b) => a.rank - b.rank).slice(0, TOP_N);
@@ -48,7 +50,7 @@ export default function SurpriseButton({
       messages.surprise.toast(
         pick.destinationCity,
         formatGap(pick.gapMinutes),
-        formatMoney(pick.totalPriceEur)
+        fmt(pick.totalPriceEur)
       )
     );
   };

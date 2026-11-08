@@ -50,7 +50,7 @@ export const ro: LangMessages = {
     fewerNights: "Mai puține nopți",
     moreNights: "Mai multe nopți",
     budgetLabel: "Buget per persoană",
-    budgetHint: "Acoperă zborul dus + întors, în EUR",
+    budgetHint: (cur: string) => `Acoperă zborul dus + întors, în ${cur}`,
     maxFlightLabel: "Timp maxim de zbor (opțional)",
     maxFlightAny: "Orice durată",
     maxFlightHours: (h: number) => `Până la ${h} h`,
@@ -61,7 +61,8 @@ export const ro: LangMessages = {
       originsUnique: "Fiecare călător trebuie să aibă alt aeroport de acasă",
       datesRequired: "Selectează plecarea și întoarcerea",
       nightsRequired: "Alege câte nopți (1–30)",
-      budgetRequired: "Bugetul trebuie să fie între 20 € și 5.000 € per persoană",
+      budgetRequired: (min: string, max: string) =>
+        `Bugetul trebuie să fie între ${min} și ${max} per persoană`,
       validationFailed: "Verifică formularul — câteva câmpuri sunt invalide",
       rateLimited: (retryAfterSeconds?: number) =>
         `Prea multe căutări — așteaptă${retryAfterSeconds ? ` ${retryAfterSeconds} s` : " puțin"} și reîncearcă`,
@@ -165,7 +166,7 @@ export const ro: LangMessages = {
       title: "Nicio potrivire încă",
       body: "Lărgește căutarea și ruleaz-o din nou — căutările repetate refolosesc prețurile din cache.",
       gap30: "Relaxează diferența la 30 h",
-      budget50: "+50 € buget",
+      budget50: (amount: string) => `+${amount} buget`,
       days3: "+3 zile fereastră",
       running: "Pornim o căutare nouă…",
     },
@@ -359,6 +360,11 @@ export const ro: LangMessages = {
   },
   lang: {
     label: "Limbă",
+  },
+  currency: {
+    label: "Valută",
+    rateLine: ({ rate, cur, date }: { rate: string; cur: string; date: string }) =>
+      `1 EUR = ${rate} ${cur} · curs ECB din ${date}`,
   },
   legal: {
     privacy: {

@@ -2,6 +2,8 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format, parseISO } from "date-fns";
 
+import { formatMoneyCur, type RateMap } from "@/lib/currency";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -20,14 +22,18 @@ export function formatGap(minutes: number): string {
   return formatDuration(minutes);
 }
 
-/** EUR money, e.g. €198.50 */
+/**
+ * EUR money, e.g. €198.50 — kept for EUR callers (server share/OG assets);
+ * reimplemented via lib/currency.formatMoneyCur so the EUR output stays
+ * byte-identical (en-IE, EUR, 2 decimals).
+ */
 export function formatMoney(eur: number): string {
-  return new Intl.NumberFormat("en-IE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(eur);
+  return formatMoneyCur(eur, "EUR", { EUR: 1 });
+}
+
+/** Money in any supported display currency: convert the EUR amount, then format. */
+export function formatMoneyIn(eur: number, code: string, rates: RateMap): string {
+  return formatMoneyCur(eur, code, rates);
 }
 
 /** ISO with offset ("2026-09-03T06:40:00+03:00") -> "Sep 3, 06:40" */

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import type { ResultEntry, SearchResponse, SearchStatus } from "@/lib/types";
+import { useCurrency } from "@/lib/currency";
 import { useMessages } from "@/lib/i18n";
 import { CANDIDATES_BY_IATA } from "@/db/candidates";
 import AdsSlot from "@/components/AdsSlot";
@@ -45,6 +46,9 @@ export default function SearchResultPage({
 }) {
   const { slug } = use(params);
   const messages = useMessages();
+  // display currency — also sent as ?cur= when polling so the booking.com stay
+  // links come back with the right selected_currency
+  const { code: curCode } = useCurrency();
   const [data, setData] = React.useState<SearchResponse | null>(null);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [notFound, setNotFound] = React.useState(false);
@@ -147,9 +151,10 @@ export default function SearchResultPage({
 
     const tick = async () => {
       try {
-        const res = await fetch(`/api/search/${encodeURIComponent(slug)}`, {
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `/api/search/${encodeURIComponent(slug)}?cur=${encodeURIComponent(curCode)}`,
+          { cache: "no-store" }
+        );
         if (res.status === 404) {
           if (!stopped) {
             setNotFound(true);
@@ -181,7 +186,7 @@ export default function SearchResultPage({
       stopped = true;
       if (timer) clearInterval(timer);
     };
-  }, [slug]);
+  }, [slug, curCode]);
 
   const cancel = async () => {
     setCancelling(true);

@@ -50,7 +50,7 @@ export const es: LangMessages = {
     fewerNights: "Menos noches",
     moreNights: "Más noches",
     budgetLabel: "Presupuesto por persona",
-    budgetHint: "Cubre ida + vuelta, en EUR",
+    budgetHint: (cur: string) => `Cubre ida + vuelta, en ${cur}`,
     maxFlightLabel: "Tiempo máx. de vuelo (opcional)",
     maxFlightAny: "Cualquier duración",
     maxFlightHours: (h: number) => `Hasta ${h} h`,
@@ -61,7 +61,8 @@ export const es: LangMessages = {
       originsUnique: "Cada viajero necesita un aeropuerto de origen distinto",
       datesRequired: "Selecciona la salida y la vuelta",
       nightsRequired: "Elige cuántas noches (1–30)",
-      budgetRequired: "El presupuesto debe estar entre 20 € y 5.000 € por persona",
+      budgetRequired: (min: string, max: string) =>
+        `El presupuesto debe estar entre ${min} y ${max} por persona`,
       validationFailed: "Revisa el formulario: algunos campos no son válidos",
       rateLimited: (retryAfterSeconds?: number) =>
         `Demasiadas búsquedas: espera${retryAfterSeconds ? ` ${retryAfterSeconds} s` : " un poco"} e inténtalo de nuevo`,
@@ -165,7 +166,7 @@ export const es: LangMessages = {
       title: "Aún sin coincidencias",
       body: "Amplía la búsqueda y vuelve a ejecutarla — las búsquedas repetidas reutilizan los precios en caché.",
       gap30: "Relajar diferencia a 30 h",
-      budget50: "+50 € de presupuesto",
+      budget50: (amount: string) => `+${amount} de presupuesto`,
       days3: "+3 días de ventana",
       running: "Iniciando nueva búsqueda…",
     },
@@ -358,5 +359,10 @@ export const es: LangMessages = {
   },
   lang: {
     label: "Idioma",
+  },
+  currency: {
+    label: "Moneda",
+    rateLine: ({ rate, cur, date }: { rate: string; cur: string; date: string }) =>
+      `1 EUR = ${rate} ${cur} · tipo del BCE del ${date}`,
   },
 };

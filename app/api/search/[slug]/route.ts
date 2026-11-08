@@ -9,6 +9,7 @@ import { CANDIDATES_BY_IATA } from "@/db/candidates";
 import { getDb } from "@/db/client";
 import { airports, results, searchJobs, searches, type ResultLeg } from "@/db/schema";
 import { bookingAffiliateLink, extrasAffiliateLinks } from "@/lib/affiliate";
+import { isCurrencyCode } from "@/lib/currency";
 import { getConfig } from "@/lib/env";
 import { fetchForecast } from "@/lib/weather";
 import type {
@@ -56,6 +57,11 @@ export async function GET(
   const { slug } = await params;
   const db = getDb();
 
+  // display currency chosen client-side (?cur=) — only used for the booking.com
+  // stay link's selected_currency; validated against the 15 supported codes
+  const curParam = _request.nextUrl.searchParams.get("cur");
+  const currency = isCurrencyCode(curParam) ? curParam : "EUR";
+
   // opportunistic retention cleanup (indexed sweep; cheap)
   try {
     await db.delete(searches).where(lt(searches.expiresAt, new Date()));
@@ -97,7 +103,7 @@ export async function GET(
       // checkin/checkout. Now via the Travelpayouts Links API at runtime (lib/affiliate.ts,
       // cached 1 h) with a static c84-template fallback; computed at read time so no
       // results-table migration is needed and older searches get a stay link too.
-      stayUrl: await bookingAffiliateLink(destinationCity, r.departureDate, r.returnDate),
+      stayUrl: await bookingAffiliateLink(destinationCity, r.departureDate, r.returnDate, currency),
       outbound: legs.map((l) => toPersonLeg(l.outbound, l.origin.iata)),
       return: legs.map((l) => toPersonLeg(l.return, l.origin.iata)),
     };

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 import type { ResultEntry } from "@/lib/types";
 import { cityPhotoForIata } from "@/lib/city-photo";
+import { useCurrency } from "@/lib/currency";
 import { useMessages } from "@/lib/i18n";
 import {
   SHARE_CARD_COLORS as C,
@@ -206,6 +207,7 @@ export type ShareCardButtonProps = {
 
 export default function ShareCardButton({ result, slug, className }: ShareCardButtonProps) {
   const messages = useMessages();
+  const { fmt } = useCurrency();
   const [busy, setBusy] = React.useState(false);
 
   const download = async () => {
@@ -222,7 +224,10 @@ export default function ShareCardButton({ result, slug, className }: ShareCardBu
           pricePerPersonEur: maxPricePerPerson(result),
         },
         getSiteUrl(),
-        slug
+        slug,
+        // client share card renders the price in the selected display currency
+        // (the server OG image keeps EUR)
+        fmt
       );
       const canvas = document.createElement("canvas");
       canvas.width = SHARE_CARD_SIZE.width;

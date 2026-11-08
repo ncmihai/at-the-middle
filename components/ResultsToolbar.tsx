@@ -6,8 +6,8 @@
 // filter by max arrival gap and max price per person (slider).
 import * as React from "react";
 
+import { rateFor, useCurrency } from "@/lib/currency";
 import { useMessages } from "@/lib/i18n";
-import { formatMoney } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -53,8 +53,19 @@ export default function ResultsToolbar({
   total,
 }: ResultsToolbarProps) {
   const messages = useMessages();
+  const { code, rates, rateDate, fmt } = useCurrency();
   const cap = Math.max(1, Math.ceil(priceCap));
   const priceValue = value.maxPriceEur ?? cap;
+  const rateLine =
+    code !== "EUR"
+      ? messages.currency.rateLine({
+          rate: new Intl.NumberFormat(undefined, { maximumFractionDigits: 4 }).format(
+            rateFor(code, rates)
+          ),
+          cur: code,
+          date: rateDate || "—",
+        })
+      : null;
 
   return (
     <div className="flex flex-wrap items-end gap-x-4 gap-y-3 rounded-2xl border border-border bg-card p-3 shadow-sm">
@@ -112,7 +123,7 @@ export default function ResultsToolbar({
           <span className="font-medium text-foreground">
             {value.maxPriceEur == null
               ? messages.results.toolbar.priceAny
-              : formatMoney(value.maxPriceEur)}
+              : fmt(value.maxPriceEur)}
           </span>
         </Label>
         <Slider
@@ -132,6 +143,10 @@ export default function ResultsToolbar({
         <span className="ml-auto pb-1 text-xs text-muted-foreground">
           {messages.results.toolbar.showing(shown, total)}
         </span>
+      )}
+
+      {rateLine && (
+        <p className="w-full text-xs text-muted-foreground/70">{rateLine}</p>
       )}
     </div>
   );

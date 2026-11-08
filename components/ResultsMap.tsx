@@ -22,8 +22,9 @@ import * as React from "react";
 import { MapPinIcon } from "lucide-react";
 
 import type { ResultEntry } from "@/lib/types";
+import { useCurrency } from "@/lib/currency";
 import { useMessages } from "@/lib/i18n";
-import { cn, formatDateDay, formatGap, formatMoney } from "@/lib/utils";
+import { cn, formatDateDay, formatGap } from "@/lib/utils";
 import { CANDIDATE_DESTINATIONS } from "@/db/candidates";
 import { maxPricePerPerson } from "@/components/ResultCard";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -129,6 +130,7 @@ export default function ResultsMap({
   selectedEntry = null,
 }: ResultsMapProps) {
   const messages = useMessages();
+  const { fmt } = useCurrency();
   const [basemap, setBasemap] = React.useState<Basemap | null>(null);
 
   React.useEffect(() => {
@@ -354,7 +356,7 @@ export default function ResultsMap({
                   {messages.results.map.tooltip.total}
                 </span>
                 <span className="font-semibold">
-                  {formatMoney(selectedEntry.totalPriceEur)}
+                  {fmt(selectedEntry.totalPriceEur)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
@@ -362,7 +364,7 @@ export default function ResultsMap({
                   {messages.results.map.tooltip.perPerson}
                 </span>
                 <span className="font-medium">
-                  {formatMoney(maxPricePerPerson(selectedEntry))}
+                  {fmt(maxPricePerPerson(selectedEntry))}
                 </span>
               </div>
             </div>

@@ -11,6 +11,7 @@ import { Loader2Icon, SparklesIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { ResultEntry, SearchRequest } from "@/lib/types";
+import { useCurrency } from "@/lib/currency";
 import { useMessages } from "@/lib/i18n";
 import ResultCard, { entryKey } from "@/components/ResultCard";
 import ShareCardButton from "@/components/ShareCardButton";
@@ -50,6 +51,7 @@ export function RelaxPanel({
   usageLimited?: boolean;
 }) {
   const messages = useMessages();
+  const { fmt } = useCurrency();
   const router = useRouter();
   const [busy, setBusy] = React.useState<string | null>(null);
 
@@ -99,7 +101,9 @@ export function RelaxPanel({
     { key: "gap", label: messages.results.relax.gap30, patch: () => ({}) },
     {
       key: "budget",
-      label: messages.results.relax.budget50,
+      // "+<50 EUR expressed in the selected currency> budget" — the request itself
+      // still widens the EUR budget by 50 (internal bounds stay 20–5000 EUR)
+      label: messages.results.relax.budget50(fmt(50)),
       patch: () => ({
         budgetPerPersonEur: Math.min(5000, request.budgetPerPersonEur + 50),
       }),

@@ -74,7 +74,7 @@ export const en = {
     fewerNights: "Fewer nights",
     moreNights: "More nights",
     budgetLabel: "Budget per person",
-    budgetHint: "Covers outbound + return flight, in EUR",
+    budgetHint: (cur: string) => `Covers outbound + return flight, in ${cur}`,
     maxFlightLabel: "Max flight time (optional)",
     maxFlightAny: "Any duration",
     maxFlightHours: (h: number) => `Up to ${h} h`,
@@ -85,7 +85,8 @@ export const en = {
       originsUnique: "Each traveler needs a different home airport",
       datesRequired: "Select departure and return dates",
       nightsRequired: "Choose how many nights (1–30)",
-      budgetRequired: "Budget must be between €20 and €5,000 per person",
+      budgetRequired: (min: string, max: string) =>
+        `Budget must be between ${min} and ${max} per person`,
       validationFailed: "Please check the form — some fields are invalid",
       rateLimited: (retryAfterSeconds?: number) =>
         `Too many searches — please wait${retryAfterSeconds ? ` ${retryAfterSeconds}s` : " a moment"} and try again`,
@@ -188,7 +189,7 @@ export const en = {
       title: "No matches yet",
       body: "Widen the search and run it again — repeat searches reuse cached flight prices.",
       gap30: "Relax gap to 30 h",
-      budget50: "+€50 budget",
+      budget50: (amount: string) => `+${amount} budget`,
       days3: "+3 days window",
       running: "Starting new search…",
     },
@@ -382,6 +383,11 @@ export const en = {
   },
   lang: {
     label: "Language",
+  },
+  currency: {
+    label: "Currency",
+    rateLine: ({ rate, cur, date }: { rate: string; cur: string; date: string }) =>
+      `1 EUR = ${rate} ${cur} · ECB rate from ${date}`,
   },
   legal: {
     privacy: {

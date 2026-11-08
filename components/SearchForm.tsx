@@ -25,6 +25,7 @@ import { toast } from "sonner";
 
 import { searchRequestSchema } from "@/lib/validation";
 import type { AirportSuggestion } from "@/lib/types";
+import { currencyInfo, rateFor, useCurrency } from "@/lib/currency";
 import { useLanguage, useMessages } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -79,6 +80,11 @@ export default function SearchForm() {
   const router = useRouter();
   const messages = useMessages();
   const [lang] = useLanguage();
+  // display currency: the budget INPUT is entered in the selected currency and
+  // converted to EUR for the request (internal bounds stay 20–5000 EUR)
+  const { code: curCode, rates: curRates, fmt: fmtCur } = useCurrency();
+  const curRate = rateFor(curCode, curRates);
+  const curSymbol = currencyInfo(curCode).symbol;
   const [rows, setRows] = React.useState<OriginRow[]>([
     { id: 0, value: null },
     { id: 1, value: null },
@@ -125,6 +131,38 @@ export default function SearchForm() {
   const nights = watch("nights");
   const budget = watch("budgetPerPersonEur");
   const maxFlightMinutes = watch("maxFlightMinutes");
+
+  // The budget text field shows the EUR value converted to the selected currency.
+  // `budgetInputSrc` remembers which (EUR, rate) pair the current text was derived
+  // from, so typing in the field is not overwritten by its own round-trip, while
+  // slider changes and currency switches re-display the converted amount.
+  const [budgetInput, setBudgetInput] = React.useState<string>("");
+  const budgetInputSrc = React.useRef<{ eur: number; rate: number } | null>(null);
+  React.useEffect(() => {
+    const src = budgetInputSrc.current;
+    if (src && src.eur === budget && src.rate === curRate) {
+      budgetInputSrc.current = null;
+      return;
+    }
+    budgetInputSrc.current = null;
+    setBudgetInput(
+      Number.isFinite(budget) ? String(Math.round(Number(budget) * curRate * 100) / 100) : ""
+    );
+  }, [budget, curRate]);
+
+  // compact header readout (0 decimals, like the previous "€250")
+  const budgetHeader = React.useMemo(() => {
+    const amount = (Number(budget) || 0) * curRate;
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: curCode,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    } catch {
+      return `${curSymbol}${amount.toFixed(0)}`;
+    }
+  }, [budget, curCode, curRate, curSymbol]);
 
   const syncOrigins = (next: OriginRow[]) => {
     setRows(next);
@@ -582,7 +620,7 @@ export default function SearchForm() {
                   {messages.form.budgetLabel}
                 </Label>
                 <span className="text-sm font-semibold text-primary">
-                  €{Number(budget ?? 0).toFixed(0)}
+                  {budgetHeader}
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -602,19 +640,25 @@ export default function SearchForm() {
                 />
                 <div className="relative w-24 shrink-0">
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                    €
+                    {curSymbol}
                   </span>
                   <Input
                     type="number"
-                    min={20}
-                    max={5000}
-                    step={10}
+                    min={Math.round(20 * curRate)}
+                    max={Math.round(5000 * curRate)}
+                    step={curRate >= 100 ? 50 : 10}
                     className="w-24 pl-6"
-                    value={Number.isFinite(budget) ? budget : ""}
+                    placeholder={curCode}
+                    value={budgetInput}
                     onChange={(e) => {
-                      const n = Number(e.target.value);
-                      if (!Number.isNaN(n)) {
-                        setValue("budgetPerPersonEur", n, {
+                      const raw = e.target.value;
+                      setBudgetInput(raw);
+                      const n = Number(raw);
+                      if (raw !== "" && !Number.isNaN(n)) {
+                        // entered in the selected currency → store EUR
+                        const eur = n / curRate;
+                        budgetInputSrc.current = { eur, rate: curRate };
+                        setValue("budgetPerPersonEur", eur, {
                           shouldDirty: true,
                           shouldValidate: true,
                         });
@@ -624,9 +668,11 @@ export default function SearchForm() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">{messages.form.budgetHint}</p>
+              <p className="text-xs text-muted-foreground">{messages.form.budgetHint(curCode)}</p>
               {errors.budgetPerPersonEur && (
-                <p className="text-sm text-destructive">{messages.form.errors.budgetRequired}</p>
+                <p className="text-sm text-destructive">
+                  {messages.form.errors.budgetRequired(fmtCur(20), fmtCur(5000))}
+                </p>
               )}
             </div>
 

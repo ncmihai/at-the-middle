@@ -138,11 +138,14 @@ export function hostOf(url: string): string {
  * The share-card content model — identical for the OG image and the canvas PNG.
  * Card copy is brand-level English (a share asset for social, like the wordmark);
  * all surrounding UI chrome stays localized via lib/i18n.
+ * `priceFmt` lets the CLIENT share card render the price in the visitor's
+ * selected currency; the server OG image omits it and stays in EUR.
  */
 export function cardModel(
   result: ShareCardInput,
   siteUrl: string,
-  slug?: string
+  slug?: string,
+  priceFmt: (eur: number) => string = formatPrice
 ): ShareCardModel {
   const base = siteUrl.replace(/\/+$/, "");
   return {
@@ -151,7 +154,7 @@ export function cardModel(
       : result.destinationCity,
     subtitle: `${formatCardDate(result.departureDate)} → ${formatCardDate(result.returnDate)}`,
     gapText: `arrivals within ${formatGap(result.gapMinutes)}`,
-    priceText: `from ${formatPrice(result.pricePerPersonEur)} / person`,
+    priceText: `from ${priceFmt(result.pricePerPersonEur)} / person`,
     url: slug ? `${base}/r/${encodeURIComponent(slug)}` : base,
   };
 }
