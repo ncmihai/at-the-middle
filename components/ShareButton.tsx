@@ -5,6 +5,7 @@ import { CheckIcon, LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { useMessages } from "@/lib/i18n";
+import { shareUrlFor } from "@/lib/share";
 import { Button } from "@/components/ui/button";
 
 export default function ShareButton({
@@ -17,12 +18,8 @@ export default function ShareButton({
   const messages = useMessages();
   const [copied, setCopied] = React.useState(false);
 
-  const shareUrl = React.useMemo(() => {
-    const base =
-      process.env.NEXT_PUBLIC_SITE_URL ??
-      (typeof window !== "undefined" ? window.location.origin : "");
-    return `${base}/r/${slug}`;
-  }, [slug]);
+  // shared with the OG image / share card (lib/share.ts)
+  const shareUrl = React.useMemo(() => shareUrlFor(slug), [slug]);
 
   const markCopied = () => {
     setCopied(true);

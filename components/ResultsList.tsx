@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import type { ResultEntry, SearchRequest } from "@/lib/types";
 import { useMessages } from "@/lib/i18n";
 import ResultCard, { entryKey } from "@/components/ResultCard";
+import ShareCardButton from "@/components/ShareCardButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -124,6 +125,11 @@ export type ResultsListProps = {
   request?: SearchRequest;
   selectedKey?: string | null;
   onSelect?: (key: string | null) => void;
+  /** ADDITIVE (Faza 4 lot 4): best (rank 1) result of the whole search — powers the
+   *  downloadable share card in the results header, next to the ShareButton. */
+  bestResult?: ResultEntry | null;
+  /** share slug of this search — used for the card's URL line + download filename */
+  slug?: string;
 };
 
 export default function ResultsList({
@@ -131,6 +137,8 @@ export default function ResultsList({
   request,
   selectedKey = null,
   onSelect,
+  bestResult = null,
+  slug,
 }: ResultsListProps) {
   const messages = useMessages();
 
@@ -144,6 +152,11 @@ export default function ResultsList({
   }
   return (
     <div className="flex flex-col gap-4">
+      {bestResult && slug && (
+        <div className="flex items-center justify-end">
+          <ShareCardButton result={bestResult} slug={slug} />
+        </div>
+      )}
       {results.map((entry) => {
         const key = entryKey(entry);
         return (

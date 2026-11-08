@@ -76,6 +76,13 @@ export default function SearchResultPage({
     return list;
   }, [data, toolbar]);
 
+  // best (rank 1) result of the whole search — passed down so ResultsList can wire
+  // the downloadable share card (Faza 4 lot 4); independent of the toolbar sort/filter
+  const bestResult = React.useMemo<ResultEntry | null>(() => {
+    const all = data?.results ?? [];
+    return all.find((r) => r.rank === 1) ?? all[0] ?? null;
+  }, [data]);
+
   const priceCap = React.useMemo(() => {
     const all = data?.results ?? [];
     const fromResults = all.reduce((m, e) => Math.max(m, maxPricePerPerson(e)), 0);
@@ -308,6 +315,8 @@ export default function SearchResultPage({
                   request={data.request}
                   selectedKey={selectedKey}
                   onSelect={setSelectedKey}
+                  bestResult={bestResult}
+                  slug={slug}
                 />
                 {/* one ad slot after the results list — never between cards (app-spec §9) */}
                 <AdsSlot position="results" />
