@@ -26,7 +26,7 @@ const WHEREAMI_TIMEOUT_MS = 5000;
 /** loose IPv4 / IPv6 check — the value is also encodeURIComponent'd before use */
 const IP_RE = /^[0-9a-fA-F:.]{7,45}$/;
 
-/** our UI languages → whereami `locale` values (ro is not offered by Aviasales → en) */
+/** our UI languages → whereami `locale` values (unsupported by Aviasales → en) */
 const WHEREAMI_LOCALE: Record<(typeof SUPPORTED_LANGUAGES)[number], string> = {
   en: "en",
   ro: "en",
@@ -34,6 +34,23 @@ const WHEREAMI_LOCALE: Record<(typeof SUPPORTED_LANGUAGES)[number], string> = {
   fr: "fr",
   es: "es",
   it: "it",
+  pt: "en",
+  nl: "en",
+  pl: "pl",
+  cs: "en",
+  tr: "tr",
+  sv: "en",
+  da: "en",
+  fi: "en",
+  no: "en",
+  el: "en",
+  uk: "uk",
+  hu: "en",
+  zh: "en",
+  ja: "en",
+  ko: "en",
+  th: "th",
+  vi: "en",
 };
 
 type WhereamiResponse = {

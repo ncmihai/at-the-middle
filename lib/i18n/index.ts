@@ -22,6 +22,23 @@ import { de } from "./de";
 import { fr } from "./fr";
 import { es } from "./es";
 import { it } from "./it";
+import { pt } from "./pt";
+import { nl } from "./nl";
+import { pl } from "./pl";
+import { cs } from "./cs";
+import { tr } from "./tr";
+import { sv } from "./sv";
+import { da } from "./da";
+import { fi } from "./fi";
+import { no } from "./no";
+import { el } from "./el";
+import { uk } from "./uk";
+import { hu } from "./hu";
+import { zh } from "./zh";
+import { ja } from "./ja";
+import { ko } from "./ko";
+import { th } from "./th";
+import { vi } from "./vi";
 
 export type { LangMessages, LegalContent, LegalDoc, LegalSection, Messages, InviteArgs } from "./en";
 export { en };
@@ -38,7 +55,11 @@ export const CONSENT_CHANGE_EVENT = "midspot:consent";
 export const CONSENT_OPEN_EVENT = "midspot:consent-open";
 export type ConsentValue = "all" | "essential";
 
-export const SUPPORTED_LANGUAGES = ["en", "ro", "de", "fr", "es", "it"] as const;
+export const SUPPORTED_LANGUAGES = [
+  "en", "ro", "de", "fr", "es", "it",
+  "pt", "nl", "pl", "cs", "tr", "sv", "da", "fi", "no",
+  "el", "uk", "hu", "zh", "ja", "ko", "th", "vi",
+] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 export const DEFAULT_LANGUAGE: Language = "en";
 
@@ -50,9 +71,30 @@ export const LANGUAGE_NAMES: Record<Language, string> = {
   fr: "Français",
   es: "Español",
   it: "Italiano",
+  pt: "Português",
+  nl: "Nederlands",
+  pl: "Polski",
+  cs: "Čeština",
+  tr: "Türkçe",
+  sv: "Svenska",
+  da: "Dansk",
+  fi: "Suomi",
+  no: "Norsk",
+  el: "Ελληνικά",
+  uk: "Українська",
+  hu: "Magyar",
+  zh: "中文",
+  ja: "日本語",
+  ko: "한국어",
+  th: "ไทย",
+  vi: "Tiếng Việt",
 };
 
-export const messagesByLang: Record<Language, LangMessages> = { en, ro, de, fr, es, it };
+export const messagesByLang: Record<Language, LangMessages> = {
+  en, ro, de, fr, es, it,
+  pt, nl, pl, cs, tr, sv, da, fi, no,
+  el, uk, hu, zh, ja, ko, th, vi,
+};
 
 export function isLanguage(value: string | null | undefined): value is Language {
   return !!value && (SUPPORTED_LANGUAGES as readonly string[]).includes(value);
