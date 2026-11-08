@@ -8,6 +8,7 @@ import { travelpayoutsDataProvider } from "./travelpayouts-data";
 import { duffelProvider } from "./duffel";
 import { serpApiProvider } from "./serpapi";
 import { apifyProvider } from "./apify";
+import { fastflightsProvider } from "./fastflights";
 import { mockProvider } from "./mock";
 
 export type { FlightOption, FlightProvider };
@@ -172,6 +173,9 @@ export function getProvider(): FlightProvider {
       }
       break;
     }
+    case "fastflights":
+      provider = createFastflightsProvider();
+      break;
     case "mock":
     default:
       provider = createMockProvider();
@@ -208,6 +212,9 @@ function createSerpApiProvider(): FlightProvider {
 }
 function createApifyProvider(): FlightProvider {
   return apifyProvider;
+}
+function createFastflightsProvider(): FlightProvider {
+  return fastflightsProvider;
 }
 function createMockProvider(): FlightProvider {
   return mockProvider;

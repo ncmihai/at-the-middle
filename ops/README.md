@@ -69,3 +69,15 @@ Loader instalat în `<head>` (components/DriveScript.tsx, `NEXT_PUBLIC_DRIVE_ENA
 - Switch Links to Travelpayouts: **ON**; "Switch links from affiliate networks": **OFF**
 - Link Relevant Keywords / Insert Recommendations / Display Smart Previews / Show Targeted Offers: **OFF**
 - Exclude pages: `https://midspot.ncmihai.dev/r/*` (paginile de rezultate cu butoane Book rămân neatinse)
+
+## fastflights bridge (flight provider service, port 8850)
+
+```bash
+pip3 install --user "git+https://github.com/Mohamed3on/flights.git"
+rsync -a services/fastflights/ box:projects/fastflights/   # from the repo
+cp ops/fastflights.service ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now fastflights.service
+curl -s http://127.0.0.1:8850/health    # {"ok":true,"tz":10378}
+# Infisical midspot/prod: FLIGHTS_PROVIDER=fastflights, FASTFLIGHTS_BASE_URL=http://127.0.0.1:8850
+systemctl --user restart midspot-web.service
+```

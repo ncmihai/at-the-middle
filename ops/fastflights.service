@@ -1,0 +1,21 @@
+# fast-flights bridge (Google Flights scraper) — loopback only, port 8850.
+# Install on BC250: copy services/fastflights/ to ~/projects/fastflights/ and this
+# unit to ~/.config/systemd/user/, then:
+#   pip3 install --user "git+https://github.com/Mohamed3on/flights.git"
+#   systemctl --user daemon-reload && systemctl --user enable --now fastflights.service
+#   curl -s http://127.0.0.1:8850/health   # {"ok":true,...}
+[Unit]
+Description=midspot fast-flights bridge (Google Flights scraper, loopback 8850)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/projects/fastflights
+Environment=PORT=8850
+Environment=HOST=127.0.0.1
+ExecStart=/usr/bin/python3 %h/projects/fastflights/service.py
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target

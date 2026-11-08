@@ -359,3 +359,27 @@ FLIGHTS_ARRIVAL_GAP_RELAXED_HOURS=30
 
 **Aeroporturi**
 - https://ourairports.com/data/ ; CSV zilnic: https://davidmegginson.github.io/ourairports-data/airports.csv ; repo: https://github.com/davidmegginson/ourairports-data
+
+---
+
+## 11. ADDENDUM 2026-11-08 — ungated fallbacks researched when SerpApi free tier ran out
+
+Tested live, ranked by fit for midspot:
+
+1. **fast-flights bridge (IMPLEMENTED, `FLIGHTS_PROVIDER=fastflights`)** — open-source Google
+   Flights scraper `github.com/Mohamed3on/flights` (fork of AWeirdDev/flights; base64-protobuf,
+   no API key, EU consent cookie built in, `currency="EUR"` supported). We wrap it in a tiny
+   loopback service `services/fastflights/service.py` (port 8850, systemd unit `ops/fastflights.service`),
+   which converts local wall-clock times to UTC epochs via `tz_map.json` (IATA→IANA from Aviasales
+   airports.json). Verified: OTP→BER 2-day window → 303 options in ~4s, real prices EUR, correct
+   DST offsets; E2E search gave gap=0 (Krakow, both arrive 08:45). Free, no approval.
+   Gray ToS (scrapes Google) → local testing / fallback; production prefers Tequila.
+2. **api.skypicker.com/flights** — DEAD (Varnish 404, 2026-11-08). Was Kiwi's old public API.
+3. **Apify keyless LCC scrapers** (Ryanair etc.) — work, but Apify account + pay-per-use; Ryanair
+   official api.ryanair.com unreachable from our network (000).
+4. **jcrodriguez1989/rflights** — R wrapper over Tequila (gated). **irrisolto/skyscanner** —
+   Python client over Skyscanner app endpoints; fragile/blocked often.
+5. **Wizz Air / Ryanair own APIs** — partner keys needed; skip.
+
+Provider abstraction note: every fallback slots into `FlightProvider` (`searchOneWayRange` +
+`searchCheapestPerCity` via Travelpayouts Data API), so switching is one env var.
