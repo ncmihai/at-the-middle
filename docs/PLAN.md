@@ -138,3 +138,23 @@ Notă: login rămâne „mai târziu” (link-only). Car/transfer affiliate: nu 
 3. Kiwi approval → FLIGHTS_PROVIDER=tequila (no code change); then cache prewarm
 4. Health alerting (webhook/Telegram) on top of the 5-min health timer
 5. Price alerts / saved searches — needs login/email (later)
+
+---
+
+## Faza 7 — destinations SEO + affiliate extras (DONE 2026-11-08)
+
+- /destinations + /destinations/[city]: ALL candidate cities (485 urls in sitemap, ISR 1h,
+  per-city OG cards, i18n 6 langs). Verified: /destinations/krakow → 200 "Meet in Krakow · midspot".
+- Per-result affiliate extras via Travelpayouts Links API (batched ≤10/call, 1h cache, top-10 results):
+  transfer (Welcome Pickups), car (QEEQ), eSIM (Airalo), activities (Tiqets) — verified live:
+  302 → brand URL with aff_track_id=…-802224 (attribution works).
+- Kiwi.com flights program (3%) is CONNECTED → Book links attribute already.
+- Booking.com NOT connected (review: needs 3 months stable traffic + travel content) → re-apply after 9 Nov.
+
+## Travelpayouts review unblock plan (owner: traffic + content)
+1. Blog /blog with 3-5 real posts (owner writes) — infra next faja
+2. TikTok start after blog exists (assets ready: share cards, OG, map, gap-0 results)
+3. Destination pages already live (this faja) — count as content base
+4. Re-submit Midspot project for review after 9 Nov with traffic stats + blog
+5. Meanwhile use connected programs only (list in Q&A 2026-11-08): Kiwi, Aviasales(hot 40%),
+   WelcomePickups, QEEQ, Airalo, Tiqets, Klook, GetTransfer, Kiwitaxi, Localrent, AutoEurope, ...
