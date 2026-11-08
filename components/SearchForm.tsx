@@ -372,7 +372,7 @@ export default function SearchForm() {
                       }}
                       aria-hidden
                     />
-                    <div className="absolute left-0 top-full z-50 mt-2 rounded-xl border border-border bg-card p-3 shadow-md">
+                    <div className="absolute left-0 top-full z-[60] mt-2 rounded-xl border border-border bg-card p-3 shadow-md max-sm:fixed max-sm:inset-x-2 max-sm:bottom-2 max-sm:top-auto max-sm:mt-0">
                       <Calendar
                         mode="range"
                         selected={range}
