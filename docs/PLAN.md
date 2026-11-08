@@ -158,3 +158,21 @@ Notă: login rămâne „mai târziu” (link-only). Car/transfer affiliate: nu 
 4. Re-submit Midspot project for review after 9 Nov with traffic stats + blog
 5. Meanwhile use connected programs only (list in Q&A 2026-11-08): Kiwi, Aviasales(hot 40%),
    WelcomePickups, QEEQ, Airalo, Tiqets, Klook, GetTransfer, Kiwitaxi, Localrent, AutoEurope, ...
+
+---
+
+## Faza 8 — DONE 2026-11-08 (commits 6bfb1c5, f45699f, 26d8a1d, CI green)
+
+- **A. Poze orașe**: 378/485 orașe cu poze free (Wikimedia Commons, doar licențe CC0/CC-BY/PD,
+  cu credit foto pe pagină) → mirror în Digi Storage (midspot/cities/<slug>.jpg) → hero pe
+  /destinations/[city], thumbs în index, fundal pe OG cards + share card + HeroAnswer.
+  Pipeline: scripts/fetch-city-images.ts (idempotent; re-run pentru a reînnoi linkurile semnate Digi).
+- **B. Vremea la destinație**: open-meteo (free, fără cheie) — pe cardurile de rezultate (zilele
+  călătoriei) și pe paginile orașelor (următoarele 7 zile), cache 30 min, iconițe WMO, 6 limbi.
+- **E. Analytics proprii**: tabel pageviews + contor în proxy (fără IP-uri) + /stats protejat cu
+  STATS_SECRET (în Infisical) + /api/stats JSON — dovadă de trafic pt re-review TP (+ dashboard CF).
+- **F. Edge cache**: paginile sunt ISR; rețeta Cache Rule Cloudflare pt /destinations+/blog e în ops/README (owner o lipește în dashboard).
+
+## Rămas din brainstorm (nealese încă)
+C vot pe rezultate · D badge „mai ieftin decât de obicei" · G mai multe limbi · H valută · I dark mode ·
+J PWA · K prefill origine din IP · L compară 2 rezultate · M alerte preț pe email (după review) · N webhook.
