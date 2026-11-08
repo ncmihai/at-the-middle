@@ -81,6 +81,12 @@ export type ResultEntry = {
   totalPriceEur: number;
   outbound: PersonLeg[];
   return: PersonLeg[];
+  /**
+   * ADDITIVE (Faza 4 lot 3): Booking.com affiliate search URL for this destination
+   * (city + departure/return dates as checkin/checkout), computed server-side by
+   * lib/affiliate.ts bookingAffiliateLink — the "Stay in <city>" button opens it.
+   */
+  stayUrl?: string;
 };
 
 export type SearchProgress = {

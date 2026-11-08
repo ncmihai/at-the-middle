@@ -5,6 +5,7 @@ import {
   CalendarDaysIcon,
   ClockIcon,
   ExternalLinkIcon,
+  HotelIcon,
   MapPinIcon,
 } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from "date-fns";
@@ -166,6 +167,19 @@ export default function ResultCard({ entry, selected = false, onSelect }: Result
             {formatMoney(entry.totalPriceEur)}
           </span>
         </div>
+        {entry.stayUrl && (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Button asChild size="sm" variant="outline">
+              <a href={entry.stayUrl} target="_blank" rel="noopener sponsored">
+                <HotelIcon className="h-3.5 w-3.5" />
+                {messages.results.stay(entry.destinationCity)}
+              </a>
+            </Button>
+            <span className="text-[11px] text-muted-foreground">
+              {messages.results.stayNote}
+            </span>
+          </div>
+        )}
         <p className="text-xs text-muted-foreground">{messages.results.priceNote}</p>
       </CardFooter>
     </Card>

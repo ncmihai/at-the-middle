@@ -89,6 +89,8 @@ export const de: LangMessages = {
     groupTotal: "Gesamt für die Gruppe",
     bookOutbound: "Hinflug buchen",
     bookReturn: "Rückflug buchen",
+    stay: (city: string) => `Unterkunft in ${city}`,
+    stayNote: "Affiliate-Link",
     priceNote:
       "Preise vom Zeitpunkt der Suche — die Buchungsseite zeigt den Live-Preis.",
     share: "Share-Link kopieren",

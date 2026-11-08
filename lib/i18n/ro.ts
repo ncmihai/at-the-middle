@@ -89,6 +89,8 @@ export const ro: LangMessages = {
     groupTotal: "Total pentru grup",
     bookOutbound: "Rezervă dus",
     bookReturn: "Rezervă întors",
+    stay: (city: string) => `Cazare în ${city}`,
+    stayNote: "Link afiliat",
     priceNote:
       "Prețurile sunt din momentul căutării — site-ul de rezervare arată prețul live.",
     share: "Copiază linkul de partajare",

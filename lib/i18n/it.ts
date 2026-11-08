@@ -89,6 +89,8 @@ export const it: LangMessages = {
     groupTotal: "Totale per il gruppo",
     bookOutbound: "Prenota andata",
     bookReturn: "Prenota ritorno",
+    stay: (city: string) => `Alloggio a ${city}`,
+    stayNote: "Link di affiliazione",
     priceNote:
       "I prezzi sono di quando è stata fatta la ricerca — il sito di prenotazione mostra il prezzo in tempo reale.",
     share: "Copia link di condivisione",

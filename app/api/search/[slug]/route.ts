@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { CANDIDATES_BY_IATA } from "@/db/candidates";
 import { getDb } from "@/db/client";
 import { airports, results, searchJobs, searches, type ResultLeg } from "@/db/schema";
+import { bookingAffiliateLink } from "@/lib/affiliate";
 import { getConfig } from "@/lib/env";
 import type {
   AirportCoords,
@@ -72,15 +73,21 @@ export async function GET(
   const resultEntries: ResultEntry[] = resultRows.map((r) => {
     const legs = r.legs as ResultLeg[];
     const dest = CANDIDATES_BY_IATA[r.destinationIata];
+    const destinationCity = dest?.city ?? r.destinationIata;
     return {
       rank: r.rank,
       destinationIata: r.destinationIata,
-      destinationCity: dest?.city ?? r.destinationIata,
+      destinationCity,
       destinationCountry: dest?.country ?? "",
       departureDate: r.departureDate,
       returnDate: r.returnDate,
       gapMinutes: r.gapMinutes,
       totalPriceEur: Number(r.totalPriceEur),
+      // ADDITIVE (Faza 4 lot 3): Booking.com stay link per result — city + trip dates as
+      // checkin/checkout, wrapped in the Travelpayouts click template server-side
+      // (lib/affiliate.ts). Computed at read time: no results-table migration needed and
+      // searches stored before this lot get a stay link too.
+      stayUrl: bookingAffiliateLink(destinationCity, r.departureDate, r.returnDate),
       outbound: legs.map((l) => toPersonLeg(l.outbound, l.origin.iata)),
       return: legs.map((l) => toPersonLeg(l.return, l.origin.iata)),
     };

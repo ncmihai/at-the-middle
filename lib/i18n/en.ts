@@ -100,6 +100,8 @@ export const en = {
     groupTotal: "Total for the group",
     bookOutbound: "Book outbound",
     bookReturn: "Book return",
+    stay: (city: string) => `Stay in ${city}`,
+    stayNote: "Affiliate link",
     priceNote: "Prices are from the moment of search — the booking site shows the live price.",
     share: "Copy share link",
     copied: "Share link copied!",

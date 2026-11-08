@@ -151,6 +151,17 @@ https://c111.travelpayouts.com/click?shmarker=78606.kiwicom&promo_id=3791&source
 Tabel per-minut (din 14.06.2024): `/v1/prices/calendar` 300, `/v1/prices/cheap` 300, `/v1/prices/direct` 180, `/v1/prices/monthly` 60, `/v1/city-directions` 600, `/v2/prices/latest` 300, `/v2/prices/month-matrix` 300, `/v2/prices/nearest-places-matrix` 60, `/v2/prices/week-matrix` 60, `/v2/prices/special-offers` 600, `/data/*.json` 600, `/v3/*` 300–600, `/statistics/v1/execute_query` 30, `/graphql/v1/` 60. Peste limita → **429**, bloc pana la resetul minutului, auto-deblocare; header-e `X-Rate-Limit`, `X-Rate-Limit-Remaining`, `X-Rate-Limit-Reset`. Links API: 100 req/min per marker.
 Doc: https://support.travelpayouts.com/hc/en-us/articles/4402565416594-API-rate-limits
 
+### 2.4 Booking.com — stay link per result (Faza 4 lot 3)
+
+Per search result we also emit a **cazare (stay) link** to Booking.com, via the same click template but with the **Booking.com program promo_id = `3650`** (source: the official Travelpayouts offer page `travelpayouts.com/en/offers/bookingcom-affiliate-program/`, whose "PAGE ADDRESS LINK" is `https://c84.travelpayouts.com/click?shmarker=…&promo_id=3650&source_type=customlink&type=click&custom_url=https://booking.com` — the `cNN.travelpayouts.com` click hosts are interchangeable, we use `c111` like the Kiwi links):
+
+```
+custom_url = https://www.booking.com/searchresults.html?ss=<CITY>&checkin=<YYYY-MM-DD>&checkout=<YYYY-MM-DD>&group_adults=2&no_rooms=1&group_children=0&selected_currency=EUR
+link       = https://c111.travelpayouts.com/click?shmarker={TRAVELPAYOUTS_MARKER}.{TRAVELPAYOUTS_SUB_ID}&promo_id={TRAVELPAYOUTS_BOOKING_PROMO_ID}&source_type=customlink&type=click&custom_url={encodeURIComponent(custom_url)}
+```
+
+`ss` = destination city name (from the candidate shortlist), `checkin`/`checkout` = the result's departure/return dates. Implemented in `lib/affiliate.ts` (`bookingSearchUrl` / `bookingAffiliateLink`, server-only), surfaced on `ResultEntry.stayUrl` and rendered by `ResultCard` ("Stay in `<city>`", `rel="noopener sponsored"`). Env-overridable via `TRAVELPAYOUTS_BOOKING_PROMO_ID` (default `3650`); with no marker or no promo id it degrades to the plain booking.com search URL (no tracking). User books at the SAME price — commission is paid by Booking.com.
+
 ---
 
 ## 3. Amadeus (alternativa pentru dev / istoric)
@@ -269,6 +280,7 @@ TRAVELPAYOUTS_MARKER=...         # partner ID (marker numeric din cont)
 TRAVELPAYOUTS_TRS=...            # project ID (trs) pt Links API
 TRAVELPAYOUTS_SUB_ID=midspot     # sub_id default pt shmarker / links API
 TRAVELPAYOUTS_KIWI_PROMO_ID=3791 # promo_id program Kiwi.com (pentru template c111.travelpayouts.com/click)
+TRAVELPAYOUTS_BOOKING_PROMO_ID=3650 # promo_id program Booking.com (linkuri de cazare per rezultat, vezi §2.4)
 
 # Kiwi Tequila (apeluri /v2/search, /locations)
 KIWI_TEQUILA_API_KEY=...         # header: apikey

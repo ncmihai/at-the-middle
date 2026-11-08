@@ -23,6 +23,8 @@ export type MidspotConfig = {
   travelpayoutsTrs?: string;
   travelpayoutsSubId: string;
   travelpayoutsKiwiPromoId: string;
+  /** promo_id of the Booking.com program on Travelpayouts, for the stay links (c111 click template) */
+  travelpayoutsBookingPromoId: string;
   duffelAccessToken?: string;
   duffelMode: "test" | "prod";
   serpapiApiKey?: string;
@@ -77,6 +79,9 @@ function buildConfig(): MidspotConfig {
     travelpayoutsSubId: process.env.TRAVELPAYOUTS_SUB_ID ?? "midspot",
     travelpayoutsKiwiPromoId:
       process.env.TRAVELPAYOUTS_KIWI_PROMO_ID ?? process.env.KIWI_PROMO_ID ?? "3791",
+    // Booking.com program on Travelpayouts — promo_id shown on the official offer page
+    // (travelpayouts.com/en/offers/bookingcom-affiliate-program/): 3650.
+    travelpayoutsBookingPromoId: process.env.TRAVELPAYOUTS_BOOKING_PROMO_ID ?? "3650",
     duffelAccessToken: process.env.DUFFEL_ACCESS_TOKEN,
     duffelMode: process.env.DUFFEL_MODE === "prod" ? "prod" : "test",
     serpapiApiKey: process.env.SERPAPI_API_KEY,
