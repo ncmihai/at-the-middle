@@ -120,3 +120,21 @@ Marketing: TikTok (mai târziu). Până atunci: produs bun, de revisitat. Ads Et
 6. **Istoric local** (localStorage) + buton „copiază invitația” cu text precompletat
 
 Notă: login rămâne „mai târziu” (link-only). Car/transfer affiliate: nu acum, doar Booking.
+
+---
+
+## Faza 6 — anywhere UX + social proof (DONE 2026-11-08, commit f83f88a, CI green)
+
+- /r/[slug] hero banner "Best middle for you: {city}" (rank-1, gap badge, price/person, dates)
+- 🎲 "Surprise me" dice — random top-10 result, map pin highlight + tooltip, smooth scroll, toast
+  (verified live: "🎲 Budapest — 2 h 15 min apart, €373.00")
+- Landing "Popular middle spots" — /api/popular (aggregate counts, last 30d, min 3 searches,
+  5-min cache, 60/min/IP) → verified: Budapest ×37, Maribor ×14, Krakow ×14, …
+- Note: the search was already "anywhere" (no destination field) — this made it visible + fun.
+
+## Remaining roadmap (owner-approved order)
+1. TikTok content using share cards / OG images / map / gap-0 results
+2. Ads (EthicalAds) when account approved → IDs in Infisical + NEXT_PUBLIC_ADS_ENABLED=true
+3. Kiwi approval → FLIGHTS_PROVIDER=tequila (no code change); then cache prewarm
+4. Health alerting (webhook/Telegram) on top of the 5-min health timer
+5. Price alerts / saved searches — needs login/email (later)
