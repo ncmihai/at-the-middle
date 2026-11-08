@@ -183,6 +183,33 @@ Notă: login rămâne „mai târziu” (link-only). Car/transfer affiliate: nu 
 - Acelasi tratament pe OG cards + share card PNG. Credit foto păstrat pe imagine.
 - Verificat playwright: 5 carduri cu poză pe rezultate, 0 nume trunchiate, 0 pageerrors.
 
+## Faza 10 — DONE 2026-11-08 (commits 92b4c0e valută, 01295bb dark, e817e87 limbi, 21f7a95 blog; CI green, playwright-verified)
+
+- **A. Valută (top 15)**: EUR RON USD GBP CHF PLN CZK SEK HUF DKK NOK BGN TRY ILS AED. Curs ECB via
+  frankfurter.app (free, cache 24h + fallback static rates), `/api/rates` pt client, cookie `midspot-cur`,
+  switcher în footer lângă limbă. Prețurile interne rămân EUR; doar afișarea convertește. Bugetul din
+  formular se introduce în moneda aleasă (placeholder = codul), relax „+50” afișează echivalentul în
+  moneda curentă (adaugă tot 50 EUR intern), pe rezultate apare linia „1 EUR = 5.3403 RON · ECB rate from …”,
+  iar linkurile Booking primesc `selected_currency=<cod>` (param `?cur=` pe API). OG/share server rămân EUR.
+- **B. Dark mode**: toggle Light/Dark/System în footer (cookie `midspot-theme`, default system =
+  prefers-color-scheme), paletă slate (bg slate-950, carduri slate-900) prin override pe aceiași tokeni
+  `@theme` într-un block `.dark` + `@custom-variant dark (class)`, script inline no-flash în `<head>`
+  (CSP existent permite deja inline). Fix-uri dark: pe hartă, carduri, badge-uri, pop-up-uri.
+  Verificat: persistă după reload, cardurile cu poză rămân lizibile (scrim dark peste poză).
+- **C. 23 limbi**: adăugate pt nl pl cs tr sv da fi no el uk hu zh ja ko th vi (fără RTL încă).
+  Fiecare fișier `lib/i18n/<cod>.ts` are structura identică cu en (241 chei leaf; `legal` opțional,
+  fallback EN). Paritate enforced by `npm run i18n:check` (scripts/check-i18n.ts). Switcher automat pe
+  toate cele 23; `/api/location` mapează limbile noi către locale whereami (fallback en).
+  Verificat live: JA → H1 „真ん中で会いましょう”, PL → „Wasze miejsca pośrodku”.
+- **D. Blog — primele 3 postări reale EN** (~900-1000 cuv, conținut original pt review TP):
+  `prague-one-weekend-is-not-enough` (inclusiv unghiul „Viena mai ieftină”: muzee, metroul cu scări
+  rulante de 87 m Náměstí Míru), `tallinn-the-quiet-nordic-capital`,
+  `bologna-why-groups-keep-landing-there`. Fiecare post are card affiliate la final
+  (frontmatter `city:` → components/BlogAffiliateCard.tsx, server-side: zbor Kiwi + transfer
+  Welcome Pickups + activități Tiqets, `sub_id=midspot-blog-card`, dezvăluire afiliere, link
+  `rel="noopener sponsored"`). Sitemap + RSS le preiau automat. Verificat live: 5 postări în /blog,
+  card cu 3 linkuri sponsorizate pe fiecare post nou, RSS/sitemap OK.
+
 ## Rămas din brainstorm (nealese încă)
 C vot pe rezultate · D badge „mai ieftin decât de obicei" · G mai multe limbi · H valută · I dark mode ·
 J PWA · K prefill origine din IP · L compară 2 rezultate · M alerte preț pe email (după review) · N webhook.
