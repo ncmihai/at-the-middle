@@ -13,6 +13,8 @@ import type { ResultEntry, SearchResponse, SearchStatus } from "@/lib/types";
 import { useMessages } from "@/lib/i18n";
 import { CANDIDATES_BY_IATA } from "@/db/candidates";
 import AdsSlot from "@/components/AdsSlot";
+import HeroAnswer from "@/components/HeroAnswer";
+import SurpriseButton from "@/components/SurpriseButton";
 import ResultsList from "@/components/ResultsList";
 import ResultsMap, {
   type MapDestinationPin,
@@ -130,6 +132,15 @@ export default function SearchResultPage({
     [data, selectedKey]
   );
 
+  // Faza 6: one handler shared by the map pins and the SurpriseButton — iata → selectedKey
+  const handleSelectIata = React.useCallback(
+    (iata: string | null) => {
+      const e = data?.results.find((r) => r.destinationIata === iata);
+      setSelectedKey(e ? entryKey(e) : null);
+    },
+    [data]
+  );
+
   React.useEffect(() => {
     let stopped = false;
     let timer: ReturnType<typeof setInterval> | undefined;
@@ -203,6 +214,10 @@ export default function SearchResultPage({
             {data && <ShareButton slug={slug} />}
             {/* Faza 4 lot 6: prefilled invite for the best result, next to the share link */}
             {data && bestResult && <InviteButton result={bestResult} slug={slug} />}
+            {/* Faza 6 "surprinde-mă": dice button — random top-10 result, highlights its pin + card */}
+            {data && bestResult && (
+              <SurpriseButton results={data.results} onSelectIata={handleSelectIata} />
+            )}
           </div>
         </header>
 
@@ -290,16 +305,15 @@ export default function SearchResultPage({
                 </p>
               )}
             </div>
+            {/* Faza 6: hero banner with the best middle (rank 1), above the map */}
+            {bestResult && <HeroAnswer bestResult={bestResult} onSelect={setSelectedKey} />}
             {/* map v2: full-width block above the results list (no side grid) */}
             {data.request && mapOrigins.length + mapDestinations.length > 0 && (
               <ResultsMap
                 origins={mapOrigins}
                 destinations={mapDestinations}
                 selectedIata={selectedEntry?.destinationIata ?? null}
-                onSelectIata={(iata) => {
-                  const e = data.results.find((r) => r.destinationIata === iata);
-                  setSelectedKey(e ? entryKey(e) : null);
-                }}
+                onSelectIata={handleSelectIata}
                 selectedEntry={selectedEntry}
               />
             )}

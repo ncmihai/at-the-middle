@@ -6,6 +6,7 @@
 //   general            240/min/IP  (RATE_LIMIT_PER_MIN)
 //   POST /api/search     5/min/IP  (RATE_LIMIT_SEARCH_PER_MIN — costs external API calls)
 //   GET  /api/airports  30/min/IP  (RATE_LIMIT_AIRPORTS_PER_MIN)
+//   GET  /api/popular   60/min/IP  (Faza 6 — landing "popular middle spots", aggregated read)
 import { NextRequest, NextResponse } from "next/server";
 
 import { getConfig } from "@/lib/env";
@@ -22,6 +23,9 @@ export function proxy(request: NextRequest) {
     limit = cfg.rateLimitSearchPerMin;
   } else if (path === "/api/airports" && request.method === "GET") {
     limit = cfg.rateLimitAirportsPerMin;
+  } else if (path === "/api/popular" && request.method === "GET") {
+    // Faza 6: /api/popular — cheap aggregated read powering the landing chips
+    limit = 60;
   }
 
   const slot = takeRequestSlot(key, Date.now(), limit);

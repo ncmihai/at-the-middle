@@ -183,6 +183,22 @@ export const en = {
       running: "Starting new search…",
     },
   },
+  hero: {
+    title: (city: string, country: string) => `Best middle for you: ${city}, ${country}`,
+    gap: (text: string) => `everyone arrives within ${text}`,
+    from: (price: string) => `from ${price} / person`,
+    dates: (dep: string, ret: string) => `${dep} → ${ret}`,
+    cta: "See this option",
+  },
+  surprise: {
+    button: "Surprise me",
+    toast: (city: string, gap: string, total: string) => `🎲 ${city} — ${gap} apart, ${total}`,
+  },
+  popular: {
+    title: "Popular middle spots",
+    chip: (city: string, count: number) => `${city} ×${count}`,
+    empty: "No popular spots yet",
+  },
   ads: {
     label: "Sponsored",
   },

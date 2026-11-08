@@ -160,6 +160,22 @@ export const es: LangMessages = {
       running: "Iniciando nueva búsqueda…",
     },
   },
+  hero: {
+    title: (city: string, country: string) => `El mejor punto medio para vosotros: ${city}, ${country}`,
+    gap: (text: string) => `todos llegan con menos de ${text} de diferencia`,
+    from: (price: string) => `desde ${price} / persona`,
+    dates: (dep: string, ret: string) => `${dep} → ${ret}`,
+    cta: "Ver esta opción",
+  },
+  surprise: {
+    button: "Sorpréndeme",
+    toast: (city: string, gap: string, total: string) => `🎲 ${city} — ${gap} de diferencia, ${total}`,
+  },
+  popular: {
+    title: "Puntos medios populares",
+    chip: (city: string, count: number) => `${city} ×${count}`,
+    empty: "Aún no hay destinos populares",
+  },
   ads: {
     label: "Patrocinado",
   },

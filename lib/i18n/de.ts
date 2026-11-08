@@ -160,6 +160,22 @@ export const de: LangMessages = {
       running: "Neue Suche wird gestartet…",
     },
   },
+  hero: {
+    title: (city: string, country: string) => `Bester Treffpunkt für euch: ${city}, ${country}`,
+    gap: (text: string) => `alle kommen innerhalb von ${text} an`,
+    from: (price: string) => `ab ${price} / Person`,
+    dates: (dep: string, ret: string) => `${dep} → ${ret}`,
+    cta: "Diese Option ansehen",
+  },
+  surprise: {
+    button: "Überrasch mich",
+    toast: (city: string, gap: string, total: string) => `🎲 ${city} — ${gap} Unterschied, ${total}`,
+  },
+  popular: {
+    title: "Beliebte Treffpunkte",
+    chip: (city: string, count: number) => `${city} ×${count}`,
+    empty: "Noch keine beliebten Ziele",
+  },
   ads: {
     label: "Werbung",
   },

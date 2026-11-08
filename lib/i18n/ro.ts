@@ -160,6 +160,22 @@ export const ro: LangMessages = {
       running: "Pornim o căutare nouă…",
     },
   },
+  hero: {
+    title: (city: string, country: string) => `Cel mai bun mijloc pentru voi: ${city}, ${country}`,
+    gap: (text: string) => `toată lumea ajunge în ${text}`,
+    from: (price: string) => `de la ${price} / persoană`,
+    dates: (dep: string, ret: string) => `${dep} → ${ret}`,
+    cta: "Vezi această opțiune",
+  },
+  surprise: {
+    button: "Surprinde-mă",
+    toast: (city: string, gap: string, total: string) => `🎲 ${city} — la ${gap} diferență, ${total}`,
+  },
+  popular: {
+    title: "Destinații mijloc populare",
+    chip: (city: string, count: number) => `${city} ×${count}`,
+    empty: "Încă nicio destinație populară",
+  },
   ads: {
     label: "Sponsorizat",
   },

@@ -30,6 +30,14 @@ function plusDaysUtc(iso: string, days: number): string {
 }
 
 /**
+ * DOM id of a result card (Faza 6) — HeroAnswer / SurpriseButton scroll the
+ * chosen card into view via document.getElementById(cardDomId(entryKey(entry))).
+ */
+export function cardDomId(key: string): string {
+  return `result-card-${key}`;
+}
+
+/**
  * One-click relax buttons: re-run the search with one widened parameter and
  * navigate to the new share page. Server auto-relaxes the gap to 30 h, so the
  * gap button re-submits the same params (useful after usageLimited / cache-only).
@@ -173,12 +181,14 @@ export default function ResultsList({
       {results.map((entry) => {
         const key = entryKey(entry);
         return (
-          <ResultCard
-            key={key}
-            entry={entry}
-            selected={key === selectedKey}
-            onSelect={onSelect}
-          />
+          // Faza 6: wrapper carries the DOM id so the hero/surprise buttons can scroll to this card
+          <div key={key} id={cardDomId(key)}>
+            <ResultCard
+              entry={entry}
+              selected={key === selectedKey}
+              onSelect={onSelect}
+            />
+          </div>
         );
       })}
     </div>

@@ -160,6 +160,22 @@ export const fr: LangMessages = {
       running: "Nouvelle recherche en cours…",
     },
   },
+  hero: {
+    title: (city: string, country: string) => `Le meilleur point de rencontre pour vous : ${city}, ${country}`,
+    gap: (text: string) => `tout le monde arrive à moins de ${text} d'écart`,
+    from: (price: string) => `dès ${price} / personne`,
+    dates: (dep: string, ret: string) => `${dep} → ${ret}`,
+    cta: "Voir cette option",
+  },
+  surprise: {
+    button: "Surprends-moi",
+    toast: (city: string, gap: string, total: string) => `🎲 ${city} — écart de ${gap}, ${total}`,
+  },
+  popular: {
+    title: "Points de rencontre populaires",
+    chip: (city: string, count: number) => `${city} ×${count}`,
+    empty: "Pas encore de destinations populaires",
+  },
   ads: {
     label: "Sponsorisé",
   },
