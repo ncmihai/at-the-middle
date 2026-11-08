@@ -91,6 +91,8 @@ export const it: LangMessages = {
     chipAria: (label: string) => `Apri ricerca: ${label}`,
   },
   results: {
+    photoCredit: (credit: string, license: string) =>
+      `Foto: ${credit} · ${license} (Wikimedia Commons)`,
     title: "I vostri posti a metà strada",
     subtitle: "Ordinati per quanto sono vicini gli arrivi di tutti, poi per prezzo totale.",
     empty: "Nessuna destinazione corrisponde ancora a budget e limite di differenza di arrivo.",
@@ -211,6 +213,8 @@ export const it: LangMessages = {
     essentialOnly: "Solo essenziali",
   },
   destinations: {
+    photoCredit: (credit: string, license: string) =>
+      `Foto: ${credit} · ${license} (Wikimedia Commons)`,
     meta: {
       indexTitle: "Destinazioni",
       indexDescription:
@@ -297,6 +301,37 @@ export const it: LangMessages = {
     copied: "Link copiato!",
     copyFailed: "Copia non riuscita — seleziona l'indirizzo manualmente",
     rss: "Feed RSS",
+  },
+  stats: {
+    title: "Statistiche del sito",
+    subtitle: "Analitica propria di midspot, rispettosa della privacy — solo aggregati, mai IP.",
+    secretLabel: "Chiave delle statistiche",
+    secretPlaceholder: "Incolla la chiave delle statistiche",
+    unlock: "Carica statistiche",
+    loading: "Caricamento…",
+    unauthorized:
+      "Chiave errata o mancante (401). La chiave non è mai inclusa in questa pagina — chiedila al proprietario del sito.",
+    error: "Impossibile caricare le statistiche.",
+    retry: "Riprova",
+    totals: { searches: "Ricerche", results: "Risultati", pageviews: "Visualizzazioni" },
+    searchesChart: "Ricerche al giorno — ultimi 30 giorni",
+    pageviewsChart: "Visualizzazioni al giorno — ultimi 30 giorni",
+    popularRoutes: "Coppie di origini popolari — ultimi 30 giorni",
+    providerUsage: "Utilizzo dei provider — mese corrente",
+    table: {
+      day: "Giorno",
+      count: "Conteggio",
+      total: "Totale",
+      route: "Rotta",
+      searches: "Ricerche",
+      provider: "Provider",
+      calls: "Chiamate",
+      cap: "Limite mensile",
+      pctUsed: "% del limite",
+    },
+    noData: "Nessun dato ancora.",
+    cloudflareNote:
+      "La dashboard di Cloudflare mostra anche il traffico edge (tutte le richieste che raggiungono il CDN, inclusi bot e asset in cache) — questa pagina mostra solo ciò che midspot stesso serve e salva nel proprio database.",
   },
   footer: {
     destinations: "Destinazioni",

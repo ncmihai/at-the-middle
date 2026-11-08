@@ -91,6 +91,8 @@ export const fr: LangMessages = {
     chipAria: (label: string) => `Ouvrir la recherche : ${label}`,
   },
   results: {
+    photoCredit: (credit: string, license: string) =>
+      `Photo : ${credit} · ${license} (Wikimedia Commons)`,
     title: "Vos lieux du milieu",
     subtitle: "Classés selon la proximité d'arrivée de tous, puis par prix total.",
     empty: "Aucune destination ne correspond encore au budget et à la limite d'écart d'arrivée.",
@@ -211,6 +213,8 @@ export const fr: LangMessages = {
     essentialOnly: "Essentiels uniquement",
   },
   destinations: {
+    photoCredit: (credit: string, license: string) =>
+      `Photo : ${credit} · ${license} (Wikimedia Commons)`,
     meta: {
       indexTitle: "Destinations",
       indexDescription:
@@ -297,6 +301,37 @@ export const fr: LangMessages = {
     copied: "Lien copié !",
     copyFailed: "Copie impossible — sélectionnez l'adresse manuellement",
     rss: "Flux RSS",
+  },
+  stats: {
+    title: "Statistiques du site",
+    subtitle: "Analyses internes de midspot, respectueuses de la vie privée — agrégats uniquement, jamais d'IP.",
+    secretLabel: "Clé des statistiques",
+    secretPlaceholder: "Collez la clé des statistiques",
+    unlock: "Charger les stats",
+    loading: "Chargement…",
+    unauthorized:
+      "Clé absente ou incorrecte (401). La clé n'est jamais intégrée à cette page — demandez-la au propriétaire du site.",
+    error: "Impossible de charger les statistiques.",
+    retry: "Réessayer",
+    totals: { searches: "Recherches", results: "Résultats", pageviews: "Pages vues" },
+    searchesChart: "Recherches par jour — 30 derniers jours",
+    pageviewsChart: "Pages vues par jour — 30 derniers jours",
+    popularRoutes: "Paires d'origines populaires — 30 derniers jours",
+    providerUsage: "Utilisation des fournisseurs — mois en cours",
+    table: {
+      day: "Jour",
+      count: "Nombre",
+      total: "Total",
+      route: "Route",
+      searches: "Recherches",
+      provider: "Fournisseur",
+      calls: "Appels",
+      cap: "Plafond mensuel",
+      pctUsed: "% du plafond",
+    },
+    noData: "Pas encore de données.",
+    cloudflareNote:
+      "Le tableau de bord Cloudflare affiche aussi le trafic edge (toutes les requêtes arrivant au CDN, y compris bots et assets en cache) — cette page ne montre que ce que midspot sert et stocke dans sa propre base de données.",
   },
   footer: {
     destinations: "Destinations",

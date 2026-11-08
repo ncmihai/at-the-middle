@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import type { ResultEntry } from "@/lib/types";
+import { CITY_IMAGES } from "@/db/city-images";
 import { useMessages } from "@/lib/i18n";
 import { formatDateDay, formatGap, formatMoney } from "@/lib/utils";
 import { entryKey, maxPricePerPerson } from "@/components/ResultCard";
@@ -38,6 +39,8 @@ export default function HeroAnswer({ bestResult, onSelect }: HeroAnswerProps) {
   const key = entryKey(bestResult);
   const green = bestResult.gapMinutes <= GREEN_GAP_MINUTES;
   const firstOutbound = bestResult.outbound[0];
+  // Faza 8A: city photo (Wikimedia Commons → Digi Storage mirror) as hero background
+  const photo = CITY_IMAGES[bestResult.destinationCity] ?? null;
 
   const showOnCard = () => {
     onSelect(key);
@@ -47,8 +50,26 @@ export default function HeroAnswer({ bestResult, onSelect }: HeroAnswerProps) {
   };
 
   return (
-    <Card className="border-primary/40 bg-gradient-to-br from-sky-50 to-background dark:from-sky-950/40">
-      <CardContent className="flex flex-col gap-3 p-5">
+    <Card
+      className={`relative overflow-hidden border-primary/40 ${
+        photo
+          ? ""
+          : "bg-gradient-to-br from-sky-50 to-background dark:from-sky-950/40"
+      }`}
+    >
+      {photo && (
+        <>
+          <img
+            src={photo.url}
+            alt=""
+            loading="eager"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* light/dark-aware overlay so the text stays legible on the photo */}
+          <div className="absolute inset-0 bg-gradient-to-br from-sky-50/95 via-background/80 to-background/60 dark:from-sky-950/95 dark:via-sky-950/80 dark:to-background/70" />
+        </>
+      )}
+      <CardContent className="relative flex flex-col gap-3 p-5">
         <div className="flex items-start gap-2.5">
           <SparklesIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div className="flex min-w-0 flex-col gap-1.5">
@@ -90,6 +111,18 @@ export default function HeroAnswer({ bestResult, onSelect }: HeroAnswerProps) {
             </Button>
           )}
         </div>
+        {photo && (
+          <p className="text-[10px] leading-snug text-muted-foreground/90">
+            <a
+              href={photo.source}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground hover:underline"
+            >
+              {messages.results.photoCredit(photo.credit, photo.license)}
+            </a>
+          </p>
+        )}
       </CardContent>
     </Card>
   );

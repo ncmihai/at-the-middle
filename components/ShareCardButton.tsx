@@ -11,6 +11,7 @@ import { DownloadIcon, Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { ResultEntry } from "@/lib/types";
+import { CITY_IMAGES } from "@/db/city-images";
 import { useMessages } from "@/lib/i18n";
 import {
   SHARE_CARD_COLORS as C,
@@ -63,18 +64,63 @@ function fitTitle(
   return px;
 }
 
+/**
+ * Faza 8A: load the city photo for the card background. crossOrigin="anonymous"
+ * is required so the canvas stays untainted (the Digi Storage mirror sends
+ * access-control-allow-origin for our origin); null on any failure → the card
+ * falls back to the plain brand gradient.
+ */
+function loadPhoto(src: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+/** cover-crop the photo over the whole card, then tint it with the brand gradient */
+function drawPhotoBackground(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  W: number,
+  H: number
+): void {
+  const scale = Math.max(W / img.width, H / img.height);
+  const sw = W / scale;
+  const sh = H / scale;
+  const sx = (img.width - sw) / 2;
+  const sy = (img.height - sh) / 2;
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, "rgba(56,189,248,0.78)"); // sky-400 @ ~78%
+  grad.addColorStop(1, "rgba(37,99,235,0.90)"); // blue-600 @ ~90% — keeps text legible
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+}
+
 /** Mirror of the JSX layout in opengraph-image.tsx — same geometry, same colors. */
-function drawShareCard(ctx: CanvasRenderingContext2D, model: ShareCardModel): void {
+function drawShareCard(
+  ctx: CanvasRenderingContext2D,
+  model: ShareCardModel,
+  photo?: HTMLImageElement | null
+): void {
   const W = SHARE_CARD_SIZE.width;
   const H = SHARE_CARD_SIZE.height;
   const pad = 64;
 
-  // brand gradient background (sky-400 → blue-600, 135°)
-  const grad = ctx.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, C.gradientFrom);
-  grad.addColorStop(1, C.gradientTo);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
+  if (photo) {
+    // Faza 8A: city photo background + brand-tinted overlay
+    drawPhotoBackground(ctx, photo, W, H);
+  } else {
+    // brand gradient background (sky-400 → blue-600, 135°)
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, C.gradientFrom);
+    grad.addColorStop(1, C.gradientTo);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  }
 
   ctx.textBaseline = "middle";
   ctx.fillStyle = C.text;
@@ -169,8 +215,18 @@ export default function ShareCardButton({ result, slug, className }: ShareCardBu
       canvas.height = SHARE_CARD_SIZE.height;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("2d context unavailable");
-      drawShareCard(ctx, model);
-      const dataUrl = canvas.toDataURL("image/png");
+      // Faza 8A: city photo as card background when the destination has one
+      const photoUrl = CITY_IMAGES[result.destinationCity]?.url;
+      const photo = photoUrl ? await loadPhoto(photoUrl) : null;
+      drawShareCard(ctx, model, photo);
+      let dataUrl: string;
+      try {
+        dataUrl = canvas.toDataURL("image/png");
+      } catch {
+        // tainted canvas (photo without CORS) — redraw without the photo
+        drawShareCard(ctx, model, null);
+        dataUrl = canvas.toDataURL("image/png");
+      }
       const a = document.createElement("a");
       a.href = dataUrl;
       a.download = `midspot-${slug}.png`;

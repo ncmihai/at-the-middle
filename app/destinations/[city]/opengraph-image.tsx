@@ -1,11 +1,14 @@
-// Dynamic OG image for /destinations/[city] — a brand card with the city name,
-// country and its airport codes. Same ImageResponse pattern as
-// app/r/[slug]/opengraph-image.tsx, but fully static (the city model comes from
-// db/candidates.ts, no DB): generateStaticParams + revalidate = 3600, so all
-// cards are prerendered at build and refreshed hourly with the pages.
-// No external fonts/images — self-contained, like the /r card.
+// Dynamic OG image for /destinations/[city] — the city photo (Faza 8A, Digi
+// Storage mirror of a free Wikimedia Commons image) as background with a
+// brand-tinted overlay, plus the city name, country and airport codes.
+// Same ImageResponse pattern as app/r/[slug]/opengraph-image.tsx. The city
+// model comes from db/candidates.ts (no DB); the photo fetch is no-store, so
+// the card renders on demand with the freshest mirror URL and falls back to
+// the plain brand gradient when the city has no photo (or the fetch fails).
+// No external fonts — self-contained, like the /r card.
 import { ImageResponse } from "next/og";
 
+import { CITY_IMAGES_BY_SLUG } from "@/db/city-images";
 import { en } from "@/lib/i18n";
 import { SHARE_CARD_COLORS as C, SHARE_CARD_SIZE } from "@/lib/share";
 
@@ -34,6 +37,25 @@ function hostOf(url: string): string {
     return new URL(url).host;
   } catch {
     return url;
+  }
+}
+
+/**
+ * Faza 8A: fetch the city photo (Digi Storage mirror of a free Wikimedia
+ * Commons image) and return it as a base64 data URL for ImageResponse.
+ * Null on any failure → the card falls back to the plain brand gradient.
+ */
+async function loadPhotoDataUrl(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) return null;
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("image/")) return null;
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const mime = contentType.split(";")[0].trim() || "image/jpeg";
+    return `data:${mime};base64,${buffer.toString("base64")}`;
+  } catch {
+    return null;
   }
 }
 
@@ -80,6 +102,8 @@ export default async function OpengraphImage({
   const subtitle = city
     ? `${city.city}, ${city.country} — ${city.iatas.join(" · ")}`
     : en.brand.heroSubtitle;
+  // Faza 8A: city photo as card background (brand-tinted overlay keeps text legible)
+  const photoSrc = city ? await loadPhotoDataUrl(CITY_IMAGES_BY_SLUG[slug]?.url ?? "") : null;
 
   return new ImageResponse(
     (
@@ -93,50 +117,88 @@ export default async function OpengraphImage({
           background: `linear-gradient(135deg, ${C.gradientFrom} 0%, ${C.gradientTo} 100%)`,
           color: C.text,
           fontFamily: FONT_STACK,
+          position: "relative",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Wordmark />
-          <div style={{ fontSize: 24, opacity: 0.85 }}>{hostOf(url)}</div>
-        </div>
-        <div style={{ flex: 1 }} />
-        <div
-          style={{
-            fontSize: title.length > 28 ? 64 : 84,
-            fontWeight: 700,
-            letterSpacing: -2,
-            lineHeight: 1.05,
-          }}
-        >
-          {title}
-        </div>
-        <div
-          style={{
-            marginTop: 16,
-            fontSize: subtitle.length > 60 ? 28 : 36,
-            opacity: 0.92,
-            lineHeight: 1.3,
-          }}
-        >
-          {subtitle}
-        </div>
-        <div style={{ marginTop: 44, display: "flex", alignItems: "center" }}>
+        {photoSrc && (
+          <img
+            src={photoSrc}
+            alt=""
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+        )}
+        {photoSrc && (
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              background: C.pillBg,
-              borderRadius: 999,
-              padding: "12px 26px",
-              fontSize: 28,
-              fontWeight: 600,
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              background:
+                "linear-gradient(135deg, rgba(56,189,248,0.82) 0%, rgba(37,99,235,0.90) 100%)",
+            }}
+          />
+        )}
+        <div
+          style={{
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+            height: "100%",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Wordmark />
+            <div style={{ fontSize: 24, opacity: 0.85 }}>{hostOf(url)}</div>
+          </div>
+          <div style={{ flex: 1 }} />
+          <div
+            style={{
+              fontSize: title.length > 28 ? 64 : 84,
+              fontWeight: 700,
+              letterSpacing: -2,
+              lineHeight: 1.05,
             }}
           >
-            {en.destinations.index.eyebrow}
+            {title}
           </div>
-        </div>
-        <div style={{ marginTop: 24, fontSize: 22, opacity: 0.75 }}>
-          {`${url}/destinations/${slug}`}
+          <div
+            style={{
+              marginTop: 16,
+              fontSize: subtitle.length > 60 ? 28 : 36,
+              opacity: 0.92,
+              lineHeight: 1.3,
+            }}
+          >
+            {subtitle}
+          </div>
+          <div style={{ marginTop: 44, display: "flex", alignItems: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                background: C.pillBg,
+                borderRadius: 999,
+                padding: "12px 26px",
+                fontSize: 28,
+                fontWeight: 600,
+              }}
+            >
+              {en.destinations.index.eyebrow}
+            </div>
+          </div>
+          <div style={{ marginTop: 24, fontSize: 22, opacity: 0.75 }}>
+            {`${url}/destinations/${slug}`}
+          </div>
         </div>
       </div>
     ),

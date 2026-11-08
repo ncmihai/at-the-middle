@@ -91,6 +91,8 @@ export const es: LangMessages = {
     chipAria: (label: string) => `Abrir búsqueda: ${label}`,
   },
   results: {
+    photoCredit: (credit: string, license: string) =>
+      `Foto: ${credit} · ${license} (Wikimedia Commons)`,
     title: "Vuestros sitios en el medio",
     subtitle: "Ordenados por lo cerca que llegan todos, luego por precio total.",
     empty: "Ningún destino encaja todavía con el presupuesto y el límite de diferencia de llegada.",
@@ -210,6 +212,8 @@ export const es: LangMessages = {
     essentialOnly: "Solo esenciales",
   },
   destinations: {
+    photoCredit: (credit: string, license: string) =>
+      `Foto: ${credit} · ${license} (Wikimedia Commons)`,
     meta: {
       indexTitle: "Destinos",
       indexDescription:
@@ -296,6 +300,37 @@ export const es: LangMessages = {
     copied: "¡Enlace copiado!",
     copyFailed: "No se pudo copiar — selecciona la dirección manualmente",
     rss: "Feed RSS",
+  },
+  stats: {
+    title: "Estadísticas del sitio",
+    subtitle: "Analítica propia de midspot, respetuosa con la privacidad — solo agregados, nunca IPs.",
+    secretLabel: "Clave de estadísticas",
+    secretPlaceholder: "Pega la clave de estadísticas",
+    unlock: "Cargar estadísticas",
+    loading: "Cargando…",
+    unauthorized:
+      "Clave incorrecta o ausente (401). La clave nunca se incluye en esta página — pídela al propietario del sitio.",
+    error: "No se pudieron cargar las estadísticas.",
+    retry: "Reintentar",
+    totals: { searches: "Búsquedas", results: "Resultados", pageviews: "Visitas" },
+    searchesChart: "Búsquedas por día — últimos 30 días",
+    pageviewsChart: "Visitas por día — últimos 30 días",
+    popularRoutes: "Pares de orígenes populares — últimos 30 días",
+    providerUsage: "Uso de proveedores — mes en curso",
+    table: {
+      day: "Día",
+      count: "Cantidad",
+      total: "Total",
+      route: "Ruta",
+      searches: "Búsquedas",
+      provider: "Proveedor",
+      calls: "Llamadas",
+      cap: "Límite mensual",
+      pctUsed: "% del límite",
+    },
+    noData: "Aún no hay datos.",
+    cloudflareNote:
+      "El panel de Cloudflare también muestra el tráfico edge (todas las solicitudes que llegan al CDN, incluidos bots y recursos en caché) — esta página solo muestra lo que midspot sirve y guarda en su propia base de datos.",
   },
   footer: {
     destinations: "Destinos",

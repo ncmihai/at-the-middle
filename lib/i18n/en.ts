@@ -115,6 +115,8 @@ export const en = {
     chipAria: (label: string) => `Open search: ${label}`,
   },
   results: {
+    photoCredit: (credit: string, license: string) =>
+      `Photo: ${credit} · ${license} (Wikimedia Commons)`,
     title: "Your middle spots",
     subtitle: "Ranked by how close together everyone arrives, then by total price.",
     empty: "No destinations matched your budget and arrival-gap limit yet.",
@@ -234,6 +236,8 @@ export const en = {
     essentialOnly: "Essential only",
   },
   destinations: {
+    photoCredit: (credit: string, license: string) =>
+      `Photo: ${credit} · ${license} (Wikimedia Commons)`,
     meta: {
       indexTitle: "Destinations",
       indexDescription:
@@ -320,6 +324,37 @@ export const en = {
     copied: "Link copied!",
     copyFailed: "Could not copy — select the URL manually",
     rss: "RSS feed",
+  },
+  stats: {
+    title: "Site stats",
+    subtitle: "midspot's own privacy-safe analytics — aggregates only, never IPs.",
+    secretLabel: "Stats secret",
+    secretPlaceholder: "Paste the stats secret",
+    unlock: "Load stats",
+    loading: "Loading…",
+    unauthorized:
+      "Wrong or missing secret (401). The secret is never bundled into this page — ask the site owner.",
+    error: "Could not load stats.",
+    retry: "Retry",
+    totals: { searches: "Searches", results: "Results", pageviews: "Pageviews" },
+    searchesChart: "Searches per day — last 30 days",
+    pageviewsChart: "Pageviews per day — last 30 days",
+    popularRoutes: "Popular origin pairs — last 30 days",
+    providerUsage: "Provider usage — current month",
+    table: {
+      day: "Day",
+      count: "Count",
+      total: "Total",
+      route: "Route",
+      searches: "Searches",
+      provider: "Provider",
+      calls: "Calls",
+      cap: "Monthly cap",
+      pctUsed: "% of cap",
+    },
+    noData: "No data yet.",
+    cloudflareNote:
+      "The Cloudflare dashboard also shows edge traffic (all requests hitting the CDN edge, including bots and cached assets) — this page shows only what midspot itself serves and stores in its own database.",
   },
   footer: {
     destinations: "Destinations",

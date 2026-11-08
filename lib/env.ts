@@ -56,6 +56,8 @@ export type MidspotConfig = {
   cronSecret?: string;
   /** salt for searches.ip_hash = sha256(ip + salt); raw IPs are never stored */
   ipHashSalt: string;
+  /** Faza 8E: shared secret for GET /api/stats (header x-stats-secret); the /stats page never bundles it — the owner types it in (sessionStorage) */
+  statsSecret?: string;
 };
 
 const num = (value: string | undefined, fallback: number): number => {
@@ -112,6 +114,7 @@ function buildConfig(): MidspotConfig {
     carbonAdsServeId: process.env.NEXT_PUBLIC_CARBONADS_SERVE_ID,
     cronSecret: process.env.CRON_SECRET,
     ipHashSalt: process.env.IP_HASH_SALT ?? "midspot",
+    statsSecret: process.env.STATS_SECRET,
   };
 }
 

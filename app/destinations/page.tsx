@@ -5,6 +5,7 @@
 // namespace; metadata follows the existing pattern and stays English (like /).
 import type { Metadata } from "next";
 
+import { CITY_IMAGES_BY_SLUG } from "@/db/city-images";
 import { en } from "@/lib/i18n";
 
 import DestinationsBrowser from "./DestinationsBrowser";
@@ -29,7 +30,10 @@ export const metadata: Metadata = {
 type CityCard = Pick<
   DestinationCity,
   "slug" | "city" | "country" | "countryCode" | "iatas" | "airportCount"
->;
+> & {
+  /** Faza 8A: photo thumb URL (Digi Storage mirror), null when the city has no photo */
+  photoUrl: string | null;
+};
 
 export default async function DestinationsPage() {
   const counts = await getChosenCountsBySlug();
@@ -41,6 +45,7 @@ export default async function DestinationsPage() {
       countryCode,
       iatas,
       airportCount,
+      photoUrl: CITY_IMAGES_BY_SLUG[slug]?.url ?? null,
     })
   );
   return (

@@ -91,6 +91,8 @@ export const ro: LangMessages = {
     chipAria: (label: string) => `Deschide căutarea: ${label}`,
   },
   results: {
+    photoCredit: (credit: string, license: string) =>
+      `Foto: ${credit} · ${license} (Wikimedia Commons)`,
     title: "Destinațiile voastre la mijloc",
     subtitle: "Sortate după cât de aproape ajunge toată lumea, apoi după prețul total.",
     empty: "Nicio destinație nu s-a potrivit încă cu bugetul și limita de sosire.",
@@ -211,6 +213,8 @@ export const ro: LangMessages = {
     essentialOnly: "Doar esențiale",
   },
   destinations: {
+    photoCredit: (credit: string, license: string) =>
+      `Foto: ${credit} · ${license} (Wikimedia Commons)`,
     meta: {
       indexTitle: "Destinații",
       indexDescription:
@@ -297,6 +301,37 @@ export const ro: LangMessages = {
     copied: "Link copiat!",
     copyFailed: "Nu s-a putut copia — selectați adresa manual",
     rss: "Flux RSS",
+  },
+  stats: {
+    title: "Statistici site",
+    subtitle: "Analitica proprie a midspot, privacy-safe — doar agregate, niciodată IP-uri.",
+    secretLabel: "Cheia de statistici",
+    secretPlaceholder: "Lipește cheia de statistici",
+    unlock: "Încarcă statisticile",
+    loading: "Se încarcă…",
+    unauthorized:
+      "Cheie greșită sau lipsă (401). Cheia nu este inclusă în această pagină — cere-o proprietarului site-ului.",
+    error: "Nu s-au putut încărca statisticile.",
+    retry: "Reîncearcă",
+    totals: { searches: "Căutări", results: "Rezultate", pageviews: "Vizualizări" },
+    searchesChart: "Căutări pe zi — ultimele 30 de zile",
+    pageviewsChart: "Vizualizări pe zi — ultimele 30 de zile",
+    popularRoutes: "Perechi populare de origini — ultimele 30 de zile",
+    providerUsage: "Utilizare provider — luna curentă",
+    table: {
+      day: "Zi",
+      count: "Număr",
+      total: "Total",
+      route: "Rută",
+      searches: "Căutări",
+      provider: "Provider",
+      calls: "Apeluri",
+      cap: "Prag lunar",
+      pctUsed: "% din prag",
+    },
+    noData: "Încă nu există date.",
+    cloudflareNote:
+      "Panoul Cloudflare arată și traficul de la edge (toate cererile ajunse la CDN, inclusiv boți și asset-uri cache-uite) — această pagină arată doar ceea ce midspot însuși servește și stochează în propria bază de date.",
   },
   footer: {
     destinations: "Destinații",

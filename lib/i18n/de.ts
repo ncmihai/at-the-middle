@@ -91,6 +91,8 @@ export const de: LangMessages = {
     chipAria: (label: string) => `Suche öffnen: ${label}`,
   },
   results: {
+    photoCredit: (credit: string, license: string) =>
+      `Foto: ${credit} · ${license} (Wikimedia Commons)`,
     title: "Eure Mittleren Orte",
     subtitle: "Sortiert danach, wie nah alle ankommen, dann nach dem Gesamtpreis.",
     empty: "Noch kein Ziel passt zu Budget und Ankunftsdifferenz.",
@@ -211,6 +213,8 @@ export const de: LangMessages = {
     essentialOnly: "Nur essentielle",
   },
   destinations: {
+    photoCredit: (credit: string, license: string) =>
+      `Foto: ${credit} · ${license} (Wikimedia Commons)`,
     meta: {
       indexTitle: "Reiseziele",
       indexDescription:
@@ -297,6 +301,37 @@ export const de: LangMessages = {
     copied: "Link kopiert!",
     copyFailed: "Kopieren fehlgeschlagen — bitte die Adresse manuell markieren",
     rss: "RSS-Feed",
+  },
+  stats: {
+    title: "Website-Statistiken",
+    subtitle: "midspots eigene datenschutzfreundliche Analyse — nur Aggregate, niemals IPs.",
+    secretLabel: "Statistik-Schlüssel",
+    secretPlaceholder: "Statistik-Schlüssel einfügen",
+    unlock: "Statistiken laden",
+    loading: "Wird geladen…",
+    unauthorized:
+      "Falscher oder fehlender Schlüssel (401). Der Schlüssel ist nicht in diese Seite eingebettet — beim Website-Betreiber erfragen.",
+    error: "Statistiken konnten nicht geladen werden.",
+    retry: "Erneut versuchen",
+    totals: { searches: "Suchen", results: "Ergebnisse", pageviews: "Seitenaufrufe" },
+    searchesChart: "Suchen pro Tag — letzte 30 Tage",
+    pageviewsChart: "Seitenaufrufe pro Tag — letzte 30 Tage",
+    popularRoutes: "Beliebte Start-Ziel-Paare — letzte 30 Tage",
+    providerUsage: "Anbieternutzung — aktueller Monat",
+    table: {
+      day: "Tag",
+      count: "Anzahl",
+      total: "Gesamt",
+      route: "Route",
+      searches: "Suchen",
+      provider: "Anbieter",
+      calls: "Aufrufe",
+      cap: "Monatslimit",
+      pctUsed: "% vom Limit",
+    },
+    noData: "Noch keine Daten.",
+    cloudflareNote:
+      "Das Cloudflare-Dashboard zeigt ebenfalls Edge-Traffic (alle Anfragen am CDN-Edge, inkl. Bots und gecachter Assets) — diese Seite zeigt nur, was midspot selbst ausliefert und in der eigenen Datenbank speichert.",
   },
   footer: {
     destinations: "Reiseziele",

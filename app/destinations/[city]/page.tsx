@@ -12,6 +12,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { CITY_IMAGES_BY_SLUG } from "@/db/city-images";
 import { en } from "@/lib/i18n";
 
 import { DESTINATIONS_BY_SLUG, DESTINATION_SLUGS } from "../cities";
@@ -54,9 +55,12 @@ export default async function DestinationCityPage({ params }: Props) {
   const city = DESTINATIONS_BY_SLUG[slug];
   if (!city) notFound();
   const counts = await getChosenCountsBySlug();
+  // Faza 8A: free city photo (Wikimedia Commons → Digi Storage mirror), null when
+  // the city has no accepted photo → CityView falls back to the plain gradient hero.
+  const photo = CITY_IMAGES_BY_SLUG[slug] ?? null;
   return (
     <main className="mx-auto w-full max-w-md px-4 py-10 md:max-w-2xl md:py-14">
-      <CityView city={city} chosenCount={counts[city.slug] ?? 0} />
+      <CityView city={city} chosenCount={counts[city.slug] ?? 0} photo={photo} />
     </main>
   );
 }

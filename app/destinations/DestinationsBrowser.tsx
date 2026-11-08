@@ -17,7 +17,10 @@ import type { DestinationCity } from "./cities";
 type CityCard = Pick<
   DestinationCity,
   "slug" | "city" | "country" | "countryCode" | "iatas" | "airportCount"
->;
+> & {
+  /** Faza 8A: photo thumb URL (Digi Storage mirror), null when the city has no photo */
+  photoUrl: string | null;
+};
 
 type Props = {
   cities: CityCard[];
@@ -81,14 +84,24 @@ export default function DestinationsBrowser({ cities, counts }: Props) {
                 href={`/destinations/${c.slug}`}
                 className="group flex h-full flex-col gap-2 rounded-2xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/60 hover:bg-muted/40"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="truncate text-base font-semibold text-foreground group-hover:text-primary">
-                      {c.city}
-                    </div>
-                    <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                      <MapPinIcon className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">{c.country}</span>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    {c.photoUrl && (
+                      <img
+                        src={c.photoUrl}
+                        alt={c.city}
+                        loading="lazy"
+                        className="h-14 w-14 shrink-0 rounded-xl border border-border object-cover"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <div className="truncate text-base font-semibold text-foreground group-hover:text-primary">
+                        {c.city}
+                      </div>
+                      <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPinIcon className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{c.country}</span>
+                      </div>
                     </div>
                   </div>
                   <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">

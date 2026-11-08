@@ -201,9 +201,29 @@ export const providerUsage = pgTable(
   (t) => [primaryKey({ columns: [t.ym, t.provider] })]
 );
 
+/**
+ * pageviews — privacy-safe own traffic counter (Faza 8E). One row per
+ * (day, path): aggregates only, NO IPs, no per-user data — incremented by
+ * proxy.ts for public GET page routes and flushed from an in-memory buffer
+ * every 60 s (upsert count = count + delta). day is a UTC calendar date.
+ */
+export const pageviews = pgTable(
+  "pageviews",
+  {
+    /** UTC calendar day, YYYY-MM-DD */
+    day: date("day", { mode: "string" }).notNull(),
+    /** public page path, e.g. /, /destinations, /blog, /r/<slug> */
+    path: text("path").notNull(),
+    /** aggregated pageview count for (day, path) */
+    count: integer("count").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.path] })]
+);
+
 export type SearchRow = typeof searches.$inferSelect;
 export type SearchJobRow = typeof searchJobs.$inferSelect;
 export type ResultRow = typeof results.$inferSelect;
 export type AirportRow = typeof airports.$inferSelect;
 export type FlightCacheRow = typeof flightCache.$inferSelect;
 export type ProviderUsageRow = typeof providerUsage.$inferSelect;
+export type PageviewRow = typeof pageviews.$inferSelect;

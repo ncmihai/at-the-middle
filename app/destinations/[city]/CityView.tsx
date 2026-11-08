@@ -8,6 +8,7 @@ import Link from "next/link";
 import { ArrowLeftIcon, MapPinIcon, PlaneIcon, PlaneTakeoffIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import type { CityImage } from "@/db/city-images";
 import { useMessages } from "@/lib/i18n";
 
 import type { DestinationCity } from "../cities";
@@ -16,13 +17,38 @@ type Props = {
   city: DestinationCity;
   /** distinct searches (last 90 days) with this city in the results */
   chosenCount: number;
+  /** Faza 8A: free city photo (Wikimedia Commons → Digi Storage), null = no accepted photo */
+  photo: CityImage | null;
 };
 
-export default function CityView({ city, chosenCount }: Props) {
-  const t = useMessages().destinations.city;
+export default function CityView({ city, chosenCount, photo }: Props) {
+  const messages = useMessages();
+  const t = messages.destinations.city;
 
   return (
     <div className="flex flex-col gap-10">
+      {photo && (
+        <figure className="flex flex-col gap-1.5">
+          {/* plain <img> (not next/image): the photo is a remote mirror on Digi Storage,
+              eager + 16/9 hero at the top of the page */}
+          <img
+            src={photo.url}
+            alt={city.city}
+            loading="eager"
+            className="aspect-video w-full rounded-2xl border border-border object-cover shadow-sm"
+          />
+          <figcaption className="text-[11px] leading-snug text-muted-foreground">
+            <a
+              href={photo.source}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground hover:underline"
+            >
+              {messages.destinations.photoCredit(photo.credit, photo.license)}
+            </a>
+          </figcaption>
+        </figure>
+      )}
       <Link
         href="/destinations"
         className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground hover:underline"
