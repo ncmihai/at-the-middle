@@ -170,6 +170,22 @@ export const es: LangMessages = {
       running: "Iniciando nueva búsqueda…",
     },
   },
+  // ADDITIVE (Faza 8B): tiempo en el destino (open-meteo) — franja en la tarjeta + widget en /destinations
+  weather: {
+    title: (city: string) => `Tiempo en ${city} — próximos 7 días`,
+    rain: (pct: number) => `lluvia ${pct} %`,
+    source: "Previsión: Open-Meteo (CC BY 4.0)",
+    labels: {
+      clear: "Despejado",
+      partlyCloudy: "Parcialmente nublado",
+      cloudy: "Nublado",
+      fog: "Niebla",
+      rain: "Lluvia",
+      snow: "Nieve",
+      showers: "Chubascos",
+      thunderstorm: "Tormenta",
+    },
+  },
   hero: {
     title: (city: string, country: string) => `El mejor punto medio para vosotros: ${city}, ${country}`,
     gap: (text: string) => `todos llegan con menos de ${text} de diferencia`,

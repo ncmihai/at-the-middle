@@ -12,8 +12,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { WeatherStrip } from "@/components/ResultCard";
 import { CITY_IMAGES_BY_SLUG } from "@/db/city-images";
 import { en } from "@/lib/i18n";
+import { fetchForecast, nextDaysRange } from "@/lib/weather";
 
 import { DESTINATIONS_BY_SLUG, DESTINATION_SLUGS } from "../cities";
 import { getChosenCountsBySlug } from "../counts";
@@ -58,9 +60,19 @@ export default async function DestinationCityPage({ params }: Props) {
   // Faza 8A: free city photo (Wikimedia Commons → Digi Storage mirror), null when
   // the city has no accepted photo → CityView falls back to the plain gradient hero.
   const photo = CITY_IMAGES_BY_SLUG[slug] ?? null;
+  // Faza 8B: "Weather in {city} — next 7 days" widget (open-meteo, free, no key).
+  // Runs at build and at most once per hourly ISR revalidate per city; lib/weather.ts
+  // adds a 30-min in-memory cache on top and never throws → null just hides the widget.
+  const { startDate, endDate } = nextDaysRange(7);
+  const forecast = await fetchForecast(city.latitude, city.longitude, startDate, endDate);
   return (
     <main className="mx-auto w-full max-w-md px-4 py-10 md:max-w-2xl md:py-14">
-      <CityView city={city} chosenCount={counts[city.slug] ?? 0} photo={photo} />
+      <div className="flex flex-col gap-10">
+        <CityView city={city} chosenCount={counts[city.slug] ?? 0} photo={photo} />
+        {forecast && forecast.days.length > 0 && (
+          <WeatherStrip city={city.city} days={forecast.days} startDate={forecast.days[0]?.date} />
+        )}
+      </div>
     </main>
   );
 }

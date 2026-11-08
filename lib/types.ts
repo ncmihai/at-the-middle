@@ -75,6 +75,46 @@ export type ResultExtraKey = "transfer" | "car" | "esim" | "activities";
 /** ADDITIVE (Faza 7): one converted affiliate "extra" link (see ResultEntry.extras). */
 export type ResultExtra = { key: ResultExtraKey; url: string };
 
+/**
+ * ADDITIVE (Faza 8B): WMO weathercode group — localized via weather.labels.* and mapped
+ * to a lucide icon in the UI (lib/weather.ts weatherCondition()).
+ */
+export type WeatherCondition =
+  | "clear"
+  | "partlyCloudy"
+  | "cloudy"
+  | "fog"
+  | "rain"
+  | "snow"
+  | "showers"
+  | "thunderstorm";
+
+/**
+ * ADDITIVE (Faza 8B): lucide icon name for a weather condition — a string (not the
+ * component) so it survives JSON serialization from the API route to the client.
+ */
+export type WeatherIconName =
+  | "sun"
+  | "cloudSun"
+  | "cloud"
+  | "cloudFog"
+  | "cloudRain"
+  | "cloudSnow"
+  | "cloudDrizzle"
+  | "cloudLightning";
+
+/** ADDITIVE (Faza 8B): one day of the destination forecast attached to a result (lib/weather.ts, open-meteo). */
+export type ResultWeatherDay = {
+  /** °C */
+  tMin: number;
+  /** °C */
+  tMax: number;
+  /** max precipitation probability for the day, 0–100 */
+  rainPct: number;
+  label: WeatherCondition;
+  icon: WeatherIconName;
+};
+
 export type ResultEntry = {
   rank: number;
   destinationIata: string;
@@ -101,6 +141,13 @@ export type ResultEntry = {
    * only for the extras that converted successfully; absent otherwise.
    */
   extras?: ResultExtra[];
+  /**
+   * ADDITIVE (Faza 8B): destination forecast for the trip days (open-meteo, computed
+   * server-side in app/api/search/[slug]/route.ts for the top-10 results) — one entry
+   * per trip day, capped at 7, in trip order (day 0 = departureDate). Absent when the
+   * destination has no coordinates or the forecast fetch failed.
+   */
+  weather?: ResultWeatherDay[];
 };
 
 export type SearchProgress = {

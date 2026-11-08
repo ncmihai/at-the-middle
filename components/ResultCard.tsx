@@ -6,16 +6,32 @@ import {
   CarIcon,
   CarTaxiFrontIcon,
   ClockIcon,
+  CloudDrizzleIcon,
+  CloudFogIcon,
+  CloudIcon,
+  CloudLightningIcon,
+  CloudRainIcon,
+  CloudSnowIcon,
+  CloudSunIcon,
   ExternalLinkIcon,
   HotelIcon,
   MapPinIcon,
   SmartphoneIcon,
+  SunIcon,
   TicketIcon,
+  UmbrellaIcon,
   type LucideIcon,
 } from "lucide-react";
-import { differenceInCalendarDays, parseISO } from "date-fns";
+import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 
-import type { PersonLeg, ResultEntry, ResultExtraKey } from "@/lib/types";
+import type {
+  PersonLeg,
+  ResultEntry,
+  ResultExtraKey,
+  ResultWeatherDay,
+  WeatherCondition,
+  WeatherIconName,
+} from "@/lib/types";
 import { useMessages } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
@@ -42,6 +58,155 @@ const EXTRA_ICONS: Record<ResultExtraKey, LucideIcon> = {
   esim: SmartphoneIcon,
   activities: TicketIcon,
 };
+
+/** ADDITIVE (Faza 8B): lucide icon per weather condition (ResultWeatherDay.icon) */
+const WEATHER_ICONS: Record<WeatherIconName, LucideIcon> = {
+  sun: SunIcon,
+  cloudSun: CloudSunIcon,
+  cloud: CloudIcon,
+  cloudFog: CloudFogIcon,
+  cloudRain: CloudRainIcon,
+  cloudSnow: CloudSnowIcon,
+  cloudDrizzle: CloudDrizzleIcon,
+  cloudLightning: CloudLightningIcon,
+};
+
+/** ADDITIVE (Faza 8B): dot color per weather condition (per-day dots in the strip) */
+const WEATHER_DOT: Record<WeatherCondition, string> = {
+  clear: "bg-amber-400",
+  partlyCloudy: "bg-sky-300",
+  cloudy: "bg-slate-400",
+  fog: "bg-gray-400",
+  rain: "bg-blue-500",
+  snow: "bg-cyan-200",
+  showers: "bg-blue-400",
+  thunderstorm: "bg-violet-500",
+};
+
+/** "2026-11-19"→"2026-11-22" renders as "Nov 19–22" (same month) or "Nov 19 – Dec 2" */
+function formatRangeShort(startDate: string, endDate: string): string {
+  try {
+    const s = parseISO(`${startDate}T00:00:00`);
+    const e = parseISO(`${endDate}T00:00:00`);
+    if (format(s, "yyyy-MM") === format(e, "yyyy-MM")) {
+      return `${format(s, "MMM d")}–${format(e, "d")}`;
+    }
+    return `${format(s, "MMM d")} – ${format(e, "MMM d")}`;
+  } catch {
+    return `${startDate}–${endDate}`;
+  }
+}
+
+function dayDate(startDate: string | undefined, i: number): string | undefined {
+  if (!startDate) return undefined;
+  try {
+    return format(addDays(parseISO(`${startDate}T00:00:00`), i), "yyyy-MM-dd");
+  } catch {
+    return undefined;
+  }
+}
+
+export type WeatherStripProps = {
+  days: ResultWeatherDay[];
+  /** first forecast day (YYYY-MM-DD); day i is startDate + i — used for dot tooltips */
+  startDate?: string;
+  /** display range end (defaults to startDate + days.length - 1) */
+  endDate?: string;
+  /** set → page variant: titled 7-day widget for /destinations/[city] ("Weather in {city}") */
+  city?: string;
+};
+
+/**
+ * ADDITIVE (Faza 8B): destination forecast strip, shared by the result cards (compact:
+ * "Nov 19–22 · 6–9°C · rain 20%" + per-day dots) and the destination pages (city variant:
+ * 7-day widget). All copy via the weather.* i18n namespace. Renders nothing without days.
+ */
+export function WeatherStrip({ days, startDate, endDate, city }: WeatherStripProps) {
+  const messages = useMessages();
+  if (days.length === 0) return null;
+
+  const tMin = Math.min(...days.map((d) => d.tMin));
+  const tMax = Math.max(...days.map((d) => d.tMax));
+  const maxRain = Math.max(...days.map((d) => d.rainPct));
+  // headline icon = the rainiest day's condition (first day wins ties)
+  const headline = days.reduce((a, b) => (b.rainPct > a.rainPct ? b : a));
+  const HeadlineIcon = WEATHER_ICONS[headline.icon];
+  const lastDate = dayDate(startDate, days.length - 1);
+  const rangeEnd = endDate ?? lastDate;
+
+  const dotTitle = (d: ResultWeatherDay, i: number) => {
+    const date = dayDate(startDate, i);
+    const head = `${messages.weather.labels[d.label]}, ${d.tMin}–${d.tMax}°C, ${messages.weather.rain(d.rainPct)}`;
+    return date ? `${formatDateDay(date)} — ${head}` : head;
+  };
+
+  if (city) {
+    return (
+      <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <h2 className="text-xs font-semibold tracking-widest text-primary uppercase">
+          {messages.weather.title(city)}
+        </h2>
+        <div className="flex items-start justify-between gap-1">
+          {days.map((d, i) => {
+            const Icon = WEATHER_ICONS[d.icon];
+            const date = dayDate(startDate, i);
+            return (
+              <div
+                key={i}
+                className="flex min-w-0 flex-1 flex-col items-center gap-0.5 text-center"
+                title={dotTitle(d, i)}
+              >
+                <span className="text-[10px] text-muted-foreground">
+                  {date ? format(parseISO(`${date}T00:00:00`), "EEE") : ""}
+                </span>
+                <Icon className="h-4 w-4 text-foreground" />
+                <span className="text-xs font-semibold text-foreground">{d.tMax}°</span>
+                <span className="text-[10px] text-muted-foreground">{d.tMin}°</span>
+                <span
+                  className={cn(
+                    "text-[10px]",
+                    d.rainPct > 0 ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground/40"
+                  )}
+                >
+                  {d.rainPct > 0 ? `${d.rainPct}%` : "–"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-[11px] text-muted-foreground">{messages.weather.source}</p>
+      </section>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+      <span
+        className="inline-flex items-center gap-1"
+        title={messages.weather.labels[headline.label]}
+      >
+        <HeadlineIcon className="h-3.5 w-3.5 text-primary" />
+        {startDate && rangeEnd && <span>{formatRangeShort(startDate, rangeEnd)}</span>}
+      </span>
+      <span>
+        {tMin}–{tMax}°C
+      </span>
+      <span className="inline-flex items-center gap-1">
+        <UmbrellaIcon className="h-3 w-3" />
+        {messages.weather.rain(maxRain)}
+      </span>
+      <span className="inline-flex items-center gap-1" aria-hidden="true">
+        {days.map((d, i) => (
+          <span
+            key={i}
+            className={cn("h-1.5 w-1.5 rounded-full", WEATHER_DOT[d.label])}
+            title={dotTitle(d, i)}
+          />
+        ))}
+      </span>
+    </div>
+  );
+}
 
 /** stable id for a result entry — used to lift hover/select state to the page and the map */
 export function entryKey(entry: ResultEntry): string {
@@ -147,6 +312,13 @@ export default function ResultCard({ entry, selected = false, onSelect }: Result
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {entry.weather && entry.weather.length > 0 && (
+          <WeatherStrip
+            days={entry.weather}
+            startDate={entry.departureDate}
+            endDate={entry.returnDate}
+          />
+        )}
         <ArrivalTimeline legs={entry.outbound} />
         <div className="flex flex-col gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

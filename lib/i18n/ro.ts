@@ -170,6 +170,22 @@ export const ro: LangMessages = {
       running: "Pornim o căutare nouă…",
     },
   },
+  // ADDITIVE (Faza 8B): vremea la destinație (open-meteo) — bandă pe card + widget pe /destinations
+  weather: {
+    title: (city: string) => `Vremea în ${city} — următoarele 7 zile`,
+    rain: (pct: number) => `ploaie ${pct}%`,
+    source: "Prognoza: Open-Meteo (CC BY 4.0)",
+    labels: {
+      clear: "Cer senin",
+      partlyCloudy: "Parțial noros",
+      cloudy: "Noros",
+      fog: "Ceață",
+      rain: "Ploaie",
+      snow: "Ninsoare",
+      showers: "Averse",
+      thunderstorm: "Furtună",
+    },
+  },
   hero: {
     title: (city: string, country: string) => `Cel mai bun mijloc pentru voi: ${city}, ${country}`,
     gap: (text: string) => `toată lumea ajunge în ${text}`,

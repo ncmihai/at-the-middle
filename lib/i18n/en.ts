@@ -193,6 +193,22 @@ export const en = {
       running: "Starting new search…",
     },
   },
+  // ADDITIVE (Faza 8B): destination weather (open-meteo) — result-card strip + /destinations widget
+  weather: {
+    title: (city: string) => `Weather in ${city} — next 7 days`,
+    rain: (pct: number) => `rain ${pct}%`,
+    source: "Forecast: Open-Meteo (CC BY 4.0)",
+    labels: {
+      clear: "Clear sky",
+      partlyCloudy: "Partly cloudy",
+      cloudy: "Overcast",
+      fog: "Fog",
+      rain: "Rain",
+      snow: "Snow",
+      showers: "Showers",
+      thunderstorm: "Thunderstorm",
+    },
+  },
   hero: {
     title: (city: string, country: string) => `Best middle for you: ${city}, ${country}`,
     gap: (text: string) => `everyone arrives within ${text}`,

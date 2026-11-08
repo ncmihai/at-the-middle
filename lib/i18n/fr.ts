@@ -170,6 +170,22 @@ export const fr: LangMessages = {
       running: "Nouvelle recherche en cours…",
     },
   },
+  // ADDITIVE (Faza 8B) : météo à la destination (open-meteo) — bandeau sur la carte + widget /destinations
+  weather: {
+    title: (city: string) => `Météo à ${city} — les 7 prochains jours`,
+    rain: (pct: number) => `pluie ${pct} %`,
+    source: "Prévisions : Open-Meteo (CC BY 4.0)",
+    labels: {
+      clear: "Ciel dégagé",
+      partlyCloudy: "Partiellement nuageux",
+      cloudy: "Nuageux",
+      fog: "Brouillard",
+      rain: "Pluie",
+      snow: "Neige",
+      showers: "Averses",
+      thunderstorm: "Orage",
+    },
+  },
   hero: {
     title: (city: string, country: string) => `Le meilleur point de rencontre pour vous : ${city}, ${country}`,
     gap: (text: string) => `tout le monde arrive à moins de ${text} d'écart`,

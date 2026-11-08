@@ -10,6 +10,7 @@ import { getDb } from "@/db/client";
 import { airports, results, searchJobs, searches, type ResultLeg } from "@/db/schema";
 import { bookingAffiliateLink, extrasAffiliateLinks } from "@/lib/affiliate";
 import { getConfig } from "@/lib/env";
+import { fetchForecast } from "@/lib/weather";
 import type {
   AirportCoords,
   PersonLeg,
@@ -26,6 +27,11 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 /** ADDITIVE (Faza 7): affiliate "extras" are attached to the top N results only. */
 const EXTRAS_TOP_RESULTS = 10;
+
+/** ADDITIVE (Faza 8B): destination forecast (open-meteo) is attached to the top N results only. */
+const WEATHER_TOP_RESULTS = 10;
+/** ADDITIVE (Faza 8B): per-trip forecast shown on the card is capped at 7 days. */
+const WEATHER_MAX_DAYS = 7;
 
 function json(body: unknown, status = 200) {
   return NextResponse.json(body, { status, headers: { "cache-control": "no-store" } });
@@ -117,6 +123,36 @@ export async function GET(
       console.warn(`[api/search] extras conversion failed for rank ${entry.rank}:`, err);
     }
   }
+
+  // ADDITIVE (Faza 8B): destination weather (open-meteo, free, no key) for the TOP 10
+  // results — lat/lon from the candidate shortlist (CANDIDATES_BY_IATA), trip dates
+  // departureDate..returnDate, capped at 7 days on the entry. fetchForecast never throws
+  // and is cached 30 min in-process, so repeat polls are free; any failure just omits
+  // entry.weather and the card renders without the strip.
+  await Promise.all(
+    resultEntries.slice(0, WEATHER_TOP_RESULTS).map(async (entry) => {
+      try {
+        const dest = CANDIDATES_BY_IATA[entry.destinationIata];
+        if (!dest) return;
+        const forecast = await fetchForecast(
+          dest.latitude,
+          dest.longitude,
+          entry.departureDate,
+          entry.returnDate
+        );
+        if (!forecast || forecast.days.length === 0) return;
+        entry.weather = forecast.days.slice(0, WEATHER_MAX_DAYS).map((d) => ({
+          tMin: d.tMin,
+          tMax: d.tMax,
+          rainPct: d.rainPct,
+          label: d.label,
+          icon: d.icon,
+        }));
+      } catch (err) {
+        console.warn(`[api/search] weather failed for rank ${entry.rank}:`, err);
+      }
+    })
+  );
 
   const status = (job?.status === "done" ? "completed" : search.status) as SearchStatus;
 
