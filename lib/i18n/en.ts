@@ -225,7 +225,75 @@ export const en = {
     acceptAll: "Accept all",
     essentialOnly: "Essential only",
   },
+  destinations: {
+    meta: {
+      indexTitle: "Destinations",
+      indexDescription:
+        "Browse the European cities midspot can search as the middle for your group — ranked by how often travelers have picked them.",
+      cityTitle: (city: string) => `Meet in ${city}`,
+      cityDescription: (city: string, country: string) =>
+        `Meet in ${city}, ${country} — see why it works as the middle for friends and family flying from different cities, then find your own middle spot.`,
+    },
+    index: {
+      eyebrow: "Destinations",
+      title: "Where should your group meet?",
+      subtitle:
+        "Every city below is a destination midspot can search as a possible middle for 2–8 travelers flying from different home airports. Pick one to see why it works — or head back and let the search find your middle.",
+      searchPlaceholder: "Search city, country or airport code…",
+      empty: "No destinations match your search.",
+      showing: (shown: number, total: number) => `Showing ${shown} of ${total} destinations`,
+      airports: (codes: string) => `Airports: ${codes}`,
+      chosen: (count: number) =>
+        count === 0
+          ? "Not picked as a middle yet"
+          : count === 1
+            ? "Picked once as a middle"
+            : `Picked ${count}× as a middle`,
+    },
+    city: {
+      back: "All destinations",
+      pitch: (city: string) => `Meet in ${city} — the middle that works for everyone.`,
+      pitchBody: (city: string, country: string) =>
+        `${city} (${country}) is one of the destinations midspot searches when a group of friends or family wants to meet up. Everyone flies from their own home airport; we rank destinations by how close together everyone arrives, then by price — within your budget.`,
+      airportsLabel: "Airports served",
+      statsLabel: "Times picked as a middle (last 90 days)",
+      statsEmpty: "No searches yet — be the first group to meet here.",
+      howTitle: "How it works",
+      howSteps: [
+        {
+          title: "Add everyone's home airport",
+          body: "2–8 travelers, each from their own city — we search real flight prices from all of them.",
+        },
+        {
+          title: "Set dates, nights and budget",
+          body: "Flexible dates or a whole month; a per-person budget that covers outbound + return.",
+        },
+        {
+          title: "We rank the middle spots",
+          body: "Destinations are sorted by arrival gap (everyone lands within 24 h of each other), then by total price.",
+        },
+      ],
+      faqTitle: "Frequently asked questions",
+      // "{city}" is replaced with the page's city at render time
+      faqs: [
+        {
+          q: "Why is {city} a good middle?",
+          a: "{city} is reachable with short, frequent flights from all over Europe, so travelers from different cities often arrive within hours of each other — at a low total price. Run a search and midspot will rank it against every other option.",
+        },
+        {
+          q: "Do I book flights through midspot?",
+          a: "No. midspot finds and ranks the middle; booking happens on the partner's site (e.g. Kiwi.com) via an affiliate link, at the same price for you.",
+        },
+        {
+          q: "Are the prices real?",
+          a: "Prices come from live flight data at the moment of the search and can change — the booking site always shows the final price.",
+        },
+      ],
+      cta: "Find your middle",
+    },
+  },
   footer: {
+    destinations: "Destinations",
     privacy: "Privacy",
     terms: "Terms",
     cookieSettings: "Cookie settings",

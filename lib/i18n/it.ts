@@ -202,7 +202,75 @@ export const it: LangMessages = {
     acceptAll: "Accetta tutti",
     essentialOnly: "Solo essenziali",
   },
+  destinations: {
+    meta: {
+      indexTitle: "Destinazioni",
+      indexDescription:
+        "Sfoglia le città europee che midspot può cercare come punto mediano per il tuo gruppo — ordinate per quante volte i viaggiatori le hanno scelte.",
+      cityTitle: (city: string) => `Incontro a ${city}`,
+      cityDescription: (city: string, country: string) =>
+        `Incontro a ${city}, ${country}: scopri perché funziona come punto mediano per amici e famiglia che volano da città diverse, e trova il vostro punto mediano.`,
+    },
+    index: {
+      eyebrow: "Destinazioni",
+      title: "Dove dovrebbe incontrarsi il vostro gruppo?",
+      subtitle:
+        "Ogni città qui sotto è una destinazione che midspot può cercare come possibile punto mediano per 2–8 viaggiatori in partenza da aeroporti diversi. Scegline una per capire perché funziona — oppure tornate alla home e lasciate che la ricerca trovi il vostro punto mediano.",
+      searchPlaceholder: "Cerca città, paese o codice aeroporto…",
+      empty: "Nessuna destinazione corrisponde alla ricerca.",
+      showing: (shown: number, total: number) => `Mostrando ${shown} di ${total} destinazioni`,
+      airports: (codes: string) => `Aeroporti: ${codes}`,
+      chosen: (count: number) =>
+        count === 0
+          ? "Non ancora scelto come punto mediano"
+          : count === 1
+            ? "Scelto 1× come punto mediano"
+            : `Scelto ${count}× come punto mediano`,
+    },
+    city: {
+      back: "Tutte le destinazioni",
+      pitch: (city: string) => `Incontro a ${city} — il punto mediano che funziona per tutti.`,
+      pitchBody: (city: string, country: string) =>
+        `${city} (${country}) è una delle destinazioni che midspot cerca quando un gruppo di amici o famiglia vuole incontrarsi. Ognuno parte dal proprio aeroporto; ordiniamo le destinazioni per quanto ravvicinati arrivano tutti, poi per prezzo — entro il vostro budget.`,
+      airportsLabel: "Aeroporti serviti",
+      statsLabel: "Volte scelto come punto mediano (ultimi 90 giorni)",
+      statsEmpty: "Nessuna ricerca ancora — siate il primo gruppo a incontrarsi qui.",
+      howTitle: "Come funziona",
+      howSteps: [
+        {
+          title: "Aggiungi l'aeroporto di ciascuno",
+          body: "2–8 viaggiatori, ognuno dalla propria città: cerchiamo prezzi reali dei voli da tutti.",
+        },
+        {
+          title: "Date, notti e budget",
+          body: "Date flessibili o un mese intero; un budget a persona che copre andata + ritorno.",
+        },
+        {
+          title: "Classifichiamo i punti mediani",
+          body: "Destinazioni ordinate per differenza di arrivo (tutti atterrano entro 24 h) e poi per prezzo totale.",
+        },
+      ],
+      faqTitle: "Domande frequenti",
+      // "{city}" viene sostituito con la città della pagina al render
+      faqs: [
+        {
+          q: "Perché {city} è un buon punto mediano?",
+          a: "{city} è raggiungibile con voli brevi e frequenti da tutta Europa, quindi i viaggiatori da città diverse arrivano spesso a poche ore di distanza — sovente a un prezzo totale basso. Avvia una ricerca e midspot la confronterà con tutte le altre opzioni.",
+        },
+        {
+          q: "Prenoto i voli tramite midspot?",
+          a: "No. midspot trova e ordina il punto mediano; la prenotazione avviene sul sito del partner (es. Kiwi.com) tramite un link di affiliazione, allo stesso prezzo per te.",
+        },
+        {
+          q: "I prezzi sono reali?",
+          a: "I prezzi arrivano dai dati sui voli in tempo reale al momento della ricerca e possono cambiare — il sito di prenotazione mostra sempre il prezzo finale.",
+        },
+      ],
+      cta: "Trova il vostro punto mediano",
+    },
+  },
   footer: {
+    destinations: "Destinazioni",
     privacy: "Privacy",
     terms: "Termini",
     cookieSettings: "Impostazioni cookie",

@@ -202,7 +202,75 @@ export const ro: LangMessages = {
     acceptAll: "Acceptă toate",
     essentialOnly: "Doar esențiale",
   },
+  destinations: {
+    meta: {
+      indexTitle: "Destinații",
+      indexDescription:
+        "Parcurge orașele europene pe care midspot le poate căuta ca mijloc pentru grupul tău — sortate după cât de des le-au ales călătorii.",
+      cityTitle: (city: string) => `Întâlnire în ${city}`,
+      cityDescription: (city: string, country: string) =>
+        `Întâlnire în ${city}, ${country} — vezi de ce funcționează ca mijloc pentru prieteni și familie care zboară din orașe diferite, apoi găsește-ți propriul mijloc.`,
+    },
+    index: {
+      eyebrow: "Destinații",
+      title: "Unde ar trebui să se întâlnească grupul tău?",
+      subtitle:
+        "Fiecare oraș de mai jos este o destinație pe care midspot o poate căuta ca posibil mijloc pentru 2–8 călători care zboară din diferite aeroporturi de acasă. Alege unul ca să vezi de ce funcționează — sau întoarce-te și lasă căutarea să-ți găsească mijlocul.",
+      searchPlaceholder: "Caută oraș, țară sau cod de aeroport…",
+      empty: "Nicio destinație nu corespunde căutării tale.",
+      showing: (shown: number, total: number) => `Afișez ${shown} din ${total} destinații`,
+      airports: (codes: string) => `Aeroporturi: ${codes}`,
+      chosen: (count: number) =>
+        count === 0
+          ? "Încă neales ca mijloc"
+          : count === 1
+            ? "Ales o dată ca mijloc"
+            : `Ales de ${count}× ca mijloc`,
+    },
+    city: {
+      back: "Toate destinațiile",
+      pitch: (city: string) => `Întâlnire în ${city} — mijlocul care funcționează pentru toată lumea.`,
+      pitchBody: (city: string, country: string) =>
+        `${city} (${country}) este una dintre destinațiile pe care midspot le caută când un grup de prieteni sau familie vrea să se întâlnească. Toată lumea zboară din propriul aeroport de acasă; sortăm destinațiile după cât de aproape sosesc toți, apoi după preț — în limita bugetului vostru.`,
+      airportsLabel: "Aeroporturi deservite",
+      statsLabel: "De câte ori ales ca mijloc (ultimele 90 de zile)",
+      statsEmpty: "Încă nicio căutare — fiți primul grup care se întâlnește aici.",
+      howTitle: "Cum funcționează",
+      howSteps: [
+        {
+          title: "Adaugă aeroportul de acasă al fiecăruia",
+          body: "2–8 călători, fiecare din orașul lui — căutăm prețuri reale de zboruri de la toate.",
+        },
+        {
+          title: "Setează datele, nopțile și bugetul",
+          body: "Date flexibile sau o lună întreagă; un buget pe persoană care acoperă dus + întors.",
+        },
+        {
+          title: "Noi clasăm mijloacele",
+          body: "Destinațiile sunt sortate după decalajul de sosire (toți aterizează la mai puțin de 24 h unul de celălalt), apoi după prețul total.",
+        },
+      ],
+      faqTitle: "Întrebări frecvente",
+      // „{city}” este înlocuit cu orașul paginii la afișare
+      faqs: [
+        {
+          q: "De ce {city} este un mijloc bun?",
+          a: "{city} este accesibil cu zboruri scurte și dese din toată Europa, așa că de obicei călătorii din orașe diferite sosesc la doar câteva ore unul de celălalt — adesea la un preț total mic. Rulează o căutare și midspot îl va compara cu toate celelalte opțiuni.",
+        },
+        {
+          q: "Rezerv zborurile prin midspot?",
+          a: "Nu. midspot găsește și sortează mijlocul; rezervarea se face pe site-ul partenerului (ex. Kiwi.com) printr-un link de afiliere, la același preț pentru tine.",
+        },
+        {
+          q: "Prețurile sunt reale?",
+          a: "Prețurile vin din date live de zboruri în momentul căutării și se pot schimba — site-ul de rezervare afișează întotdeauna prețul final.",
+        },
+      ],
+      cta: "Găsește-ți mijlocul",
+    },
+  },
   footer: {
+    destinations: "Destinații",
     privacy: "Confidențialitate",
     terms: "Termeni",
     cookieSettings: "Setări cookie-uri",

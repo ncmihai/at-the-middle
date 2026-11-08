@@ -202,7 +202,75 @@ export const de: LangMessages = {
     acceptAll: "Alle akzeptieren",
     essentialOnly: "Nur essentielle",
   },
+  destinations: {
+    meta: {
+      indexTitle: "Reiseziele",
+      indexDescription:
+        "Stöbere in den europäischen Städten, die midspot deiner Gruppe als Treffpunkt in der Mitte suchen kann — sortiert danach, wie oft Reisende sie gewählt haben.",
+      cityTitle: (city: string) => `Trefft euch in ${city}`,
+      cityDescription: (city: string, country: string) =>
+        `Trefft euch in ${city}, ${country} — sieh, warum die Stadt als Mitte für Freunde und Familie aus verschiedenen Städten funktioniert, und findet euren eigenen Treffpunkt.`,
+    },
+    index: {
+      eyebrow: "Reiseziele",
+      title: "Wo soll sich eure Gruppe treffen?",
+      subtitle:
+        "Jede Stadt unten ist ein Ziel, das midspot für 2–8 Reisende aus verschiedenen Heimatflughäfen als mögliche Mitte durchsuchen kann. Wähle eine, um zu sehen, warum sie funktioniert — oder geh zurück und lass die Suche eure Mitte finden.",
+      searchPlaceholder: "Stadt, Land oder Flughafencore suchen…",
+      empty: "Keine Reiseziele passen zu deiner Suche.",
+      showing: (shown: number, total: number) => `${shown} von ${total} Reisezielen angezeigt`,
+      airports: (codes: string) => `Flughäfen: ${codes}`,
+      chosen: (count: number) =>
+        count === 0
+          ? "Noch nicht als Mitte gewählt"
+          : count === 1
+            ? "1× als Mitte gewählt"
+            : `${count}× als Mitte gewählt`,
+    },
+    city: {
+      back: "Alle Reiseziele",
+      pitch: (city: string) => `Trefft euch in ${city} — die Mitte, die für alle funktioniert.`,
+      pitchBody: (city: string, country: string) =>
+        `${city} (${country}) ist eines der Ziele, die midspot durchsucht, wenn eine Gruppe aus Freunden oder Familie sich treffen möchte. Alle fliegen von ihrem eigenen Heimatflughafen; wir sortieren Ziele nach Ankunftsdifferenz und dann nach Preis — im Rahmen eures Budgets.`,
+      airportsLabel: "Angfogene Flughäfen",
+      statsLabel: "So oft als Mitte gewählt (letzte 90 Tage)",
+      statsEmpty: "Noch keine Suchen — seid die erste Gruppe, die sich hier trifft.",
+      howTitle: "So funktioniert's",
+      howSteps: [
+        {
+          title: "Heimatflughafen aller hinzufügen",
+          body: "2–8 Reisende, jeder aus seiner Stadt — wir suchen echte Flugpreise von allen.",
+        },
+        {
+          title: "Termine, Nächte und Budget festlegen",
+          body: "Flexible Daten oder ein ganzer Monat; ein Pro-Kopf-Budget für Hin- + Rückflug.",
+        },
+        {
+          title: "Wir ranken die Treffpunkte",
+          body: "Ziele werden nach Ankunftsdifferenz sortiert (alle landen innerhalb von 24 h), dann nach Gesamtpreis.",
+        },
+      ],
+      faqTitle: "Häufige Fragen",
+      // „{city}” wird beim Rendern durch die Stadt der Seite ersetzt
+      faqs: [
+        {
+          q: "Warum ist {city} eine gute Mitte?",
+          a: "{city} ist mit kurzen, häufigen Flügen aus ganz Europa erreichbar, sodass Reisende aus verschiedenen Städten oft innerhalb weniger Stunden ankommen — und das zu einem niedrigen Gesamtpreis. Starte eine Suche und midspot vergleicht die Stadt mit allen anderen Optionen.",
+        },
+        {
+          q: "Buche ich Flüge über midspot?",
+          a: "Nein. midspot findet und sortiert die Mitte; gebucht wird auf der Partnerseite (z. B. Kiwi.com) über einen Affiliate-Link — zum selben Preis für dich.",
+        },
+        {
+          q: "Sind die Preise echt?",
+          a: "Die Preise stammen aus Live-Flugdaten zum Zeitpunkt der Suche und können sich ändern — die Buchungsseite zeigt immer den Endpreis.",
+        },
+      ],
+      cta: "Findet eure Mitte",
+    },
+  },
   footer: {
+    destinations: "Reiseziele",
     privacy: "Datenschutz",
     terms: "AGB",
     cookieSettings: "Cookie-Einstellungen",

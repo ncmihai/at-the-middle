@@ -202,7 +202,75 @@ export const fr: LangMessages = {
     acceptAll: "Tout accepter",
     essentialOnly: "Essentiels uniquement",
   },
+  destinations: {
+    meta: {
+      indexTitle: "Destinations",
+      indexDescription:
+        "Parcourez les villes européennes que midspot peut rechercher comme point de ralliement pour votre groupe — classées selon la fréquence à laquelle les voyageurs les ont choisies.",
+      cityTitle: (city: string) => `Rendez-vous à ${city}`,
+      cityDescription: (city: string, country: string) =>
+        `Rendez-vous à ${city}, ${country} — découvrez pourquoi la ville fonctionne comme point médian pour des amis ou de la famille venant de villes différentes, puis trouvez votre propre point médian.`,
+    },
+    index: {
+      eyebrow: "Destinations",
+      title: "Où votre groupe devrait-il se retrouver ?",
+      subtitle:
+        "Chaque ville ci-dessous est une destination que midspot peut rechercher comme ralliement possible pour 2 à 8 voyageurs partant d'aéroports différents. Choisissez-en une pour voir pourquoi elle fonctionne — ou revenez en arrière et laissez la recherche trouver votre point médian.",
+      searchPlaceholder: "Rechercher une ville, un pays ou un code d'aéroport…",
+      empty: "Aucune destination ne correspond à votre recherche.",
+      showing: (shown: number, total: number) => `${shown} destinations sur ${total} affichées`,
+      airports: (codes: string) => `Aéroports : ${codes}`,
+      chosen: (count: number) =>
+        count === 0
+          ? "Pas encore choisi comme point médian"
+          : count === 1
+            ? "Choisi 1× comme point médian"
+            : `Choisi ${count}× comme point médian`,
+    },
+    city: {
+      back: "Toutes les destinations",
+      pitch: (city: string) => `Rendez-vous à ${city} — le point médian qui convient à tout le monde.`,
+      pitchBody: (city: string, country: string) =>
+        `${city} (${country}) est l'une des destinations que midspot recherche quand un groupe d'amis ou de famille veut se retrouver. Chacun part de son propre aéroport ; nous classons les destinations selon l'écart d'arrivée de tout le monde, puis selon le prix — dans votre budget.`,
+      airportsLabel: "Aéroports desservis",
+      statsLabel: "Fois choisi comme point médian (90 derniers jours)",
+      statsEmpty: "Pas encore de recherches — soyez le premier groupe à vous retrouver ici.",
+      howTitle: "Comment ça marche",
+      howSteps: [
+        {
+          title: "Ajoutez l'aéroport de chacun",
+          body: "2 à 8 voyageurs, chacun depuis sa ville — nous cherchons les vrais prix de vols depuis tous.",
+        },
+        {
+          title: "Dates, nuits et budget",
+          body: "Dates flexibles ou un mois entier ; un budget par personne couvrant aller + retour.",
+        },
+        {
+          title: "Nous classons les points médians",
+          body: "Destinations classées par écart d'arrivée (tout le monde atterrit à moins de 24 h d'intervalle), puis par prix total.",
+        },
+      ],
+      faqTitle: "Questions fréquentes",
+      // « {city} » est remplacé par la ville de la page au rendu
+      faqs: [
+        {
+          q: "Pourquoi {city} est-il un bon point médian ?",
+          a: "{city} est accessible par des vols courts et fréquents depuis toute l'Europe : des voyageurs de villes différentes arrivent souvent à quelques heures d'intervalle, souvent pour un prix total bas. Lancez une recherche et midspot comparera la ville à toutes les autres options.",
+        },
+        {
+          q: "Je réserve les vols via midspot ?",
+          a: "Non. midspot trouve et classe le point médian ; la réservation se fait sur le site partenaire (p. ex. Kiwi.com) via un lien d'affiliation, au même prix pour vous.",
+        },
+        {
+          q: "Les prix sont-ils réels ?",
+          a: "Les prix proviennent de données de vols en direct au moment de la recherche et peuvent changer — le site de réservation affiche toujours le prix final.",
+        },
+      ],
+      cta: "Trouvez votre point médian",
+    },
+  },
   footer: {
+    destinations: "Destinations",
     privacy: "Confidentialité",
     terms: "Conditions",
     cookieSettings: "Paramètres des cookies",

@@ -7,9 +7,10 @@ import { CONSENT_OPEN_EVENT, useMessages } from "@/lib/i18n";
 import LangSwitcher from "@/components/LangSwitcher";
 
 /**
- * Site footer rendered in the root layout: brand, legal links (/privacy, /terms —
- * PLAN.md Faza 3 "pagini legale obligatorii înainte de lansare"), a "Cookie
- * settings" button that re-opens the consent banner, and the language switcher.
+ * Site footer rendered in the root layout: brand, the /destinations SEO index,
+ * legal links (/privacy, /terms — PLAN.md Faza 3 "pagini legale obligatorii
+ * înainte de lansare"), a "Cookie settings" button that re-opens the consent
+ * banner, and the language switcher.
  */
 export default function Footer() {
   const messages = useMessages();
@@ -25,6 +26,9 @@ export default function Footer() {
           {messages.footer.copyright(year)}
         </Link>
         <nav className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Link href="/destinations" className="hover:text-foreground hover:underline">
+            {messages.footer.destinations}
+          </Link>
           <Link href="/privacy" className="hover:text-foreground hover:underline">
             {messages.footer.privacy}
           </Link>

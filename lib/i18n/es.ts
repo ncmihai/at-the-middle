@@ -201,7 +201,75 @@ export const es: LangMessages = {
     acceptAll: "Aceptar todas",
     essentialOnly: "Solo esenciales",
   },
+  destinations: {
+    meta: {
+      indexTitle: "Destinos",
+      indexDescription:
+        "Explora las ciudades europeas que midspot puede buscar como punto medio para tu grupo — ordenadas según las veces que los viajeros las han elegido.",
+      cityTitle: (city: string) => `Quedemos en ${city}`,
+      cityDescription: (city: string, country: string) =>
+        `Quedemos en ${city}, ${country}: descubre por qué funciona como punto medio para amigos y familia que vuelan desde ciudades diferentes, y encuentra vuestro propio punto medio.`,
+    },
+    index: {
+      eyebrow: "Destinos",
+      title: "¿Dónde debería reunirse tu grupo?",
+      subtitle:
+        "Cada ciudad de abajo es un destino que midspot puede buscar como posible punto medio para 2–8 viajeros que salen de aeropuertos distintos. Elige una para ver por qué funciona — o vuelve atrás y deja que la búsqueda encuentre vuestro punto medio.",
+      searchPlaceholder: "Buscar ciudad, país o código de aeropuerto…",
+      empty: "Ningún destino coincide con tu búsqueda.",
+      showing: (shown: number, total: number) => `Mostrando ${shown} de ${total} destinos`,
+      airports: (codes: string) => `Aeropuertos: ${codes}`,
+      chosen: (count: number) =>
+        count === 0
+          ? "Aún no elegido como punto medio"
+          : count === 1
+            ? "Elegido 1× como punto medio"
+            : `Elegido ${count}× como punto medio`,
+    },
+    city: {
+      back: "Todos los destinos",
+      pitch: (city: string) => `Quedemos en ${city} — el punto medio que funciona para todos.`,
+      pitchBody: (city: string, country: string) =>
+        `${city} (${country}) es uno de los destinos que midspot busca cuando un grupo de amigos o familia quiere reunirse. Cada uno vuela desde su propio aeropuerto; ordenamos los destinos por lo cerca que llegan todos y luego por precio — dentro de vuestro presupuesto.`,
+      airportsLabel: "Aeropuertos servidos",
+      statsLabel: "Veces elegido como punto medio (últimos 90 días)",
+      statsEmpty: "Aún no hay búsquedas: sed el primer grupo en reunirse aquí.",
+      howTitle: "Cómo funciona",
+      howSteps: [
+        {
+          title: "Añade el aeropuerto de cada uno",
+          body: "2–8 viajeros, cada uno desde su ciudad: buscamos precios reales de vuelos desde todos.",
+        },
+        {
+          title: "Fechas, noches y presupuesto",
+          body: "Fechas flexibles o un mes entero; un presupuesto por persona que cubre ida + vuelta.",
+        },
+        {
+          title: "Clasificamos los puntos medios",
+          body: "Destinos ordenados por diferencia de llegada (todos aterrizan con menos de 24 h de diferencia) y luego por precio total.",
+        },
+      ],
+      faqTitle: "Preguntas frecuentes",
+      // "{city}" se sustituye por la ciudad de la página al renderizar
+      faqs: [
+        {
+          q: "¿Por qué {city} es un buen punto medio?",
+          a: "{city} es accesible con vuelos cortos y frecuentes desde toda Europa, así que los viajeros de distintas ciudades llegan a menudo con horas de diferencia — y a menudo a buen precio. Lanza una búsqueda y midspot la comparará con todas las demás opciones.",
+        },
+        {
+          q: "¿Reservo los vuelos en midspot?",
+          a: "No. midspot encuentra y ordena el punto medio; la reserva se hace en el sitio del socio (p. ej. Kiwi.com) mediante un enlace de afiliado, al mismo precio para ti.",
+        },
+        {
+          q: "¿Los precios son reales?",
+          a: "Los precios vienen de datos de vuelos en vivo en el momento de la búsqueda y pueden cambiar: el sitio de reserva siempre muestra el precio final.",
+        },
+      ],
+      cta: "Encuentra vuestro punto medio",
+    },
+  },
   footer: {
+    destinations: "Destinos",
     privacy: "Privacidad",
     terms: "Términos",
     cookieSettings: "Configuración de cookies",
