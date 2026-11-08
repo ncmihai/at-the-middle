@@ -7,23 +7,24 @@ import { pathToFileURL } from "node:url";
 
 const dir = join(process.cwd(), "lib", "i18n");
 
-function shape(value: unknown, path: string, out: string[]): void {
+function shape(value: unknown, path: string, out: string[]): string[] {
   if (value === null || typeof value !== "object") {
     out.push(path);
-    return;
+    return out;
   }
   if (Array.isArray(value)) {
     out.push(path + "[]");
-    return;
+    return out;
   }
   const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
     a.localeCompare(b),
   );
   if (entries.length === 0) {
     out.push(path + "{}");
-    return;
+    return out;
   }
   for (const [k, v] of entries) shape(v, path ? `${path}.${k}` : k, out);
+  return out;
 }
 
 async function load(file: string): Promise<Record<string, unknown>> {
