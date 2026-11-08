@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -363,27 +364,31 @@ export default function SearchForm() {
                       : `${format(range.from, "MMM d, yyyy")} → …`}
                   </span>
                 )}
-                {dateOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40 cursor-default"
-                      onClick={() => {
-                        if (!range?.from || range.to) setDateOpen(false);
-                      }}
-                      aria-hidden
-                    />
-                    <div className="absolute left-0 top-full z-[60] mt-2 rounded-xl border border-border bg-card p-3 shadow-md max-sm:fixed max-sm:inset-x-2 max-sm:bottom-2 max-sm:top-auto max-sm:mt-0">
-                      <Calendar
-                        mode="range"
-                        selected={range}
-                        onSelect={onRangeSelect}
-                        disabled={[{ before: today }]}
-                        defaultMonth={range?.from ?? today}
-                        numberOfMonths={1}
+                {/* portaled to body so the panel always sits above the consent banner
+                    (z-[60] at body level beats the banner's z-50) */}
+                {dateOpen &&
+                  createPortal(
+                    <>
+                      <div
+                        className="fixed inset-0 z-[55] cursor-default"
+                        onClick={() => {
+                          if (!range?.from || range.to) setDateOpen(false);
+                        }}
+                        aria-hidden
                       />
-                    </div>
-                  </>
-                )}
+                      <div className="fixed z-[60] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-3 shadow-lg max-sm:inset-x-2 max-sm:top-auto max-sm:bottom-2 max-sm:translate-x-0 max-sm:translate-y-0">
+                        <Calendar
+                          mode="range"
+                          selected={range}
+                          onSelect={onRangeSelect}
+                          disabled={[{ before: today }]}
+                          defaultMonth={range?.from ?? today}
+                          numberOfMonths={1}
+                        />
+                      </div>
+                    </>,
+                    document.body
+                  )}
               </div>
               <p className="text-xs text-muted-foreground">{messages.form.datesHint}</p>
               {(errors.windowStart ?? errors.windowEnd) && (
