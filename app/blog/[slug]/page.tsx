@@ -12,6 +12,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { getPost, listPostSlugs } from "@/lib/blog";
+import BlogAffiliateCard from "@/components/BlogAffiliateCard";
 
 import PostView from "./PostView";
 
@@ -52,6 +53,9 @@ export default async function BlogPostPage({ params }: Props) {
   return (
     <main className="mx-auto w-full max-w-md px-4 py-10 md:max-w-2xl md:py-14">
       <PostView post={post} />
+      {/* Posts with a `city` frontmatter get the affiliate card (flights /
+          transfer / activities for that destination) after the article. */}
+      {post.city ? <BlogAffiliateCard city={post.city} /> : null}
     </main>
   );
 }

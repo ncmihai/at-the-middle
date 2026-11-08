@@ -8,6 +8,8 @@
 //   excerpt: "…"        (required, used in lists, metadata and the RSS feed)
 //   lang: en            (required-ish, defaults to "en"; shown as a badge)
 //   cover: /images/…    (optional)
+//   city: prague        (optional; /destinations slug — when set, the post page
+//                        renders the affiliate card components/BlogAffiliateCard)
 //   draft: true         (optional; drafts are skipped everywhere)
 //   ---
 // Body = markdown, rendered to HTML server-side with marked (gfm).
@@ -38,6 +40,8 @@ export type BlogPostMeta = {
   lang: string;
   /** optional cover image path, e.g. "/images/blog/x.jpg" */
   cover?: string;
+  /** optional /destinations slug the post is about ("prague") — drives the affiliate card */
+  city?: string;
   /** reading time in whole minutes (words / 200, min 1) */
   readingMinutes: number;
 };
@@ -110,6 +114,7 @@ function parsePost(slug: string, raw: string): BlogPost | null {
     excerpt: typeof data.excerpt === "string" ? data.excerpt.trim() : "",
     lang: typeof data.lang === "string" && data.lang.trim() ? data.lang.trim() : "en",
     cover: typeof data.cover === "string" && data.cover.trim() ? data.cover.trim() : undefined,
+    city: typeof data.city === "string" && data.city.trim() ? data.city.trim().toLowerCase() : undefined,
     readingMinutes: readingMinutesOf(html),
   };
   return { ...meta, html, prev: null, next: null };
@@ -160,6 +165,7 @@ function toMeta(p: BlogPost): BlogPostMeta {
     excerpt: p.excerpt,
     lang: p.lang,
     cover: p.cover,
+    city: p.city,
     readingMinutes: p.readingMinutes,
   };
 }
