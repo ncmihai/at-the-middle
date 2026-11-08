@@ -24,7 +24,6 @@ import { toast } from "sonner";
 import { searchRequestSchema } from "@/lib/validation";
 import type { AirportSuggestion } from "@/lib/types";
 import { useLanguage, useMessages } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
