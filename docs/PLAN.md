@@ -104,3 +104,19 @@ Decizii luate (Q&A):
 5. **Limbi**: EN + top limbi UE — `en, ro, de, fr, es, it` (prin modulul de mesaje existent, comutator de limbă, fără schimbare de rutare).
 
 Ordinea de implementare: (1) cost guard [protejează banii], (2) legal + consent + SEO [GDPR înainte de ads], (3) ads live când ai contul, (4) i18n + detectează locația (IP→IATA), (5) monitorizare health pe box.
+
+---
+
+## Faza 4 — UI/UX & monetizare (brainstorming cu owner-ul, 2026-11-07)
+
+Marketing: TikTok (mai târziu). Până atunci: produs bun, de revisitat. Ads EthicalAds: mai târziu (după consent deja în vigoare).
+
+**Backlog incremental, în ordinea votată de owner:**
+1. **Hartă SVG + timeline sosiri** pe `/r/[slug]` (pin-uri origini+destinație, gap vizual) — cel mai bun asset și pentru TikTok
+2. **Sort/filter rezultate + butoane relax** one-click (gap 30h / +50€ / +3 zile) când nu găsește
+3. **Cazare afiliată (Booking.com)** per rezultat, cu date — prin Travelpayouts (comisie mai mare decât la zbor)
+4. **Share card PNG** descărcabil (cel mai bun rezultat, canvas client-side) pt TikTok
+5. **OG image dinamic** per `/r/[slug]` (thumbnail bun la share)
+6. **Istoric local** (localStorage) + buton „copiază invitația” cu text precompletat
+
+Notă: login rămâne „mai târziu” (link-only). Car/transfer affiliate: nu acum, doar Booking.
