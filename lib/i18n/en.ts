@@ -300,8 +300,30 @@ export const en = {
       cta: "Find your middle",
     },
   },
+  blog: {
+    meta: {
+      title: "Blog",
+      description:
+        "Stories and notes from the midspot team — how we find the middle for groups of travelers flying from different cities.",
+    },
+    title: "Stories from the middle",
+    subtitle:
+      "Notes on meeting up halfway: how the search works, where groups actually met, and what we learn from live flight data.",
+    latest: "Latest stories",
+    empty: "No posts yet — check back soon.",
+    readingTime: (minutes: number) => `${minutes} min read`,
+    published: (date: string) => `Published on ${date}`,
+    back: "All posts",
+    prev: "Newer post",
+    next: "Older post",
+    share: "Copy link",
+    copied: "Link copied!",
+    copyFailed: "Could not copy — select the URL manually",
+    rss: "RSS feed",
+  },
   footer: {
     destinations: "Destinations",
+    blog: "Blog",
     privacy: "Privacy",
     terms: "Terms",
     cookieSettings: "Cookie settings",

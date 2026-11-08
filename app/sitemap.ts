@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { DESTINATION_SLUGS } from "./destinations/cities";
+import { listPosts } from "@/lib/blog";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3005";
 
@@ -8,8 +9,10 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3005";
 // /r/ share links and /api/ are disallowed in robots.ts and deliberately absent.
 // /destinations + every /destinations/[city] SEO page (top 120 cities from
 // db/candidates.ts) are included; the city pages are ISR (revalidate 3600).
+// Faza 7 blog: /blog + every live /blog/[slug] post (content/blog/*.md).
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
+  const posts = listPosts();
   return [
     {
       url: `${siteUrl}/`,
@@ -27,6 +30,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${siteUrl}/destinations/${slug}`,
       lastModified: now,
       changeFrequency: "weekly" as const,
+      priority: 0.6,
+    })),
+    {
+      url: `${siteUrl}/blog`,
+      lastModified: posts[0] ? new Date(`${posts[0].date}T00:00:00Z`) : now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    ...posts.map((post) => ({
+      url: `${siteUrl}/blog/${post.slug}`,
+      lastModified: new Date(`${post.date}T00:00:00Z`),
+      changeFrequency: "monthly" as const,
       priority: 0.6,
     })),
     {

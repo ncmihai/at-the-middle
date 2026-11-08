@@ -277,8 +277,30 @@ export const de: LangMessages = {
       cta: "Findet eure Mitte",
     },
   },
+  blog: {
+    meta: {
+      title: "Blog",
+      description:
+        "Geschichten und Notizen aus dem midspot-Team — wie wir die Mitte für Gruppen finden, die aus verschiedenen Städten anreisen.",
+    },
+    title: "Geschichten aus der Mitte",
+    subtitle:
+      "Notizen zum Treffen in der Mitte: wie die Suche funktioniert, wo Gruppen sich tatsächlich trafen und was wir aus Live-Flugdaten lernen.",
+    latest: "Neueste Artikel",
+    empty: "Noch keine Artikel — schau bald wieder vorbei.",
+    readingTime: (minutes: number) => `${minutes} Min. Lesezeit`,
+    published: (date: string) => `Veröffentlicht am ${date}`,
+    back: "Alle Artikel",
+    prev: "Neuerer Artikel",
+    next: "Älterer Artikel",
+    share: "Link kopieren",
+    copied: "Link kopiert!",
+    copyFailed: "Kopieren fehlgeschlagen — bitte die Adresse manuell markieren",
+    rss: "RSS-Feed",
+  },
   footer: {
     destinations: "Reiseziele",
+    blog: "Blog",
     privacy: "Datenschutz",
     terms: "AGB",
     cookieSettings: "Cookie-Einstellungen",

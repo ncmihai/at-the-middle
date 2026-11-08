@@ -277,8 +277,30 @@ export const fr: LangMessages = {
       cta: "Trouvez votre point médian",
     },
   },
+  blog: {
+    meta: {
+      title: "Blog",
+      description:
+        "Histoires et notes de l'équipe midspot — comment nous trouvons le milieu pour les groupes qui voyagent depuis des villes différentes.",
+    },
+    title: "Histoires du milieu",
+    subtitle:
+      "Notes sur les retrouvailles à mi-chemin : comment fonctionne la recherche, où les groupes se sont réellement retrouvés et ce que nous apprenons des données de vols en direct.",
+    latest: "Derniers articles",
+    empty: "Pas encore d'articles — revenez bientôt.",
+    readingTime: (minutes: number) => `${minutes} min de lecture`,
+    published: (date: string) => `Publié le ${date}`,
+    back: "Tous les articles",
+    prev: "Article plus récent",
+    next: "Article plus ancien",
+    share: "Copier le lien",
+    copied: "Lien copié !",
+    copyFailed: "Copie impossible — sélectionnez l'adresse manuellement",
+    rss: "Flux RSS",
+  },
   footer: {
     destinations: "Destinations",
+    blog: "Blog",
     privacy: "Confidentialité",
     terms: "Conditions",
     cookieSettings: "Paramètres des cookies",

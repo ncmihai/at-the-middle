@@ -276,8 +276,30 @@ export const es: LangMessages = {
       cta: "Encuentra vuestro punto medio",
     },
   },
+  blog: {
+    meta: {
+      title: "Blog",
+      description:
+        "Historias y notas del equipo de midspot — cómo encontramos el punto medio para grupos que viajan desde ciudades diferentes.",
+    },
+    title: "Historias desde el medio",
+    subtitle:
+      "Notas sobre quedar en medio: cómo funciona la búsqueda, dónde se encontraron de verdad los grupos y qué aprendemos de los datos de vuelos en tiempo real.",
+    latest: "Últimos artículos",
+    empty: "Aún no hay artículos — vuelve pronto.",
+    readingTime: (minutes: number) => `${minutes} min de lectura`,
+    published: (date: string) => `Publicado el ${date}`,
+    back: "Todos los artículos",
+    prev: "Artículo más reciente",
+    next: "Artículo más antiguo",
+    share: "Copiar enlace",
+    copied: "¡Enlace copiado!",
+    copyFailed: "No se pudo copiar — selecciona la dirección manualmente",
+    rss: "Feed RSS",
+  },
   footer: {
     destinations: "Destinos",
+    blog: "Blog",
     privacy: "Privacidad",
     terms: "Términos",
     cookieSettings: "Configuración de cookies",

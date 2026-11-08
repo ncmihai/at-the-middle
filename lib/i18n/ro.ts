@@ -277,8 +277,30 @@ export const ro: LangMessages = {
       cta: "Găsește-ți mijlocul",
     },
   },
+  blog: {
+    meta: {
+      title: "Blog",
+      description:
+        "Povești și notițe din echipa midspot — cum găsim mijlocul pentru grupuri care zboară din orașe diferite.",
+    },
+    title: "Povești de la mijloc",
+    subtitle:
+      "Notițe despre întâlniri la jumătate: cum funcționează căutarea, unde s-au întâlnit grupurile în realitate și ce învățăm din datele live de zboruri.",
+    latest: "Ultimele articole",
+    empty: "Niciun articol încă — reveniți curând.",
+    readingTime: (minutes: number) => `${minutes} min de citit`,
+    published: (date: string) => `Publicat pe ${date}`,
+    back: "Toate articolele",
+    prev: "Articol mai nou",
+    next: "Articol mai vechi",
+    share: "Copiază linkul",
+    copied: "Link copiat!",
+    copyFailed: "Nu s-a putut copia — selectați adresa manual",
+    rss: "Flux RSS",
+  },
   footer: {
     destinations: "Destinații",
+    blog: "Blog",
     privacy: "Confidențialitate",
     terms: "Termeni",
     cookieSettings: "Setări cookie-uri",
