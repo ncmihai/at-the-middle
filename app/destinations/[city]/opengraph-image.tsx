@@ -9,6 +9,8 @@
 import { ImageResponse } from "next/og";
 
 import { CITY_IMAGES_BY_SLUG } from "@/db/city-images";
+import { cityPhotoProxyPath } from "@/lib/city-photo";
+import { getConfig } from "@/lib/env";
 import { en } from "@/lib/i18n";
 import { SHARE_CARD_COLORS as C, SHARE_CARD_SIZE } from "@/lib/share";
 
@@ -102,8 +104,15 @@ export default async function OpengraphImage({
   const subtitle = city
     ? `${city.city}, ${city.country} — ${city.iatas.join(" · ")}`
     : en.brand.heroSubtitle;
-  // Faza 8A: city photo as card background (brand-tinted overlay keeps text legible)
-  const photoSrc = city ? await loadPhotoDataUrl(CITY_IMAGES_BY_SLUG[slug]?.url ?? "") : null;
+  // Faza 8A: city photo as card background (brand-tinted overlay keeps text legible).
+  // The stored Digi URL is signed and expires — go through our own stable
+  // /city-photo/<file> proxy (absolute URL, this route fetches it over HTTP).
+  const rawPhotoUrl = city ? (CITY_IMAGES_BY_SLUG[slug]?.url ?? "") : "";
+  const photoSrc = rawPhotoUrl
+    ? await loadPhotoDataUrl(
+        new URL(cityPhotoProxyPath(rawPhotoUrl), getConfig().siteUrl).toString()
+      )
+    : null;
 
   return new ImageResponse(
     (

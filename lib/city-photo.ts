@@ -3,11 +3,31 @@
 // the OG / share cards. Reads only the pure data modules (db/city-images.ts,
 // db/candidates.ts, app/destinations/cities.ts) — no I/O, no env — and NEVER
 // throws: any miss or bad input returns null so callers can fall back to the
-// plain light card style.
+// plain light card style. Returned images point at the stable
+// /city-photo/<file> proxy (cityPhotoProxyPath), never at the expiring Digi
+// signed URLs stored in db/city-images.ts.
 import { CANDIDATES_BY_IATA } from "@/db/candidates";
 import { CITY_IMAGES, CITY_IMAGES_BY_SLUG, type CityImage } from "@/db/city-images";
 
 import { DESTINATION_CITIES, slugifyCity } from "@/app/destinations/cities";
+
+/**
+ * Rewrite a raw Digi Storage signed URL to our own stable proxy path:
+ * "https://storage-c3.rcs-rds.ro/content/files/get/krakow.jpg?base=…" →
+ * "/city-photo/krakow.jpg". The Digi signatures expire (~24h), but
+ * /city-photo/[file] (app/city-photo/[file]/route.ts) mints a fresh signed
+ * URL on every fetch, so the proxied URL never expires. Non-Digi URLs are
+ * returned unchanged. Pure string mapping — safe for client components.
+ */
+export function cityPhotoProxyPath(url: string): string {
+  const match = /\/get\/([a-z0-9-]+\.(?:jpg|jpeg))(\?|$)/i.exec(url);
+  return match ? `/city-photo/${match[1]}` : url;
+}
+
+/** Wrap a CityImage so its url points at the stable /city-photo/... proxy. */
+function proxied(img: CityImage | null): CityImage | null {
+  return img ? { ...img, url: cityPhotoProxyPath(img.url) } : null;
+}
 
 /** IATA code → destination slug, built once from DESTINATION_CITIES (iata→city→slug). */
 const IATA_TO_SLUG: Record<string, string> = (() => {
@@ -38,15 +58,15 @@ export function cityPhotoForIata(iata: string | null | undefined): CityImage | n
     const slug = IATA_TO_SLUG[code];
     if (slug) {
       const bySlug = CITY_IMAGES_BY_SLUG[slug];
-      if (bySlug) return bySlug;
+      if (bySlug) return proxied(bySlug);
     }
 
     const candidate = CANDIDATES_BY_IATA[code];
     if (candidate) {
       const bySlug = CITY_IMAGES_BY_SLUG[slugifyCity(candidate.city)];
-      if (bySlug) return bySlug;
+      if (bySlug) return proxied(bySlug);
       const byName = CITY_IMAGES[candidate.city];
-      if (byName) return byName;
+      if (byName) return proxied(byName);
     }
     return null;
   } catch {
@@ -63,7 +83,7 @@ export function cityPhotoForSlug(slug: string | null | undefined): CityImage | n
     if (!slug) return null;
     const key = slug.trim().toLowerCase();
     if (!key) return null;
-    return CITY_IMAGES_BY_SLUG[key] ?? CITY_IMAGES_BY_SLUG[slugifyCity(key)] ?? null;
+    return proxied(CITY_IMAGES_BY_SLUG[key] ?? CITY_IMAGES_BY_SLUG[slugifyCity(key)] ?? null);
   } catch {
     return null;
   }
@@ -78,7 +98,7 @@ export function cityPhotoForCity(city: string | null | undefined): CityImage | n
     if (!city) return null;
     const name = city.trim();
     if (!name) return null;
-    return CITY_IMAGES[name] ?? CITY_IMAGES_BY_SLUG[slugifyCity(name)] ?? null;
+    return proxied(CITY_IMAGES[name] ?? CITY_IMAGES_BY_SLUG[slugifyCity(name)] ?? null);
   } catch {
     return null;
   }

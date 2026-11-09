@@ -88,7 +88,9 @@ Paginile /destinations și /blog sunt deja ISR la origine (revalidate 1h). Ca s�
 edge-ul Cloudflare (mai rapid, mai puțin load pe box), adaugă în dashboard (zona ncmihai.dev →
 Caching → Cache Rules) o regulă, ca la D-095 de la cumsevoteaza:
 
-- Expression: `(http.host eq "midspot.ncmihai.dev" and (starts_with(http.request.uri.path, "/destinations") or starts_with(http.request.uri.path, "/blog")) and not any(http.request.headers["rsc"][*] in {"1"}) and not any(http.request.headers["next-router-prefetch"][*] in {"1"}) and http.request.uri.query eq "")`
+- Expression: `(http.host eq "midspot.ncmihai.dev" and (starts_with(http.request.uri.path, "/destinations") or starts_with(http.request.uri.path, "/blog") or starts_with(http.request.uri.path, "/city-photo/")) and not any(http.request.headers["rsc"][*] in {"1"}) and not any(http.request.headers["next-router-prefetch"][*] in {"1"}) and http.request.uri.query eq "")`
 - Settings: Eligible for cache · Edge TTL: Ignore cache-control and use this TTL: 30 minutes ·
   Status Code TTL: 4xx–5xx → No store · Browser TTL: Respect origin.
 - Verificare: `curl -sI https://midspot.ncmihai.dev/destinations` de 2 ori → al doilea răspuns `cf-cache-status: HIT`.
+  La fel și pentru `https://midspot.ncmihai.dev/city-photo/krakow.jpg` (imaginile sunt immutable —
+  proxy-ul `/city-photo/[file]` semnează fresh la fiecare fetch Digi, deci URL-ul local nu expiră niciodată).

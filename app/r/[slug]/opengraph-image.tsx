@@ -17,6 +17,7 @@ import { asc, eq } from "drizzle-orm";
 import { CANDIDATES_BY_IATA } from "@/db/candidates";
 import { getDb, isDatabaseConfigured } from "@/db/client";
 import { cityPhotoForIata } from "@/lib/city-photo";
+import { getConfig } from "@/lib/env";
 import { results, searches } from "@/db/schema";
 import { en } from "@/lib/i18n";
 import {
@@ -151,9 +152,12 @@ export default async function OpengraphImage({
   };
   const hasResult = Boolean(model.gapText);
   // Faza 9: city photo as card background, resolved via the destination IATA
-  // (slug map) — the same photo the result cards show
-  const photoSrc = loaded
-    ? await loadPhotoDataUrl(cityPhotoForIata(loaded.destinationIata)?.url ?? "")
+  // (slug map) — the same photo the result cards show. cityPhotoForIata returns
+  // the stable relative /city-photo/<file> proxy path; this server route needs
+  // an absolute URL to fetch it, so resolve it against the configured site URL.
+  const photoUrl = loaded ? (cityPhotoForIata(loaded.destinationIata)?.url ?? "") : "";
+  const photoSrc = photoUrl
+    ? await loadPhotoDataUrl(new URL(photoUrl, getConfig().siteUrl).toString())
     : null;
 
   return new ImageResponse(

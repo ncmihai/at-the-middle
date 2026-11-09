@@ -43,10 +43,32 @@ _last_query_lock = threading.Lock()
 _last_query_at = 0.0
 
 
+_err_lock = threading.Lock()
+_consec_errors = 0
+
+
+def note_error():
+    global _consec_errors
+    with _err_lock:
+        _consec_errors += 1
+
+
+def note_ok():
+    global _consec_errors
+    with _err_lock:
+        _consec_errors = 0
+
+
+def effective_interval():
+    """Triple the spacing while Google is refusing us (error 13 / blocks)."""
+    with _err_lock:
+        return MIN_SECONDS_BETWEEN_QUERIES * (3.0 if _consec_errors >= 3 else 1.0)
+
+
 def throttle():
     global _last_query_at
     with _last_query_lock:
-        wait = MIN_SECONDS_BETWEEN_QUERIES - (time.monotonic() - _last_query_at)
+        wait = effective_interval() - (time.monotonic() - _last_query_at)
         if wait > 0:
             time.sleep(wait)
         _last_query_at = time.monotonic()
@@ -62,22 +84,45 @@ def local_to_utc(iata, date_arr, time_arr):
     return int(local.timestamp()), local.isoformat()
 
 
-def query_date(from_iata, to_iata, date_iso):
-    throttle()
-    q = create_query(
-        flights=[FlightQuery(date=date_iso, from_airport=from_iata, to_airport=to_iata)],
-        trip="one-way",
-        passengers=Passengers(adults=1),
-        seat="economy",
-        currency="EUR",
-        language="en",
-    )
-    return get_flights(q)
+def query_date(from_iata, to_iata, date_iso, retries=2):
+    """One date query with backoff retries. Returns None if all attempts fail."""
+    for attempt in range(retries + 1):
+        throttle()
+        q = create_query(
+            flights=[FlightQuery(date=date_iso, from_airport=from_iata, to_airport=to_iata)],
+            trip="one-way",
+            passengers=Passengers(adults=1),
+            seat="economy",
+            currency="EUR",
+            language="en",
+        )
+        try:
+            result = get_flights(q)
+            note_ok()
+            return result
+        except Exception as e:
+            note_error()
+            sys.stderr.write(
+                f"[fastflights] {from_iata}->{to_iata} {date_iso} attempt {attempt + 1} failed: {e}\n"
+            )
+            if attempt < retries:
+                time.sleep(4.0 * (attempt + 1))  # backoff: 4s, 8s
+    return None
 
 
 def normalize(from_iata, to_iata, date_iso, flight):
     legs = flight.flights
     if not legs:
+        return None
+    # Google sometimes returns flights without a price — skip them (we rank by price).
+    price = getattr(flight, "price", None)
+    if price is None:
+        return None
+    try:
+        price_eur = float(price)
+    except (TypeError, ValueError):
+        return None
+    if price_eur <= 0:
         return None
     first, last = legs[0], legs[-1]
     dep_utc, dep_local = local_to_utc(first.from_airport.code, first.departure.date, first.departure.time)
@@ -90,7 +135,7 @@ def normalize(from_iata, to_iata, date_iso, flight):
         "departUtc": dep_utc,
         "arriveUtc": arr_utc,
         "durationMinutes": int(sum(l.duration for l in legs)),
-        "priceEur": float(flight.price),
+        "priceEur": price_eur,
     }
 
 
@@ -104,10 +149,14 @@ def search(from_iata, to_iata, date_from, date_to):
         date_iso = cur.isoformat()
         try:
             result = query_date(from_iata, to_iata, date_iso)
+            if result is None:
+                raise RuntimeError("all query attempts failed")
             # one retry on empty (transient consent/block hiccups)
             if len(result) == 0:
                 time.sleep(2)
-                result = query_date(from_iata, to_iata, date_iso)
+                result = query_date(from_iata, to_iata, date_iso, retries=1)
+                if result is None:
+                    result = []
             for f in result:
                 opt = normalize(from_iata, to_iata, date_iso, f)
                 if opt:

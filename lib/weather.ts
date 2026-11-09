@@ -130,6 +130,8 @@ export async function fetchForecast(
   let cacheKey = "";
   try {
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+    // open-meteo answers 400 for out-of-range coords — fail fast instead of calling
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null;
     if (!DAY_RE.test(startDate) || !DAY_RE.test(endDate)) return null;
     const end = endDate < startDate ? startDate : clampEndDate(startDate, endDate);
     // rounded coords: nearby airports/city centroids share one upstream call
