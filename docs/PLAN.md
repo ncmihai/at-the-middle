@@ -210,6 +210,16 @@ Notă: login rămâne „mai târziu” (link-only). Car/transfer affiliate: nu 
   `rel="noopener sponsored"`). Sitemap + RSS le preiau automat. Verificat live: 5 postări în /blog,
   card cu 3 linkuri sponsorizate pe fiecare post nou, RSS/sitemap OK.
 
+## Faza 10e — DONE 2026-11-09 (commits 4d2891b, 5edd97d; deploy green via manual run 42673480288, playwright-verified EN/RO/JA/PL)
+
+- **Hero copy spune povestea gap-ului de sosire** (clarificarea owner-ului: "at the middle" = intervalul
+  dintre sosiri, nu doar mijlocul geografic — fiecare zboară de acasă, întâlnirea e într-un al treilea loc,
+  la ore apropiate, nu la zile distanță). heroSubtitle + 4 heroPoints + heroExample nou
+  („tu din București, prieten din Berlin → Barcelona, 2 h diferență, nu 3 zile”) — traduse în toate
+  cele 23 de limbi. `npm run lint` = eslint + `i18n:check`, rulat și în CI (în build step).
+- Notă: două run-uri push consecutive au eșuat cu 0 joburi (parse race GitHub, fără eroare reală) —
+  același commit rulat manual a fost verde; push-urile ulterioare au revenit normale.
+
 ## Rămas din brainstorm (nealese încă)
 C vot pe rezultate · D badge „mai ieftin decât de obicei" · G mai multe limbi · H valută · I dark mode ·
 J PWA · K prefill origine din IP · L compară 2 rezultate · M alerte preț pe email (după review) · N webhook.
