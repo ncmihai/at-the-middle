@@ -455,7 +455,7 @@ Toate trăiesc în Infisical `midspot-prod` / `prod`, **cu excepția** `PORT`/`H
 |---|---|
 | `DIGI_STORAGE_EMAIL` / `DIGI_STORAGE_PASSWORD` | cont Digi Storage |
 | `DIGI_STORAGE_MOUNT_ID` | |
-| `DIGI_STORAGE_BASE_PATH` | ex. `midspot-backups` |
+| `DIGI_STORAGE_BASE_PATH` | **`midspot`** — atenție: pe 2026-11-09 era setat greșit `mereya-assets` (copiat de la alt proiect), ceea ce făcea ca proxy-ul `/city-photo/[file]` să dea 404 la toate pozele. Pozele orașelor trăiesc în `/midspot/cities/<slug>.jpg` pe mount. |
 | `DIGI_STORAGE_BASE_URL` / `DIGI_STORAGE_API_URL` | `https://storage.rcs-rds.ro` / `.../api/v2.1` |
 
 ### 7f. Legacy — de șters

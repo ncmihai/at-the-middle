@@ -220,6 +220,26 @@ Notă: login rămâne „mai târziu” (link-only). Car/transfer affiliate: nu 
 - Notă: două run-uri push consecutive au eșuat cu 0 joburi (parse race GitHub, fără eroare reală) —
   același commit rulat manual a fost verde; push-urile ulterioare au revenit normale.
 
+## Faza 11 — incident fix (DONE 2026-11-09, commits e3e693e + 082a564, CI green, verified live)
+
+Raport owner: „s-au futut imaginile, căutările durează mult, nu găsește la fel de multe zboruri”. Cauze găsite și reparate:
+
+- **Imagini**: URL-urile semnate Digi din `db/city-images.ts` expirau după ~24 h → toate cele 378 de poze
+  dădeau 400. Fix permanent: proxy propriu `GET /city-photo/[file]` (app/city-photo/[file]/route.ts) care
+  semnează fresh la fiecare apel și servește cu `cache-control: immutable` + cache in-memory 1 h; toate
+  consumers (carduri, /destinations, OG, blog card) folosesc acum `/city-photo/<slug>.jpg` (vezi
+  `cityPhotoProxyPath` în lib/city-photo.ts). Root-cause suplimentar: secretul `DIGI_STORAGE_BASE_PATH`
+  era `mereya-assets` în loc de `midspot` → 404 la fetch; corectat în Infisical (vezi deploy-midspot.md).
+  Verificat live: `/city-photo/krakow.jpg` → 200 image/jpeg, toate cardurile de pe /r/ și /destinations
+  încarcă (naturalWidth > 0). Regula CF edge-cache extinsă cu `/city-photo/` (ops/README).
+- **Zboruri**: bridge-ul fastflights crăpa cu `float(None)` când Google returna zboruri fără preț
+  (42 erori) → skip acum. + Google bloca IP-ul (error 13) după multe căutări → retry max 1 cu pauză
+  10 s, cooldown 25 s după 2 refuzuri consecutive, interval adaptiv ×3/×5. + tăiat volumul: top-K deep
+  search 10→6, flight cache 30→60 min. Rezultat: căutare cold 180 s+ cu 0 rezultate → ~45 s cu rezultate
+  reale (ex. OTP+LHR 23–27.11 → Munich, gap 755 min, €473/2 pers). Blocul Google pe IP-ul boxului e
+  rezidual după testările de azi și se răcește singur; fix-ul real rămâne API-ul oficial Kiwi/Tequila.
+- **Weather**: open-meteo 400 spam → skip rapid pentru coordonate out-of-range (lib/weather.ts).
+
 ## Rămas din brainstorm (nealese încă)
 C vot pe rezultate · D badge „mai ieftin decât de obicei" · G mai multe limbi · H valută · I dark mode ·
 J PWA · K prefill origine din IP · L compară 2 rezultate · M alerte preț pe email (după review) · N webhook.
