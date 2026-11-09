@@ -7,12 +7,15 @@ export const hu: LangMessages = {
     name: "midspot",
     heroTitle: "Találkozzatok félúton",
     heroSubtitle:
-      "Egy úticél, mindenki otthonról repül, és mindenki egy napon belül érkezik egymáshoz képest — a keretetekben.",
+      "Mindenki otthonról repül, és egy harmadik úticélnál találkoztok — órákra egymástól, nem napokra. Rendezés érkezési különbség szerint először, aztán ár szerint — a keretetekben.",
     heroPoints: [
-      "2–8 utazó, mindegyik a saját városából",
-      "Rugalmas utazási dátumok — vagy válasszatok egy egész hónapot",
-      "Érkezési különbség szerint, majd ár szerint rendezve",
+      "2–8 utazó, mindegyik a saját városából repül",
+      "Az úticélnál találkoztok — nem egymás otthonában",
+      "Érkezési különbség először (max. 24 óra), aztán ár",
+      "Rugalmas dátumok — vagy válasszatok egy egész hónapot",
     ],
+    heroExample:
+      "Példa: te Bukarestből repülsz, egy barátod Berlinből → Barcelonában találkoztok, 2 óra különbséggel az érkezésben — nem 3 nap.",
   },
   form: {
     title: "Utazás tervezése",

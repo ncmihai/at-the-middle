@@ -31,12 +31,15 @@ export const en = {
     name: "midspot",
     heroTitle: "Meet in the middle",
     heroSubtitle:
-      "One destination, everyone flies from home, and everyone arrives within a day of each other — inside your budget.",
+      "Everyone flies from home and you meet at a third destination — arriving within hours of each other, not days apart. Ranked by arrival gap first, then by price, inside your budget.",
     heroPoints: [
-      "2–8 travelers, each from their own city",
-      "Flexible trip dates — or pick a whole month",
-      "Ranked by arrival gap, then by price",
+      "2–8 travelers, each flying from their own city",
+      "You meet at the destination — not at each other's home",
+      "Arrival gap first (max 24 h), then price",
+      "Flexible dates — or pick a whole month",
     ],
+    heroExample:
+      "Example: you fly from Bucharest, a friend from Berlin → you meet in Barcelona, arriving 2 h apart — not 3 days apart.",
   },
   form: {
     title: "Plan the trip",

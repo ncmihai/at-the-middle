@@ -7,12 +7,15 @@ export const ro: LangMessages = {
     name: "midspot",
     heroTitle: "Întâlnește-vă la mijloc",
     heroSubtitle:
-      "O singură destinație, fiecare zboară din orașul lui și toți ajung la mai puțin de o zi unul de altul — în bugetul vostru.",
+      "Fiecare zboară de acasă și vă întâlniți într-o destinație nouă — ajungeți la ore apropiate unul de altul, nu la zile distanță. Întâi după decalajul de sosire, apoi după preț, în bugetul vostru.",
     heroPoints: [
-      "2–8 călători, fiecare din orașul lui",
-      "Date flexibile pentru călătorie — sau alege o întreagă lună",
-      "Sortate după diferența de sosire, apoi după preț",
+      "2–8 călători, fiecare zburând din orașul lui",
+      "Vă întâlniți la destinație — nu unul la altul acasă",
+      "Decalajul de sosire primul (max 24 h), apoi prețul",
+      "Date flexibile — sau alege o întreagă lună",
     ],
+    heroExample:
+      "Exemplu: tu zbori din București, un prieten din Berlin → vă întâlniți în Barcelona, ajungând la 2 h diferență — nu la 3 zile.",
   },
   form: {
     title: "Planifică călătoria",

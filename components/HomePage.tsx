@@ -34,6 +34,9 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
+          <p className="max-w-md text-xs text-muted-foreground/80">
+            {messages.brand.heroExample}
+          </p>
         </header>
 
         <SearchForm />

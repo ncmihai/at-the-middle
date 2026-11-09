@@ -7,12 +7,15 @@ export const de: LangMessages = {
     name: "midspot",
     heroTitle: "Trefft euch in der Mitte",
     heroSubtitle:
-      "Ein Ziel, alle fliegen von zu Hause aus, und alle kommen innerhalb eines Tages an — im Budget.",
+      "Jeder fliegt von zu Hause aus, und ihr trefft euch an einem dritten Ort — mit Stunden statt Tagen Abstand bei der Ankunft. Erst nach Ankunftsdifferenz sortiert, dann nach Preis, im Budget.",
     heroPoints: [
-      "2–8 Reisende, jeder aus seiner eigenen Stadt",
+      "2–8 Reisende, jeder fliegt aus seiner eigenen Stadt",
+      "Ihr trefft euch am Ziel — nicht bei jemandem zu Hause",
+      "Ankunftsdifferenz zuerst (max 24 h), dann Preis",
       "Flexible Reisedaten — oder einen ganzen Monat wählen",
-      "Sortiert nach Ankunftsdifferenz, dann nach Preis",
     ],
+    heroExample:
+      "Beispiel: Du fliegst aus Bukarest, ein Freund aus Berlin → ihr trefft euch in Barcelona, Ankunft 2 h auseinander — nicht 3 Tage.",
   },
   form: {
     title: "Reise planen",

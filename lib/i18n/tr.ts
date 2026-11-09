@@ -7,12 +7,15 @@ export const tr: LangMessages = {
     name: "midspot",
     heroTitle: "Ortada buluşun",
     heroSubtitle:
-      "Tek bir rota, herkes kendi şehrinden uçar ve herkes birbirinden bir gün içinde varır — bütçeniz dahilinde.",
+      "Herkes evden uçar ve siz üçüncü bir destinasyonda buluşursunuz — birbirinize günler değil, saatler içinde varırsınız. Önce varış farkına, sonra fiyata göre sıralanır — bütçeniz dahilinde.",
     heroPoints: [
-      "2–8 gezgin, her biri kendi şehrinden",
-      "Esnek seyahat tarihleri — ya da tüm bir ayı seçin",
-      "Varış farkına göre, sonra fiyata göre sıralanır",
+      "2–8 gezgin, her biri kendi şehrinden uçar",
+      "Destinasyonda buluşursunuz — birbirinizin evinde değil",
+      "Önce varış farkı (maks. 24 sa), sonra fiyat",
+      "Esnek tarihler — ya da tüm bir ayı seçin",
     ],
+    heroExample:
+      "Örnek: sen Bükreş'ten, bir arkadaşın Berlin'den uçuyor → Barselona'da buluşuyorsunuz, varışlar arasında 2 saat farkla — 3 gün değil.",
   },
   form: {
     title: "Seyahati planla",

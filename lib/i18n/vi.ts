@@ -7,12 +7,15 @@ export const vi: LangMessages = {
     name: "midspot",
     heroTitle: "Gặp nhau ở điểm giữa",
     heroSubtitle:
-      "Một điểm đến duy nhất, mọi người đều bay từ nhà mình và tất cả đến trong vòng một ngày so với nhau — trong phạm vi ngân sách của bạn.",
+      "Mọi người đều bay từ nhà và các bạn gặp nhau ở một điểm đến thứ ba — cách nhau hàng giờ thay vì hàng ngày. Xếp theo độ lệch giờ đến trước, rồi theo giá, trong phạm vi ngân sách của bạn.",
     heroPoints: [
-      "2–8 du khách, mỗi người từ thành phố của riêng mình",
+      "2–8 du khách, mỗi người bay từ thành phố của riêng mình",
+      "Các bạn gặp nhau tại điểm đến — không phải tại nhà nhau",
+      "Độ lệch giờ đến trước (tối đa 24 h), rồi đến giá",
       "Ngày đi linh hoạt — hoặc chọn cả một tháng",
-      "Xếp theo độ lệch giờ đến, rồi theo giá",
     ],
+    heroExample:
+      "Ví dụ: bạn bay từ Bucharest, một người bạn từ Berlin → các bạn gặp nhau ở Barcelona, giờ đến chênh nhau 2 h — không phải 3 ngày.",
   },
   form: {
     title: "Lên kế hoạch chuyến đi",

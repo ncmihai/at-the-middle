@@ -7,12 +7,15 @@ export const fr: LangMessages = {
     name: "midspot",
     heroTitle: "Rencontrez-vous au milieu",
     heroSubtitle:
-      "Une seule destination, chacun vole de chez soi, et tout le monde arrive à moins d'un jour d'écart — dans votre budget.",
+      "Chacun vole de chez soi et vous vous retrouvez dans une troisième destination — à quelques heures d'écart à l'arrivée, pas à des jours. Classés d'abord par écart d'arrivée, puis par prix, dans votre budget.",
     heroPoints: [
-      "2 à 8 voyageurs, chacun de sa ville",
-      "Dates de voyage flexibles — ou choisissez un mois entier",
-      "Classés par écart d'arrivée, puis par prix",
+      "2 à 8 voyageurs, chacun vole de sa propre ville",
+      "Vous vous retrouvez à la destination — pas chez l'un ou l'autre",
+      "Écart d'arrivée d'abord (max 24 h), puis prix",
+      "Dates flexibles — ou choisissez un mois entier",
     ],
+    heroExample:
+      "Exemple : tu voles de Bucarest, un ami de Berlin → vous vous retrouvez à Barcelone, arrivées à 2 h d'écart — pas à 3 jours.",
   },
   form: {
     title: "Planifier le voyage",

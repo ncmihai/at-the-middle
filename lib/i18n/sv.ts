@@ -7,12 +7,15 @@ export const sv: LangMessages = {
     name: "midspot",
     heroTitle: "Mötas i mitten",
     heroSubtitle:
-      "En destination, alla flyger hemifrån, och alla anländer inom en dag från varandra — inom din budget.",
+      "Alla flyger hemifrån och ni möts på en tredje destination — inom timmar från varandra, inte dagar. Rankade efter ankomstskillnad först, sedan efter pris, inom din budget.",
     heroPoints: [
-      "2–8 resenärer, var och en från sin egen stad",
+      "2–8 resenärer, var och en flyger från sin egen stad",
+      "Ni möts på destinationen — inte hemma hos varandra",
+      "Ankomstskillnad först (max 24 tim), sedan pris",
       "Flexibla resedatum — eller välj en hel månad",
-      "Rankade efter ankomstskillnad, sedan efter pris",
     ],
+    heroExample:
+      "Exempel: du flyger från Bukarest, en vän från Berlin → ni möts i Barcelona, med 2 timmars mellanrum vid ankomst — inte 3 dagar.",
   },
   form: {
     title: "Planera resan",

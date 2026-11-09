@@ -7,12 +7,15 @@ export const cs: LangMessages = {
     name: "midspot",
     heroTitle: "Sejděte se na půli cesty",
     heroSubtitle:
-      "Jedna destinace, každý letí ze svého města a všichni přiletí do jednoho dne od sebe — ve vašem rozpočtu.",
+      "Každý letí z domova a vy se setkáte na třetí destinaci — přílet během hodin od sebe, ne dnů. Seřazeno podle rozdílu příletů, pak podle ceny, ve vašem rozpočtu.",
     heroPoints: [
-      "2–8 cestovatelů, každý ze svého města",
-      "Flexibilní termíny cesty — nebo vyberte celý měsíc",
-      "Seřazeno podle rozdílu příletů, pak podle ceny",
+      "2–8 cestovatelů, každý letí ze svého města",
+      "Setkáte se v destinaci — ne u sebe doma",
+      "Rozdíl příletů nejprve (max. 24 h), pak cena",
+      "Flexibilní termíny — nebo vyberte celý měsíc",
     ],
+    heroExample:
+      "Příklad: ty letíš z Bukurešti, kamarád z Berlína → setkáte se v Barceloně, přílet s odstupem 2 h — ne 3 dny.",
   },
   form: {
     title: "Naplánujte cestu",

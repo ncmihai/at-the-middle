@@ -7,12 +7,15 @@ export const fi: LangMessages = {
     name: "midspot",
     heroTitle: "Tavataan puolivälissä",
     heroSubtitle:
-      "Yksi määränpää, jokainen lentää kotoaan ja kaikki saapuvat vuorokauden sisällä toisistaan — budjetissanne.",
+      "Kaikki lentävät kotoaan ja tapaatte kolmannessa määränpäässä — tunnin sisällä toisistaan, ei päivien. Järjestys: ensin saapumisvaje, sitten hinta, budjettinne sisällä.",
     heroPoints: [
-      "2–8 matkustajaa, jokainen omasta kaupungistaan",
+      "2–8 matkustajaa, jokainen lentää omasta kaupungistaan",
+      "Tapaatte määränpäässä — ette toistenne kotona",
+      "Saapumisvaje ensin (enint. 24 h), sitten hinta",
       "Joustavat matkapäivät — tai valitse koko kuukausi",
-      "Järjestettynä saapumisvajeen ja sitten hinnan mukaan",
     ],
+    heroExample:
+      "Esimerkki: sinä lennät Bukarestista, kaveri Berliinistä → tapaatte Barcelonassa, saapumisten ero 2 h — ei 3 päivää.",
   },
   form: {
     title: "Suunnittele matka",

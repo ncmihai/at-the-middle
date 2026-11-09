@@ -7,12 +7,15 @@ export const nl: LangMessages = {
     name: "midspot",
     heroTitle: "Ontmoet elkaar in het midden",
     heroSubtitle:
-      "Eén bestemming, iedereen vliegt vanaf huis en iedereen komt binnen een dag van elkaar aan — binnen je budget.",
+      "Iedereen vliegt vanaf huis en jullie ontmoeten elkaar op een derde bestemming — binnen uren van elkaar, niet dagen. Gesorteerd op aankomstverschil eerst, dan op prijs, binnen je budget.",
     heroPoints: [
-      "2–8 reizigers, ieder uit de eigen stad",
+      "2–8 reizigers, ieder vliegend vanaf de eigen stad",
+      "Jullie ontmoeten elkaar op de bestemming — niet bij elkaar thuis",
+      "Aankomstverschil eerst (max. 24 u), dan prijs",
       "Flexibele reisdata — of kies een hele maand",
-      "Gesorteerd op aankomstverschil, daarna op prijs",
     ],
+    heroExample:
+      "Voorbeeld: jij vliegt vanaf Boekarest, een vriend vanaf Berlijn → jullie ontmoeten elkaar in Barcelona, met 2 uur verschil in aankomst — niet 3 dagen.",
   },
   form: {
     title: "Plan de reis",

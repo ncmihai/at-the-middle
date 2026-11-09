@@ -40,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint + i18n key parity
+        run: npm run lint
+
       - name: Install cloudflared (pinned deb from pkg.cloudflare.com — NOT GitHub releases, those 504)
         run: |
           # the apt repo has no Release file for newer ubuntu codenames; fetch the deb directly

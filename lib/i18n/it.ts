@@ -7,12 +7,15 @@ export const it: LangMessages = {
     name: "midspot",
     heroTitle: "Incontratevi a metà strada",
     heroSubtitle:
-      "Una sola destinazione, ognuno vola dalla propria città e tutti arrivano a meno di un giorno di distanza — nel vostro budget.",
+      "Ognuno vola da casa propria e vi incontrate in una terza destinazione — arrivando a ore di distanza, non a giorni. Ordinate prima per differenza di arrivo, poi per prezzo, nel vostro budget.",
     heroPoints: [
-      "2–8 viaggiatori, ognuno dalla propria città",
-      "Date di viaggio flessibili — oppure scegli un intero mese",
-      "Ordinati per differenza di arrivo, poi per prezzo",
+      "2–8 viaggiatori, ognuno vola dalla propria città",
+      "Vi incontrate alla destinazione — non a casa di nessuno",
+      "Differenza di arrivo prima (max 24 h), poi prezzo",
+      "Date flessibili — oppure scegli un intero mese",
     ],
+    heroExample:
+      "Esempio: tu voli da Bucarest, un amico da Berlino → vi incontrate a Barcellona, arrivando con 2 h di differenza — non 3 giorni.",
   },
   form: {
     title: "Pianifica il viaggio",
