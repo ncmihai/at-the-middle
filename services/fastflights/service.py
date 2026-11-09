@@ -59,10 +59,34 @@ def note_ok():
         _consec_errors = 0
 
 
+_refusal_lock = threading.Lock()
+_consec_refusals = 0
+_refusal_cooldown_until = 0.0
+
+
+def note_refusal():
+    """Google said 'refused' (error 13): enter a cooldown instead of hammering it."""
+    global _consec_refusals, _refusal_cooldown_until
+    with _refusal_lock:
+        _consec_refusals += 1
+        if _consec_refusals >= 2:
+            _refusal_cooldown_until = time.monotonic() + 25.0
+
+
+def note_success():
+    global _consec_refusals
+    with _refusal_lock:
+        _consec_refusals = 0
+
+
 def effective_interval():
-    """Triple the spacing while Google is refusing us (error 13 / blocks)."""
+    """Widen the spacing while Google is refusing us (error 13 / blocks)."""
     with _err_lock:
-        return MIN_SECONDS_BETWEEN_QUERIES * (3.0 if _consec_errors >= 3 else 1.0)
+        factor = 5.0 if _consec_errors >= 5 else (3.0 if _consec_errors >= 3 else 1.0)
+    with _refusal_lock:
+        if time.monotonic() < _refusal_cooldown_until:
+            factor = max(factor, 8.0)
+    return MIN_SECONDS_BETWEEN_QUERIES * factor
 
 
 def throttle():
@@ -85,7 +109,11 @@ def local_to_utc(iata, date_arr, time_arr):
 
 
 def query_date(from_iata, to_iata, date_iso, retries=2):
-    """One date query with backoff retries. Returns None if all attempts fail."""
+    """One date query with backoff retries. Returns None if all attempts fail.
+
+    On a Google refusal (error 13, per-IP block) we retry at most ONCE after a
+    longer pause — hammering a blocked IP only extends the block.
+    """
     for attempt in range(retries + 1):
         throttle()
         q = create_query(
@@ -99,14 +127,20 @@ def query_date(from_iata, to_iata, date_iso, retries=2):
         try:
             result = get_flights(q)
             note_ok()
+            note_success()
             return result
         except Exception as e:
+            msg = str(e)
+            refused = "refused" in msg or "error 13" in msg
             note_error()
+            if refused:
+                note_refusal()
             sys.stderr.write(
                 f"[fastflights] {from_iata}->{to_iata} {date_iso} attempt {attempt + 1} failed: {e}\n"
             )
             if attempt < retries:
-                time.sleep(4.0 * (attempt + 1))  # backoff: 4s, 8s
+                # refusals: one longer pause; other errors: short backoff
+                time.sleep(10.0 if refused and attempt == 0 else 4.0 * (attempt + 1))
     return None
 
 
